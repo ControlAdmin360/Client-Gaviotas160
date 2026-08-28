@@ -1026,7 +1026,7 @@ function setupNuevo(){
   function setupSync(){
     const btn = $$('#btnSync');
     if (!btn) return;
-    btn.addEventListener('click', cargarTabla);
+    btn?.addEventListener('click', cargarTabla);
   }
 
   // Boot de UI base (router + helpers ligeros)
@@ -2699,7 +2699,7 @@ document.getElementById('exon-depa').addEventListener('change', function() {
 
 
 // Ejecutar esto dentro de una etiqueta <script> o donde inicialices tus eventos
-document.getElementById('exon-moras-check').addEventListener('change', function(e) {
+document.getElementById('exon-moras-check')?.addEventListener('change', function(e) {
   const inputCombo = document.getElementById('exon-concepto');
   const inputMonto = document.getElementById('exon-monto');
   const checkEliminar = document.getElementById('exon-eliminar-check');
