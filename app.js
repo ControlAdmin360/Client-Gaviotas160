@@ -53,6 +53,39 @@ window.usuarioActivo = window.usuarioActivo || (() => {
     return 'UNKNOWN_LOK';
   }
 });
+
+// Usa: netRun(funcion global).withSuccessHandler(...).api_foo(...)
+window.netRun = function () {
+  let successFn = () => {};
+  let failureFn = () => {};
+
+  const proxy = new Proxy({}, {
+    get(_t, prop) {
+      if (prop === 'withSuccessHandler') {
+        return (fn) => { successFn = fn; return proxy; };
+      }
+      if (prop === 'withFailureHandler') {
+        return (fn) => { failureFn = fn; return proxy; };
+      }
+      return (...args) => {
+        if (typeof window.__NetState === 'object') window.__NetState.busy();
+        ejecutarServidor(prop, ...args)
+          .then(res => {
+            if (typeof window.__NetState === 'object') window.__NetState.idle();
+            successFn(res);
+          })
+          .catch(err => {
+            if (typeof window.__NetState === 'object') window.__NetState.idle();
+            failureFn(err);
+          });
+        return proxy;
+      };
+    }
+  });
+
+  return proxy;
+};
+
 window.eventosCache = [];
 // --- Sistema de Autenticación de Usuario + Revalidación de Token ---
 // Valida si existe una sesión o solicita credenciales para acceso a módulos restringidos. 
@@ -132,8 +165,9 @@ function ensureAuthTokenBanco(){
       .api_auth_check(existing); // SOLO token para validar
   });
 }
+
 // --- Utilidades Generales de Interfaz ---
-(function(){
+// (function(){
   const $$  = s => document.querySelector(s);
   const $$$ = s => Array.from(document.querySelectorAll(s));
 
@@ -839,7 +873,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   //window.refreshStatusUI = refreshStatusUI;
 
   // === Mini monitor de red + wrapper drop-in ===
-  (function () {
+  // (function () {
     let inflight = 0, prev = 'IDLE';
 
   function setState(next){
@@ -873,48 +907,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   };
   window.__NetState = Net;
 
-  // Usa: netRun(google.script.run).withSuccessHandler(...).api_foo(...)
-  window.netRun = function (runner = google.script.run){
-    Net.busy();
-    let r = runner;
-    let hooked = false; // si el usuario añadió handlers
-
-    const proxy = new Proxy({}, {
-      get(_t, prop, receiver){
-        if (prop === 'withSuccessHandler'){
-          return (fn) => {
-            hooked = true;
-            r = r.withSuccessHandler((...a) => {
-              try { fn?.(...a); } finally { Net.idle(); }
-            });
-            return receiver; // 👈 importante para chain
-          };
-        }
-        if (prop === 'withFailureHandler'){
-          return (fn) => {
-            hooked = true;
-            r = r.withFailureHandler((err) => {
-              try { fn?.(err); } finally { Net.idle(); }
-            });
-            return receiver; // 👈 importante para chain
-          };
-        }
-        // Métodos GAS (api_*, deleteRow, etc.)
-        return (...args) => {
-          // Fallback: si no agregaron handlers, garantizamos volver a IDLE
-          if (!hooked) {
-            r = r
-              .withSuccessHandler(() => Net.idle())
-              .withFailureHandler(() => Net.idle());
-          }
-          return r[prop](...args);
-        };
-      }
-    });
-
-    return proxy;
-  };
-})();
+// })();
 
 document.addEventListener('NET_STATE_CHANGED', (e) => {
   const el = document.getElementById('srvStatus');
@@ -1048,8 +1041,21 @@ function setupNuevo(){
   });
 
   // export helpers
-  window.$$ = $$; window.$$$ = $$$; window.escapeHTML = escapeHTML; window.toast = toast;
-})(); // fin IIFE
+// window.$$ = $$; window.$$$ = $$$; window.escapeHTML = escapeHTML; window.toast = toast;
+// Por esto (asignación directa):
+window.$$ = s => document.querySelector(s);
+window.$$$ = s => Array.from(document.querySelectorAll(s));
+window.escapeHTML = function(x){
+  return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+};
+window.toast = function(msg){
+  const t = document.querySelector('#toast');
+  if (!t) { console.log('Toast:', msg); return; }
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 4000);
+};
+// })(); // fin IIFE
 
 
 /* =========================
