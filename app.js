@@ -3,6 +3,10 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyornLnCSnFCenqUdVF
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
     method: "POST",
+    redirect: "follow", // Permite a Google procesar la redirección anónima
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8" // Evita que el navegador lance un 'preflight' estricto
+    },
     body: JSON.stringify({
       functionName: nombreFuncion,
       parameters: parametros
@@ -14,7 +18,6 @@ function ejecutarServidor(nombreFuncion, ...parametros) {
     return res.result;
   });
 }
-
 /**
  * =============================================================================
  * 0. NÚCLEO GLOBAL (Variables, Autenticación y Utilidades)
