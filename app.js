@@ -1023,7 +1023,7 @@ function setupNuevo(){
   function setupSync(){
     const btn = $$('#btnSync');
     if (!btn) return;
-    btn.addEventListener('click', cargarTabla);
+    btn?.addEventListener('click', cargarTabla);
   }
 
   // Boot de UI base (router + helpers ligeros)
