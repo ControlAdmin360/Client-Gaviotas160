@@ -3,9 +3,9 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsNAr-lhawIfuGNAs
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
     method: "POST",
-    redirect: "follow", // Permite a Google procesar la redirección anónima
+    redirect: "follow",
     headers: {
-      "Content-Type": "text/plain;charset=utf-8" // Evita que el navegador lance un 'preflight' estricto
+      "Content-Type": "text/plain;charset=utf-8"
     },
     body: JSON.stringify({
       functionName: nombreFuncion,
