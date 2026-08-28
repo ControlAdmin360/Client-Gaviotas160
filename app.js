@@ -1,4 +1,4 @@
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyornLnCSnFCenqUdVFT0Yx3F8zimfRWRmNlbNla09Uu-jI30jjQJhzjTEjjmZuUuy-/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsNAr-lhawIfuGNAsY2ZsnbySmcNF3EaGMpoJHYNHTw-_rUvbRbaRas7KnffIxB_C/exec";
 
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
@@ -2560,19 +2560,23 @@ window.addEventListener('DOMContentLoaded', setupRecibos);
 
 // 1. Funciónes para abrir el modal Exoneraciones & Reintegros Multas & Configuraciones  Globales
 function abrirModalExon() {
-  document.getElementById('modal-exon-desc').style.display = 'flex';
-  document.getElementById('exon-concepto').value = ""; 
-  document.getElementById('exon-monto').value = "";
-  document.getElementById('exon-descrip').value = "";
-  document.getElementById('exon-actual-moras-check').checked = false;
-  document.getElementById('exon-moras-check').checked = false;
-  document.getElementById('exon-actual-moras-check').checked = false;
-  document.getElementById('exon-eliminar-check').checked = false;
-  document.getElementById('exon-eliminar-check').disabled = true;
-
-  // Limpiar el combo antes de cargar para evitar confusiones
+  const modal = document.getElementById('modal-exon-desc');
+  if (!modal) return console.warn('Modal #modal-exon-desc no encontrado');
+  modal.style.display = 'flex';
+  // Asignaciones seguras con encadenamiento opcional
+  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+  const setChk = (id, chk) => { const el = document.getElementById(id); if (el) el.checked = chk; };
+  setVal('exon-concepto', ""); 
+  setVal('exon-monto', "");
+  setVal('exon-descrip', "");
+  setChk('exon-actual-moras-check', false);
+  setChk('exon-moras-check', false);
+  setChk('exon-eliminar-check', false);
+  const btnEliminar = document.getElementById('exon-eliminar-check');
+  if (btnEliminar) btnEliminar.disabled = true;
+  // Limpiar y poblar el combo de departamentos
   const select = document.getElementById('exon-depa');
-  if (select.options.length <= 1) { 
+  if (select && select.options.length <= 1) { 
     const depas = (typeof LISTAS !== 'undefined' && LISTAS.depaIds) ? LISTAS.depaIds : [];
     select.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
@@ -2909,11 +2913,10 @@ function validarYGuardarExon() {
   }
 }
 
-// abrir el modal de Multas
 function abrirModalMultas() {
   const modal = document.getElementById('modal-multas-sanciones');
+  if (!modal) return console.warn('Modal #modal-multas-sanciones no encontrado');
   modal.style.display = 'flex';
-  
   // Poblar el combo de departamentos (reutilizando los datos que ya tienes en LISTAS)
   const selectDepa = document.getElementById('multas-depa');
   if (selectDepa.options.length <= 1) { // Solo si no ha sido poblado
@@ -3300,8 +3303,12 @@ function setupComuna(){
   netRun()
     .withSuccessHandler(res => {
       console.log('[Comuna] Respuesta:', res);
-      if (!res) { toast?.('Sin respuesta de servidor'); return; }
-      if (res.error) { console.error(res.error); toast?.('Error: '+res.error); return; }
+      const tbl = document.getElementById('tbl-clientes'); // ← OBLIGATORIO: Obtener referencia de la tabla
+      if (!tbl) { console.warn('Tabla #tbl-clientes no encontrada'); return; }
+
+      tbl.innerHTML = ''; // ← Limpia ejecuciones anteriores antes de montar
+  
+  if (!res) { toast?.('Sin respuesta de servidor'); return; }
       // Soporta res.header O res.headers (según cómo devuelva el GAS)
       const headers = res.header || res.headers;
       const rows    = res.rows;
@@ -3386,7 +3393,8 @@ function setupComuna(){
       tbl.appendChild(tbody);
 
       // Snapshot para edición
-      if (Array.isArray(rows)) window.__comuna_snapshotRows__(rows);
+      if (Array.isArray(rows) && typeof window.__comuna_snapshotRows__ === 'function')
+      {window.__comuna_snapshotRows__(rows);}
     })
     .withFailureHandler(err => {
       console.error('api_comuna_getData error:', err);
