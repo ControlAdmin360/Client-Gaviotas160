@@ -153,7 +153,7 @@ function ensureAuthTokenBanco(){
     setTimeout(()=> t.classList.remove('show'), 4000);
   }
   
-  async function setupRecibosConAuth() {
+  window.setupRecibosConAuth = async function() {
       let token = null;
       try { 
         token = await ensureAuthTokenBanco(); 
@@ -505,6 +505,20 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       }
 
      // RECARGA RECIBOS
+window.getBtnPDF = window.getBtnPDF || function(res) {
+  const url = res?.urlPDF || res?.urlDrive || '#';
+  return `<a href="${url}" target="_blank" class="btn-green" style="margin-top:5px; display:inline-block; text-decoration:none;">📄 Abrir PDF</a>`;
+};
+
+window.getBtnDrive = window.getBtnDrive || function(res) {
+  const url = res?.urlDrive || '#';
+  return `<a href="${url}" target="_blank" class="btn-blue" style="margin-top:5px; margin-right:5px; display:inline-block; text-decoration:none;">📁 Abrir Drive</a>`;
+};
+
+window.getBtnExcel = window.getBtnExcel || function(res) {
+  const url = res?.urlDownload || res?.urlExcel || '#';
+  return `<a href="${url}" target="_blank" class="btn-green" style="margin-top:5px; display:inline-block; text-decoration:none;">📊 Descargar Excel</a>`;
+};
     function reloadRecibos(){
       const btn  = document.getElementById('recibos-refresh');
       if (!btn) return;
@@ -836,7 +850,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   }
   window.getUserTag = getUserTag;
   window.statusLabel = statusLabel;
-  //window.refreshStatusUI = refreshStatusUI;
+  window.refreshStatusUI = refreshStatusUI;
 
   // === Mini monitor de red + wrapper drop-in ===
   (function () {
@@ -887,15 +901,15 @@ window.netRun = function () {
         return (fn) => { failureFn = fn; return proxy; };
       }
       return (...args) => {
-        if (typeof window.__NetState === 'object') window.__NetState.busy();
+        if (typeof window.__NetState === 'object' && window.__NetState.busy) window.__NetState.busy();
         ejecutarServidor(prop, ...args)
           .then(res => {
-            if (typeof window.__NetState === 'object') window.__NetState.idle();
-            successFn(res);
+            if (typeof window.__NetState === 'object' && window.__NetState.idle) window.__NetState.idle();
+            if (typeof successFn === 'function') successFn(res);
           })
           .catch(err => {
-            if (typeof window.__NetState === 'object') window.__NetState.idle();
-            failureFn(err);
+            if (typeof window.__NetState === 'object' && window.__NetState.idle) window.__NetState.idle();
+            if (typeof failureFn === 'function') failureFn(err);
           });
         return proxy;
       };
