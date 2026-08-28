@@ -873,47 +873,37 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   };
   window.__NetState = Net;
 
-  // Usa: netRun(google.script.run).withSuccessHandler(...).api_foo(...)
-  window.netRun = function (runner = google.script.run){
-    Net.busy();
-    let r = runner;
-    let hooked = false; // si el usuario añadió handlers
+  // Usa: netRun(funcion Comun).withSuccessHandler(...).api_foo(...)
+window.netRun = function () {
+  let successFn = () => {};
+  let failureFn = () => {};
 
-    const proxy = new Proxy({}, {
-      get(_t, prop, receiver){
-        if (prop === 'withSuccessHandler'){
-          return (fn) => {
-            hooked = true;
-            r = r.withSuccessHandler((...a) => {
-              try { fn?.(...a); } finally { Net.idle(); }
-            });
-            return receiver; // 👈 importante para chain
-          };
-        }
-        if (prop === 'withFailureHandler'){
-          return (fn) => {
-            hooked = true;
-            r = r.withFailureHandler((err) => {
-              try { fn?.(err); } finally { Net.idle(); }
-            });
-            return receiver; // 👈 importante para chain
-          };
-        }
-        // Métodos GAS (api_*, deleteRow, etc.)
-        return (...args) => {
-          // Fallback: si no agregaron handlers, garantizamos volver a IDLE
-          if (!hooked) {
-            r = r
-              .withSuccessHandler(() => Net.idle())
-              .withFailureHandler(() => Net.idle());
-          }
-          return r[prop](...args);
-        };
+  const proxy = new Proxy({}, {
+    get(_t, prop) {
+      if (prop === 'withSuccessHandler') {
+        return (fn) => { successFn = fn; return proxy; };
       }
-    });
+      if (prop === 'withFailureHandler') {
+        return (fn) => { failureFn = fn; return proxy; };
+      }
+      return (...args) => {
+        if (typeof window.__NetState === 'object') window.__NetState.busy();
+        ejecutarServidor(prop, ...args)
+          .then(res => {
+            if (typeof window.__NetState === 'object') window.__NetState.idle();
+            successFn(res);
+          })
+          .catch(err => {
+            if (typeof window.__NetState === 'object') window.__NetState.idle();
+            failureFn(err);
+          });
+        return proxy;
+      };
+    }
+  });
 
-    return proxy;
-  };
+  return proxy;
+};
 })();
 
 document.addEventListener('NET_STATE_CHANGED', (e) => {
