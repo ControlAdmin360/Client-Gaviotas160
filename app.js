@@ -2403,26 +2403,12 @@ async function cons_abrirReciboPDF() {
 
 function setupConsultas() {
   setupConsultasSelect();
-
-  const btnBusca = document.getElementById('cons-buscar');
-  const btnRecibo = document.getElementById('btn-ver-recibo');
-
+  const btnBusca     = document.getElementById('cons-buscar');
+  const btnRecibo    = document.getElementById('btn-ver-recibo');
   const btnReciboAct = document.getElementById('btn-recibo-curso');
-  
-  if (btnBusca) {
-    btnBusca.removeEventListener('click', cons_consultar);
-    btnBusca.addEventListener('click', cons_consultar);
-  }
-
-  if (btnRecibo) {
-    btnRecibo.removeEventListener('click', cons_abrirReciboPDF);
-    btnRecibo.addEventListener('click', cons_abrirReciboPDF);
-  }
-
-  if (btnReciboAct) {
-    btnReciboAct.removeEventListener('click', cons_ReciboActualPDF);
-    btnReciboAct.addEventListener('click', cons_ReciboActualPDF);
-  }
+  if (btnBusca)     btnBusca.onclick     = cons_consultar;
+  if (btnRecibo)    btnRecibo.onclick    = cons_abrirReciboPDF;
+  if (btnReciboAct) btnReciboAct.onclick = cons_ReciboActualPDF;
 }
 
 async function cons_ReciboActualPDF() {
