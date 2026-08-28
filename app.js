@@ -3,9 +3,9 @@ const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsNAr-lhawIfuGNAs
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
     method: "POST",
-    redirect: "follow",
+    redirect: "follow", // Permite a Google procesar la redirección anónima
     headers: {
-      "Content-Type": "text/plain;charset=utf-8"
+      "Content-Type": "text/plain;charset=utf-8" // Evita que el navegador lance un 'preflight' estricto
     },
     body: JSON.stringify({
       functionName: nombreFuncion,
@@ -153,7 +153,7 @@ function ensureAuthTokenBanco(){
     setTimeout(()=> t.classList.remove('show'), 4000);
   }
   
-  window.setupRecibosConAuth = async function() {
+  async function setupRecibosConAuth() {
       let token = null;
       try { 
         token = await ensureAuthTokenBanco(); 
@@ -505,20 +505,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       }
 
      // RECARGA RECIBOS
-window.getBtnPDF = window.getBtnPDF || function(res) {
-  const url = res?.urlPDF || res?.urlDrive || '#';
-  return `<a href="${url}" target="_blank" class="btn-green" style="margin-top:5px; display:inline-block; text-decoration:none;">📄 Abrir PDF</a>`;
-};
-
-window.getBtnDrive = window.getBtnDrive || function(res) {
-  const url = res?.urlDrive || '#';
-  return `<a href="${url}" target="_blank" class="btn-blue" style="margin-top:5px; margin-right:5px; display:inline-block; text-decoration:none;">📁 Abrir Drive</a>`;
-};
-
-window.getBtnExcel = window.getBtnExcel || function(res) {
-  const url = res?.urlDownload || res?.urlExcel || '#';
-  return `<a href="${url}" target="_blank" class="btn-green" style="margin-top:5px; display:inline-block; text-decoration:none;">📊 Descargar Excel</a>`;
-};
     function reloadRecibos(){
       const btn  = document.getElementById('recibos-refresh');
       if (!btn) return;
@@ -850,7 +836,7 @@ window.getBtnExcel = window.getBtnExcel || function(res) {
   }
   window.getUserTag = getUserTag;
   window.statusLabel = statusLabel;
-  window.refreshStatusUI = refreshStatusUI;
+  //window.refreshStatusUI = refreshStatusUI;
 
   // === Mini monitor de red + wrapper drop-in ===
   (function () {
@@ -887,37 +873,47 @@ window.getBtnExcel = window.getBtnExcel || function(res) {
   };
   window.__NetState = Net;
 
-  // Usa: netRun(funcion Comun).withSuccessHandler(...).api_foo(...)
-window.netRun = function () {
-  let successFn = () => {};
-  let failureFn = () => {};
+  // Usa: netRun(google.script.run).withSuccessHandler(...).api_foo(...)
+  window.netRun = function (runner = google.script.run){
+    Net.busy();
+    let r = runner;
+    let hooked = false; // si el usuario añadió handlers
 
-  const proxy = new Proxy({}, {
-    get(_t, prop) {
-      if (prop === 'withSuccessHandler') {
-        return (fn) => { successFn = fn; return proxy; };
+    const proxy = new Proxy({}, {
+      get(_t, prop, receiver){
+        if (prop === 'withSuccessHandler'){
+          return (fn) => {
+            hooked = true;
+            r = r.withSuccessHandler((...a) => {
+              try { fn?.(...a); } finally { Net.idle(); }
+            });
+            return receiver; // 👈 importante para chain
+          };
+        }
+        if (prop === 'withFailureHandler'){
+          return (fn) => {
+            hooked = true;
+            r = r.withFailureHandler((err) => {
+              try { fn?.(err); } finally { Net.idle(); }
+            });
+            return receiver; // 👈 importante para chain
+          };
+        }
+        // Métodos GAS (api_*, deleteRow, etc.)
+        return (...args) => {
+          // Fallback: si no agregaron handlers, garantizamos volver a IDLE
+          if (!hooked) {
+            r = r
+              .withSuccessHandler(() => Net.idle())
+              .withFailureHandler(() => Net.idle());
+          }
+          return r[prop](...args);
+        };
       }
-      if (prop === 'withFailureHandler') {
-        return (fn) => { failureFn = fn; return proxy; };
-      }
-      return (...args) => {
-        if (typeof window.__NetState === 'object' && window.__NetState.busy) window.__NetState.busy();
-        ejecutarServidor(prop, ...args)
-          .then(res => {
-            if (typeof window.__NetState === 'object' && window.__NetState.idle) window.__NetState.idle();
-            if (typeof successFn === 'function') successFn(res);
-          })
-          .catch(err => {
-            if (typeof window.__NetState === 'object' && window.__NetState.idle) window.__NetState.idle();
-            if (typeof failureFn === 'function') failureFn(err);
-          });
-        return proxy;
-      };
-    }
-  });
+    });
 
-  return proxy;
-};
+    return proxy;
+  };
 })();
 
 document.addEventListener('NET_STATE_CHANGED', (e) => {
@@ -1037,7 +1033,7 @@ function setupNuevo(){
   function setupSync(){
     const btn = $$('#btnSync');
     if (!btn) return;
-    btn?.addEventListener('click', cargarTabla);
+    btn.addEventListener('click', cargarTabla);
   }
 
   // Boot de UI base (router + helpers ligeros)
@@ -2574,23 +2570,19 @@ window.addEventListener('DOMContentLoaded', setupRecibos);
 
 // 1. Funciónes para abrir el modal Exoneraciones & Reintegros Multas & Configuraciones  Globales
 function abrirModalExon() {
-  const modal = document.getElementById('modal-exon-desc');
-  if (!modal) return console.warn('Modal #modal-exon-desc no encontrado');
-  modal.style.display = 'flex';
-  // Asignaciones seguras con encadenamiento opcional
-  const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-  const setChk = (id, chk) => { const el = document.getElementById(id); if (el) el.checked = chk; };
-  setVal('exon-concepto', ""); 
-  setVal('exon-monto', "");
-  setVal('exon-descrip', "");
-  setChk('exon-actual-moras-check', false);
-  setChk('exon-moras-check', false);
-  setChk('exon-eliminar-check', false);
-  const btnEliminar = document.getElementById('exon-eliminar-check');
-  if (btnEliminar) btnEliminar.disabled = true;
-  // Limpiar y poblar el combo de departamentos
+  document.getElementById('modal-exon-desc').style.display = 'flex';
+  document.getElementById('exon-concepto').value = ""; 
+  document.getElementById('exon-monto').value = "";
+  document.getElementById('exon-descrip').value = "";
+  document.getElementById('exon-actual-moras-check').checked = false;
+  document.getElementById('exon-moras-check').checked = false;
+  document.getElementById('exon-actual-moras-check').checked = false;
+  document.getElementById('exon-eliminar-check').checked = false;
+  document.getElementById('exon-eliminar-check').disabled = true;
+
+  // Limpiar el combo antes de cargar para evitar confusiones
   const select = document.getElementById('exon-depa');
-  if (select && select.options.length <= 1) { 
+  if (select.options.length <= 1) { 
     const depas = (typeof LISTAS !== 'undefined' && LISTAS.depaIds) ? LISTAS.depaIds : [];
     select.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
@@ -2927,10 +2919,11 @@ function validarYGuardarExon() {
   }
 }
 
+// abrir el modal de Multas
 function abrirModalMultas() {
   const modal = document.getElementById('modal-multas-sanciones');
-  if (!modal) return console.warn('Modal #modal-multas-sanciones no encontrado');
   modal.style.display = 'flex';
+  
   // Poblar el combo de departamentos (reutilizando los datos que ya tienes en LISTAS)
   const selectDepa = document.getElementById('multas-depa');
   if (selectDepa.options.length <= 1) { // Solo si no ha sido poblado
@@ -3317,12 +3310,8 @@ function setupComuna(){
   netRun()
     .withSuccessHandler(res => {
       console.log('[Comuna] Respuesta:', res);
-      const tbl = document.getElementById('tbl-clientes'); // ← OBLIGATORIO: Obtener referencia de la tabla
-      if (!tbl) { console.warn('Tabla #tbl-clientes no encontrada'); return; }
-
-      tbl.innerHTML = ''; // ← Limpia ejecuciones anteriores antes de montar
-  
-  if (!res) { toast?.('Sin respuesta de servidor'); return; }
+      if (!res) { toast?.('Sin respuesta de servidor'); return; }
+      if (res.error) { console.error(res.error); toast?.('Error: '+res.error); return; }
       // Soporta res.header O res.headers (según cómo devuelva el GAS)
       const headers = res.header || res.headers;
       const rows    = res.rows;
@@ -3407,8 +3396,7 @@ function setupComuna(){
       tbl.appendChild(tbody);
 
       // Snapshot para edición
-      if (Array.isArray(rows) && typeof window.__comuna_snapshotRows__ === 'function')
-      {window.__comuna_snapshotRows__(rows);}
+      if (Array.isArray(rows)) window.__comuna_snapshotRows__(rows);
     })
     .withFailureHandler(err => {
       console.error('api_comuna_getData error:', err);
@@ -4139,3 +4127,4 @@ document.addEventListener('DOMContentLoaded', () => {
   updateClocks(); // pinta de inmediato al cargar
   window.__clockInterval = setInterval(updateClocks, 1000);
 });
+
