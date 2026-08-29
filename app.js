@@ -1258,8 +1258,8 @@ function banco_renderStyled(payload) {
     let bodyHtml = '<tbody>';
     const hasFindMerge = typeof findMerge === 'function';
     const hasNorm = typeof norm === 'function';
-    const hasServSet = typeof SERV_SET !== 'undefined' && SERV_SET && (SERV_SET.size > 0 || SERV_SET.length > 0);
-    const hasDepaSet = typeof DEPA_SET !== 'undefined' && DEPA_SET && (DEPA_SET.size > 0 || DEPA_SET.length > 0);
+    const hasServSet = typeof SERV_SET !== 'undefined';
+    const hasDepaSet = typeof DEPA_SET !== 'undefined';
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
