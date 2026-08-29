@@ -1167,7 +1167,6 @@ tbBanco.innerHTML = `
   </tbody>`;
 }
 // FUNCION PRINCIPAL DE CARGA DE ESTILOS A DATABANK
-// FUNCION PRINCIPAL DE CARGA DE ESTILOS A DATABANK
 function banco_renderStyled(payload) {
   const tbl = document.getElementById('tabla-banco');
   try {
@@ -1305,7 +1304,16 @@ function banco_renderStyled(payload) {
           cls += ' col-h txt-boldd';
           const textH = hasNorm ? norm(raw) : s.trim().toUpperCase();
           const prevN = parseFloat(String(r[6] ?? '').replace(/[^\d.-]/g, ''));
-
+        
+          // 🔍 DEPURACIÓN: Inspecciona estas variables en la consola de tu navegador
+          console.log({
+            textH: textH,
+            hasServSet: hasServSet,
+            esSet: SERV_SET instanceof Set,
+            existeEnSet: hasServSet && typeof SERV_SET.has === 'function' ? SERV_SET.has(textH) : false,
+            contenidoSet: Array.from(SERV_SET || [])
+          });
+        
           if (/SALDO/i.test(s)) cls += ' txt-blue';
           else if (hasServSet && SERV_SET.has(textH)) cls += ' serv';
           else if (!isNaN(prevN) && prevN < 0) cls += ' gast';
