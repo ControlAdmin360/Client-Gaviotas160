@@ -57,57 +57,66 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// 2. Validación desde el Formulario
-async function validarIngreso(event) {
+// --- Validación desde el Formulario conectada a tu Backend ---
+function validarIngreso(event) {
   event.preventDefault();
 
-  const userInput = document.getElementById("login-user").value.trim();
-  const passInput = document.getElementById("login-pass").value.trim();
+  const userInput = (document.getElementById("login-user").value || '').trim().toUpperCase();
+  const passInput = (document.getElementById("login-pass").value || '').trim();
   const errorMsg = document.getElementById("login-error");
   const btnSubmit = event.target.querySelector('button[type="submit"]');
 
   if (!userInput || !passInput) return;
 
+  // Estado de carga visual en el botón
   btnSubmit.disabled = true;
   btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
   if (errorMsg) errorMsg.style.display = "none";
 
-  try {
-    const url = `https://TU_PROYECTO.firebaseio.com/CONFIG/USUARIOS/${userInput}.json`;
-    const response = await fetch(url);
-    
-    if (!response.ok) throw new Error("Error en la respuesta del servidor");
-    
-    const userData = await response.json();
+  // Llamada al backend de Google Apps Script vía netRun
+  netRun()
+    .withSuccessHandler(res => {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
 
-    if (userData && userData.pass === passInput) {
-      const token = userData.token || `TOKEN_${Date.now()}_${userInput}`;
-      
-      setAuthToken(token);
-      setAuthUser(userInput);
-      
-      // AQUÍ: Si tienes una función propia que establece las 2 horas en AUTH_EXPIRE, la llamas directamente:
-      if (typeof tuFuncionParaSetearExpiracion === "function") {
-        tuFuncionParaSetearExpiracion();
+      if (res && res.ok && res.token) {
+        // 1. Guardar Token
+        setAuthToken(res.token);
+        
+        // 2. Guardar Usuario
+        const usuarioFinal = res.user || userInput;
+        setAuthUser(usuarioFinal);
+
+        // 3. Establecer Expiración de 2 horas (7200 segundos)
+        const expireTime = Date.now() + (7200 * 1000);
+        sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
+
+        // 4. Actualizar estado de interfaz si existe la función
+        if (typeof refreshStatusUI === 'function') refreshStatusUI();
+
+        // 5. Ocultar Login y Mostrar App
+        mostrarAplicacion();
+      } else {
+        // Error de credenciales devuelto por el servidor
+        if (errorMsg) {
+          errorMsg.style.display = "flex";
+          const txt = errorMsg.querySelector('span') || errorMsg;
+          txt.textContent = res?.error || "Usuario o PIN incorrectos.";
+        }
       }
+    })
+    .withFailureHandler(err => {
+      btnSubmit.disabled = false;
+      btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
 
-      mostrarAplicacion();
-    } else {
+      console.error("❌ Error de red o servidor:", err);
       if (errorMsg) {
         errorMsg.style.display = "flex";
-        errorMsg.querySelector('span').textContent = "Usuario o contraseña incorrectos.";
+        const txt = errorMsg.querySelector('span') || errorMsg;
+        txt.textContent = "Error de conexión con el servidor.";
       }
-    }
-  } catch (error) {
-    console.error("❌ Error de autenticación:", error);
-    if (errorMsg) {
-      errorMsg.style.display = "flex";
-      errorMsg.querySelector('span').textContent = "Error de conexión con la base de datos.";
-    }
-  } finally {
-    btnSubmit.disabled = false;
-    btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
-  }
+    })
+    .api_auth_check('', userInput, passInput); // Invoca la función remota en GAS
 }
 
 // 3. Control de Vistas
@@ -233,29 +242,16 @@ function ensureAuthTokenBanco(){
       if (typeof refreshStatusUI === 'function') refreshStatusUI();
     };
 
-    // 1) Si no hay token → pedir credenciales
+    // 1) Si no hay token → redirigir al formulario de login en pantalla
     const promptLogin = () => {
-      const user = (prompt('🧑 USUARIO: email, username') || '').trim().toUpperCase();
-      if (!user) return reject(new Error('cancelado'));
-      const pin = (prompt('🔑 Clave-PIN de acceso:') || '').trim();
-      if (!pin) return reject(new Error('cancelado'));
-
-      netRun()
-        .withSuccessHandler(res => {
-          if (res && res.ok && res.token) {
-            saveToken(res.token);
-            pulseUser(res.user || user);
-            resolve(res.token);
-          } else {
-            reject(new Error(res?.error || 'login_failed'));
-          }
-        })
-        .withFailureHandler(err => {
-          reject(err);
-        })
-        .api_auth_check('', user, pin);
+      clearAuthSafe();
+      const loginScreen = document.getElementById("login-screen");
+      const appContainer = document.getElementById("app-container");
+      // Transición de interfaz hacia la pantalla de acceso
+      if (appContainer) appContainer.style.display = "none";
+      if (loginScreen) loginScreen.style.display = "flex";
+      return reject(new Error('session_required'));
     };
-
     if (!existing) return promptLogin();
 
     // 2) Hay token → revalidar con el backend
@@ -306,13 +302,17 @@ const $$$ = s => Array.from(document.querySelectorAll(s));
       if (token && typeof token === 'string' && token.trim() !== '') {
         window.__viewsLoaded.recibo = true; // Marcamos como cargado
         setupRecibos(); // Cargamos los datos de la tabla
-        if (window.toast) toast("🔓 Acceso Autorizado (✅)");
       } else {
         window.__viewsLoaded.recibo = false;
-        if (window.toast) toast("⚠️Sesión Expirada / Acceso Denegado (⛔)");
-        // Regresamos al Banco visualmente si falla
-        const btnBanco = document.querySelector('.sidebar a[data-view="banco"]');
-        if (btnBanco) btnBanco.click(); 
+        if (typeof cerrarSesion === 'function') {
+          cerrarSesion();
+        } else {
+          clearAuth();
+          const loginScreen = document.getElementById("login-screen");
+          const appContainer = document.getElementById("app-container");
+          if (appContainer) appContainer.style.display = "none";
+          if (loginScreen) loginScreen.style.display = "flex";
+        }
       }
     }
 // ELIMINA ULTIMO REGISTRO EN BANCO
@@ -337,7 +337,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     let token = null;
     try { token = await ensureAuthTokenBanco(); } catch { token = null; }
     if (!token) {
-      notificar('🔐 Autenticación Fallida (⛔)');
       restore(); // 👈 Agregado: restaura el botón si no hay token
       return;
     }
@@ -491,12 +490,11 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       
       // ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
       async function abrirContometrosForm(){
-        try{
-          if (!token) {
-          if (window.toast) toast("⚠️ Autenticación Fallida (⛔)");
-          return;
-          }
+        try {
+          // 1. Validar/Obtener Token (redirige al login automáticamente si falla)
           const token = await ensureAuthTokenBanco();
+          if (!token) return;
+          // 2. Construir la URL e invocar el modal
           const user  = sessionStorage.getItem('AUTH_USER') || '';
           const dlg = document.getElementById('dlgContometros');
           const ifr = document.getElementById('frmContometros');
@@ -505,8 +503,9 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
                         + '&user=' + encodeURIComponent(user);
           ifr.src = url;
           dlg.showModal();
-        }catch(e){ console.error('No se abrió Contómetros:', e); 
-          alert(e);
+        } catch(e) { 
+          console.error('No se abrió Contómetros:', e); 
+          // Se captura silenciosamente el fallo/cancelación sin lanzar alertas molestas
         }
       }
 
@@ -524,10 +523,21 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       // Mensajes de sesión expirada
       window.addEventListener('message', ev => {
         if (ev?.data?.type === 'contometros-auth-expired' || ev?.data?.type === 'banco-auth-expired') {
-          sessionStorage.removeItem('AUTH_TOKEN');
-          sessionStorage.removeItem('AUTH_USER');
-          refreshStatusUI();
-          if (window.toast) toast("🧑 Sesión expirada (⛔)");
+          // Si existe la función global de cierre de sesión, la ejecutamos
+          if (typeof cerrarSesion === 'function') {
+            cerrarSesion();
+          } else {
+            // Limpieza manual y transición al Login si no existiera la función
+            sessionStorage.removeItem('AUTH_TOKEN');
+            sessionStorage.removeItem('AUTH_USER');
+            sessionStorage.removeItem('AUTH_EXPIRE');
+            if (typeof refreshStatusUI === 'function') refreshStatusUI();
+
+            const loginScreen = document.getElementById("login-screen");
+            const appContainer = document.getElementById("app-container");
+            if (appContainer) appContainer.style.display = "none";
+            if (loginScreen) loginScreen.style.display = "flex";
+          }
         }
       });
 
@@ -572,7 +582,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             let token = null;
             try { token = await ensureAuthTokenBanco(); } catch { token = null; }
             if (!token) {
-              if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
               return;
             }
         
@@ -749,22 +758,24 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       return false;
     }
   async function setupComunaConAuth() {
-  // 🔐 Reutilizamos el sistema de autenticación
-  let token = null;
-  try { 
-    token = await ensureAuthTokenBanco(); } catch (e) { token = null; }
-  if (token && typeof token === 'string' && token.trim() !== '') {
-    // Si la clave es correcta
-    window.__viewsLoaded.comunal = true;
-    setupComuna(); // Carga los datos
-    if (window.toast) toast("🔓 Acceso Autorizado");
+    // 🔐 Reutilizamos el sistema de autenticación
+    let token = null;
+    try { 
+      token = await ensureAuthTokenBanco(); 
+    } catch (e) { 
+      token = null; 
+    }
+    if (token && typeof token === 'string' && token.trim() !== '') {
+      // Acceso concedido
+      window.__viewsLoaded.comunal = true;
+      setupComuna(); // Carga los datos de la vista comunal
     } else {
-      // Si cancela o falla:
-      window.__viewsLoaded.comunal = false; // Nos aseguramos de que siga bloqueado
-      if (window.toast) toast("⛔ Sesión expirada / acceso denegado");
-      // Lo regresamos visualmente al Banco en el menú
-      const btnBanco = document.querySelector('.sidebar a[data-view="banco"]');
-      if (btnBanco) { btnBanco.click(); }
+      // Acceso denegado o sesión expirada
+      window.__viewsLoaded.comunal = false;
+      // Si no existe token, aseguramos la redirección al formulario de Login
+      if (typeof cerrarSesion === 'function') {
+        cerrarSesion(false);
+      }
     }
   }
     document.getElementById('btnRepGen')?.addEventListener('click', async () => {
@@ -783,7 +794,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       let token = null;
       try { token = await ensureAuthTokenBanco(); } catch { token = null; }
       if (!token) {
-        if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
         return; 
       }
       setWorking();
@@ -924,31 +934,42 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       if (!a) return;
 
       const v = a.getAttribute('data-view');
-      // 🔄 CONTROL DE EXPIRACIÓN: Si el navegador ya no tiene token físico, 
-      // limpiamos el acceso rápido para forzar la validación en el backend.
+
+      // 🔄 CONTROL DE EXPIRACIÓN: Verifica el token antes de cambiar de vista
       const tieneTokenLocal = !!(typeof getAuthToken === 'function' ? getAuthToken() : sessionStorage.getItem('AUTH_TOKEN'));
+
       if (!tieneTokenLocal) {
+        // Reseteamos estados de carga
         loaded.comunal = false;
         loaded.recibo = false;
         if (typeof window.__viewsLoaded === 'object') {
           window.__viewsLoaded.comunal = false;
           window.__viewsLoaded.recibo = false;
         }
+
+        // Si la sesión expiró o no hay token, redirigimos al Login y detenemos la navegación
+        if (typeof cerrarSesion === 'function') {
+          cerrarSesion(false);
+        }
+        return; // Frenamos en seco el clic
       }
+
       // 🛡️ BLOQUEO PREVENTIVO: Evalúa si debe pedir credenciales para accesos restringidos
       if ((v === 'comunal' && !loaded.comunal) || (v === 'recibo' && !loaded.recibo)) {
-        // Llamamos SOLO a la que corresponde y ESPERAMOS que termine con await
         if (v === 'comunal') await setupComunaConAuth();
         if (v === 'recibo')  await setupRecibosConAuth(); 
-        // CORRECCIÓN CLAVE: Sincronizamos el estado local del router con lo que determinó la autenticación
+
+        // Sincronizamos el estado local del router con lo que determinó la autenticación
         if (typeof window.__viewsLoaded === 'object') {
           loaded.comunal = window.__viewsLoaded.comunal;
           loaded.recibo = window.__viewsLoaded.recibo;
         }
-        // Si después de la función sigue sin estar autorizada (porque falló o canceló), frena en seco
+
+        // Si no quedó autorizada la vista, se detiene
         if (!loaded[v]) return; 
       }
-      // --- CAMBIO VISUAL (Solo ocurre si pasó la seguridad con éxito) ---
+
+      // --- CAMBIO VISUAL DE VISTA (Solo si se pasó la seguridad) ---
       $$$('.sidebar a').forEach(x => x.classList.remove('active'));
       a.classList.add('active');
 
@@ -983,17 +1004,30 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   //función auxiliar para calcular el tiempo restante en formato MM:SS u HH:MM
   function getTokenRemainingTime() {
     const expireStr = sessionStorage.getItem('AUTH_EXPIRE');
-    if (!sessionStorage.getItem('AUTH_TOKEN') || !expireStr) return '00:00';
+    const token = sessionStorage.getItem('AUTH_TOKEN');
+
+    if (!token || !expireStr) return '00:00';
+
     const remainingMs = Number(expireStr) - Date.now();
-    if (remainingMs <= 0) return '⛔Expired';
+
+    // Si el tiempo expiró o llegó a cero
+    if (remainingMs <= 0) {
+      if (typeof cerrarSesion === 'function') {
+        cerrarSesion(false); // Dispara el retorno automático al formulario de Login
+      }
+      return '⛔Expired';
+    }
+
     const totalSeconds = Math.floor(remainingMs / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    // Si le queda más de una hora, mostramos formato H:MM:SS
+
+    // Si le queda más de una hora, mostramos formato HH:MM:SS
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
+
     // Si queda menos de una hora, formato estándar MM:SS
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
@@ -1571,7 +1605,6 @@ function setupBancoFormModal(){
     
     // 2. Freno si no se autoriza
     if (!token) {
-      if (window.toast) window.toast('🔐 Autenticación Fallida (⛔)');
       return; 
     }
     // 3. Apertura inmediata del formulario
@@ -4291,6 +4324,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Evita duplicar intervalos si el script se inyecta más de una vez
   if (window.__clockInterval) clearInterval(window.__clockInterval);
   updateClocks(); // pinta de inmediato al cargar
-  window.__clockInterval = setInterval(updateClocks, 1000);
+  window.__clockInterval = setInterval(() => {
+  const badgeTxt = document.querySelector('#srvStatus .txt');
+  if (badgeTxt && sessionStorage.getItem('AUTH_TOKEN')) {
+    badgeTxt.textContent = `Sesión: ${getTokenRemainingTime()}`;
+  }
+}, 1000);
 });
 
