@@ -2996,13 +2996,18 @@ function validarYGuardarExon() {
 
 // abrir el modal de Multas
 function abrirModalMultas() {
-  const modal = document.getElementById('modal-multas-sanciones');
-  modal.style.display = 'flex';
+  const modal = document.getElementById('modal-multas-sanciones') || document.getElementById('modalMultas');
   
-  // Poblar el combo de departamentos (reutilizando los datos que ya tienes en LISTAS)
+  if (!modal) {
+    console.error('⛔ No se encontró el modal "modal-multas-sanciones" en el DOM.');
+    return;
+  }
+  modal.style.display = 'flex';
+  // Poblar el combo de departamentos de forma segura
   const selectDepa = document.getElementById('multas-depa');
-  if (selectDepa.options.length <= 1) { // Solo si no ha sido poblado
-    const depas = (typeof LISTAS !== 'undefined' && LISTAS.depaIds) ? LISTAS.depaIds : [];
+  if (selectDepa && selectDepa.options.length <= 1) { // Solo si existe y no ha sido poblado
+    const depas = (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
+    
     selectDepa.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
       let opt = document.createElement('option');
