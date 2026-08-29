@@ -4409,9 +4409,5 @@ function refreshStatusUI() {
 if (window.__clockInterval) clearInterval(window.__clockInterval);
 updateClocks(); // Pinta inmediatamente al cargar
 window.__clockInterval = setInterval(updateClocks, 1000);
-    // Evita duplicar intervalos si el script se inyecta más de una vez
-  if (window.__clockInterval) clearInterval(window.__clockInterval);
-  updateClocks(); // pinta de inmediato al cargar
-  window.__clockInterval = setInterval(updateClocks, 1000);
 });
 
