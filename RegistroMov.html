@@ -17,13 +17,12 @@
   const db = firebase.database();
 
   // URL de tu API de Apps Script
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsNAr-lhawIfuGNAsY2ZsnbySmcNF3EaGMpoJHYNHTw-_rUvbRbaRas7KnffIxB_C/exec";
+  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr0EhrkEdalBHQ1v-gdrP2oFOVZcLImO6obKwFWXpbxe81YBlS1j8C2LtrJsszeb-5/exec";
 
   // Función puente HTTP para ejecutar el backend en .gs
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
     method: "POST",
-    credentials: "omit", // ← CLAVE PARA IFRAMES: Evita bloqueo de cookies de terceros
     headers: {
       "Content-Type": "text/plain;charset=utf-8"
     },
@@ -33,7 +32,7 @@ function ejecutarServidor(nombreFuncion, ...parametros) {
     })
   })
   .then(res => {
-    if (!res.ok) throw new Error("HTTP error " + res.status);
+    if (!res.ok) throw new Error("Error HTTP: " + res.status);
     return res.json();
   })
   .then(res => {
