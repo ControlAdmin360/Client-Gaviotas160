@@ -1,4 +1,4 @@
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBsNAr-lhawIfuGNAsY2ZsnbySmcNF3EaGMpoJHYNHTw-_rUvbRbaRas7KnffIxB_C/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw-lsG-dMfjny1WrNrPQMZpbMogeeCEHA1W_YLhdk-KDBvzhdIIZjWxcX-Qr14v8r6g/exec";
 
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
@@ -12,7 +12,10 @@ function ejecutarServidor(nombreFuncion, ...parametros) {
       parameters: parametros
     })
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("HTTP error " + res.status);
+    return res.json();
+  })
   .then(res => {
     if (res.status === 'error') throw new Error(res.message);
     return res.result;
@@ -2626,7 +2629,7 @@ function cerrarModalExon() {
 }
 
 // Listener para detectar cambio de departamento buscar exoneracion de moras y descripcion existente
-document.getElementById('exon-depa').addEventListener('change', function() {
+document.getElementById('exon-depa')?.addEventListener('change', function() {
   const idDepa = this.value;
   if (!idDepa) return;
   // 1. BLOQUEAMOS EL BOTÓN DE INMEDIATO MIENTRAS CARGA LA RED
@@ -2721,7 +2724,7 @@ document.getElementById('exon-moras-check')?.addEventListener('change', function
   }
 });
 // 2. Escuchador para el Check de ELIMINAR (Para que sea mutuo)
-document.getElementById('exon-eliminar-check').addEventListener('change', function(e) {
+document.getElementById('exon-eliminar-check')?.addEventListener('change', function(e) {
   const checkMoras = document.getElementById('exon-moras-check');
   const checkActual = document.getElementById('exon-actual-moras-check');
   const inputCombo = document.getElementById('exon-concepto');
@@ -2744,7 +2747,7 @@ document.getElementById('exon-eliminar-check').addEventListener('change', functi
 });
 
 // 3. Escuchador para el Check de P.Actual (Para que sea mutuo)
-document.getElementById('exon-actual-moras-check').addEventListener('change', function(e) {
+document.getElementById('exon-actual-moras-check')?.addEventListener('change', function(e) {
   const checkMoras = document.getElementById('exon-moras-check');
   const checkEliminar = document.getElementById('exon-eliminar-check');
   const inputCombo = document.getElementById('exon-concepto');
@@ -3053,7 +3056,7 @@ function abrirModalConfig() {
     })
     .obtenerConfiguracionesIniciales();
 }
-document.getElementById('config-depa').addEventListener('change', function() {
+document.getElementById('config-depa')?.addEventListener('change', function() {
   const idDepa = this.value;
   if (!idDepa) return;
   netRun()
@@ -3414,7 +3417,7 @@ document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna
 
 // Lógica para el buscador de la tabla
 const searchInput = document.getElementById('comuna-search');
-searchInput.addEventListener('input', function() {
+searchInput?.addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase().trim();
     const table = document.getElementById('tbl-clientes');
     const rows = table.querySelectorAll('tbody tr');
