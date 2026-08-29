@@ -132,9 +132,18 @@ function mostrarAplicacion() {
   }
 }
 
-function cerrarSesion() {
+function cerrarSesion(forceReload = false) {
   clearAuth();
-  window.location.reload();
+  
+  const loginScreen = document.getElementById("login-screen");
+  const appContainer = document.getElementById("app-container");
+
+  if (appContainer) appContainer.style.display = "none";
+  if (loginScreen) loginScreen.style.display = "flex";
+
+  if (forceReload) {
+    window.location.reload();
+  }
 }
 
 
@@ -1040,7 +1049,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     const timeRemaining = getTokenRemainingTime();
     return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
   }
-  /*
+  
 function refreshStatusUI() {
   const badge = document.getElementById('srvStatus');
   if (!badge) return;
@@ -1065,7 +1074,7 @@ function refreshStatusUI() {
       txtNode.textContent = "IDLE -> OnLine";
     }
   }
-}*/
+}
 
 // --- Temporizador Dinámico (Actualiza cada 1 segundo) ---
 if (window.sessionTimer) clearInterval(window.sessionTimer);
