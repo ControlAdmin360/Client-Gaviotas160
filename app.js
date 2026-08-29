@@ -46,9 +46,6 @@ function isSessionExpired() {
   if (!expire) return true;
   return Date.now() > parseInt(expire, 10);
 }
-function refreshStatusUI() {
-  updateClocks();
-}
 
 // 1. Verificación al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
@@ -93,9 +90,6 @@ function validarIngreso(event) {
         // 3. Establecer Expiración de 2 horas (7200 segundos)
         const expireTime = Date.now() + (7200 * 1000);
         sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
-
-        // 4. Actualizar estado de interfaz si existe la función
-        if (typeof refreshStatusUI === 'function') refreshStatusUI();
 
         // 5. Ocultar Login y Mostrar App
         mostrarAplicacion();
@@ -234,7 +228,6 @@ function ensureAuthTokenBanco(){
       const u = user || '';
       if (typeof setAuthUser === 'function') setAuthUser(u);
       else sessionStorage.setItem('AUTH_USER', u);
-      if (typeof refreshStatusUI === 'function') refreshStatusUI();
     };
 
     const saveToken = (token) => {
@@ -243,7 +236,6 @@ function ensureAuthTokenBanco(){
       
       const expireTime = Date.now() + (7200 * 1000); // 2 horas (7200s)
       sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
-      if (typeof refreshStatusUI === 'function') refreshStatusUI();
     };
 
     const clearAuthSafe = () => {
@@ -251,7 +243,6 @@ function ensureAuthTokenBanco(){
       sessionStorage.removeItem('AUTH_TOKEN');
       sessionStorage.removeItem('AUTH_USER');
       sessionStorage.removeItem('AUTH_EXPIRE');
-      if (typeof refreshStatusUI === 'function') refreshStatusUI();
     };
 
     // 1) Si no hay token → redirigir al formulario de login en pantalla
@@ -543,7 +534,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             sessionStorage.removeItem('AUTH_TOKEN');
             sessionStorage.removeItem('AUTH_USER');
             sessionStorage.removeItem('AUTH_EXPIRE');
-            if (typeof refreshStatusUI === 'function') refreshStatusUI();
 
             const loginScreen = document.getElementById("login-screen");
             const appContainer = document.getElementById("app-container");
@@ -815,7 +805,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           btn.textContent = '✅ Reporte Generado';
           if (res?.user) {
             sessionStorage.setItem('AUTH_USER', res.user);
-            refreshStatusUI();
           }
           // AQUÍ ES EL CAMBIO: Solo generamos y mostramos el botón PDF
           if (res?.ok && res?.urlPDF) {
@@ -1039,32 +1028,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     const timeRemaining = getTokenRemainingTime();
     return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
   }
-  /*
-function refreshStatusUI() {
-  const badge = document.getElementById('srvStatus');
-  if (!badge) return;
-
-  const txtNode = badge.querySelector('.txt');
-  const token = (typeof getAuthToken === 'function') 
-    ? getAuthToken() 
-    : (sessionStorage.getItem('AUTH_TOKEN') || '');
-
-  const user = (typeof window.usuarioActivo === 'function') 
-    ? window.usuarioActivo() 
-    : (sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN');
-
-  if (token && typeof isSessionExpired === 'function' && !isSessionExpired()) {
-    badge.className = "srv-badge srv-online";
-    if (txtNode) {
-      txtNode.textContent = `IDLE -> OnLine   🧑-> ${user}   ⏱️TimeSession-> ${getTokenRemainingTime()}`;
-    }
-  } else {
-    badge.className = "srv-badge srv-idle";
-    if (txtNode) {
-      txtNode.textContent = "IDLE -> OnLine";
-    }
-  }
-} */
 
 // --- Temporizador Dinámico (Actualiza cada 1 segundo) ---
 if (window.sessionTimer) clearInterval(window.sessionTimer);
