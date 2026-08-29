@@ -329,131 +329,144 @@
       }
     }
 
-    // Submit del Formulario
-    f.addEventListener('submit', (e) => {
-      e.preventDefault();
-      fbMsg.textContent = ''; 
-      fbWrap.className = 'feedback';
-      resetErrors();
+// Submit del Formulario corregido con netRun directo
+f.addEventListener('submit', (e) => {
+  e.preventDefault();
+  fbMsg.textContent = ''; 
+  fbWrap.className = 'feedback';
+  resetErrors();
 
-      const fecha = limpiarFecha(inputFecha.value);
-      const desc = (inputDesc.value || '').trim();
-      const monto = limpiarMonto(inputMonto.value);
-      const datos = (inputDatos.value || '').trim();
-      const idUpper = datos.toUpperCase();
-      const montoClean = (monto || '').replace(/^S\//, '');
-      const montoSign = montoClean.startsWith('-') ? -1 : 1;
+  const fecha = limpiarFecha(inputFecha.value);
+  const desc = (inputDesc.value || '').trim();
+  const monto = limpiarMonto(inputMonto.value);
+  const datos = (inputDatos.value || '').trim();
+  const idUpper = datos.toUpperCase();
+  const montoClean = (monto || '').replace(/^S\//, '');
+  const montoSign = montoClean.startsWith('-') ? -1 : 1;
 
-      const erroresInputs = [];
+  const erroresInputs = [];
 
-      if (!fecha) addError(inputFecha,'⛔ Fecha obligatoria');
-      else if(!REG_FECHA.test(fecha)) addError(inputFecha,'⛔ Formato fecha debe ser: DD/MM/AAAA');
-      else if(!fechaValida(fecha)) addError(inputFecha,'⛔ Fecha inválida');
-      else if(!fechaEnPeriodoActual(fecha)) addError(inputFecha,'⛔ La fecha introducida no corresponde al periodo actual');
+  if (!fecha) addError(inputFecha,'⛔ Fecha obligatoria');
+  else if(!REG_FECHA.test(fecha)) addError(inputFecha,'⛔ Formato fecha debe ser: DD/MM/AAAA');
+  else if(!fechaValida(fecha)) addError(inputFecha,'⛔ Fecha inválida');
+  else if(!fechaEnPeriodoActual(fecha)) addError(inputFecha,'⛔ La fecha introducida no corresponde al periodo actual');
 
-      if(!desc) addError(inputDesc,'⛔ Descripción obligatoria');
-      else if(desc.length < 4) addError(inputDesc,'⛔ La descripción debe ser mínimo 4 caracteres');
+  if(!desc) addError(inputDesc,'⛔ Descripción obligatoria');
+  else if(desc.length < 4) addError(inputDesc,'⛔ La descripción debe ser mínimo 4 caracteres');
 
-      if (monto && REG_MONTO.test(monto) && datos && datos.length >= 4) {
-        if (listaDepas.includes(idUpper) && montoSign === -1) {
-          addError(inputMonto, '⛔ El monto de PAGO por un Recibo NO puede ser Negativo');
+  if (monto && REG_MONTO.test(monto) && datos && datos.length >= 4) {
+    if (listaDepas.includes(idUpper) && montoSign === -1) {
+      addError(inputMonto, '⛔ El monto de PAGO por un Recibo NO puede ser Negativo');
+    }
+    if (listaServs.includes(idUpper) && montoSign === 1) {
+      addError(inputMonto, '⛔ El monto de PAGO por un Servicio NO puede ser Positivo');
+    }
+  }
+
+  if(!monto) addError(inputMonto,'⛔ Monto obligatorio');
+  else if(!REG_MONTO.test(monto)) addError(inputMonto,'⛔ Copie el monto desde el extracto bancario');
+
+  if(!datos) addError(inputDatos,'⛔ ID obligatorio');
+  else if(datos.length < 4) addError(inputDatos,'⛔ ID debe ser mínimo 4 caracteres');
+
+  Array.from(document.querySelectorAll('input.error')).forEach(el => {
+    if(el.dataset.err) erroresInputs.push(el.dataset.err);
+  });
+
+  if(!idFijo || idFijo.length < 4) erroresInputs.push('⚠️ ID inválido (autogeneración falló)');
+
+  const allErrors = [...new Set(erroresInputs)];
+
+  if (allErrors.length) {
+    fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + allErrors.map(e => '<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
+    fbWrap.className = 'feedback err';
+    fbMsg.style.color = 'red'; 
+    return;
+  }
+
+  const payload = {
+    fechaMov: fecha,
+    descripMov: desc,
+    montoMov: monto.replace(/^S\//,''),
+    cuentaUser: typeof AUTH_USER !== 'undefined' ? AUTH_USER : '',
+    iDmov: datos,
+    authToken: typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : ''
+  };
+
+  fbMsg.textContent = ' ⤴️🖥️ Enviando datos al servidor…';
+  fbMsg.style.color = 'blue'; 
+  loader.classList.remove('hidden');
+  const btn = document.getElementById('btnRegistrar');
+  btn.disabled = true;
+
+  const p = window.parent;
+  if (!p || typeof p.netRun !== 'function') {
+    alert('No se pudo conectar con el servidor principal');
+    loader.classList.add('hidden');
+    btn.disabled = false;
+    return;
+  }
+
+  // 1. Primera llamada directa mediante netRun
+  p.netRun()
+    .withSuccessHandler(res => {
+      loader.classList.add('hidden');
+      btn.disabled = false;
+
+      if (res && res.needCode) {
+        const ok = pedirCodigoCliente(res.mensaje, res.code, res.maxAttempts || 3);
+        if (!ok) {
+          fbMsg.textContent = '🚨 OPERACIÓN CANCELADA POR EL USUARIO';
+          fbMsg.style.color = 'red';
+          fbWrap.className = 'feedback err';
+          return;
         }
-        if (listaServs.includes(idUpper) && montoSign === 1) {
-          addError(inputMonto, '⛔ El monto de PAGO por un Servicio NO puede ser Positivo');
-        }
-      }
+        fbMsg.textContent = 'Validación correcta! ✔️ Registrando…';
+        fbWrap.className = 'feedback ok';
+        loader.classList.remove('hidden');
+        btn.disabled = true;
 
-      if(!monto) addError(inputMonto,'⛔ Monto obligatorio');
-      else if(!REG_MONTO.test(monto)) addError(inputMonto,'⛔ Copie el monto desde el extracto bancario');
-
-      if(!datos) addError(inputDatos,'⛔ ID obligatorio');
-      else if(datos.length < 4) addError(inputDatos,'⛔ ID debe ser mínimo 4 caracteres');
-
-      Array.from(document.querySelectorAll('input.error')).forEach(el => {
-        if(el.dataset.err) erroresInputs.push(el.dataset.err);
-      });
-
-      if(!idFijo || idFijo.length < 4) erroresInputs.push('⚠️ ID inválido (autogeneración falló)');
-
-      const allErrors = [...new Set(erroresInputs)];
-
-      if (allErrors.length) {
-        fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + allErrors.map(e => '<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
-        fbWrap.className = 'feedback err';
-        fbMsg.style.color = 'red'; 
+        // 2. Segunda llamada de confirmación directa mediante netRun
+        const payloadConfirm = Object.assign({}, payload, { skipConfirm: true });
+        p.netRun()
+          .withSuccessHandler(r2 => {
+            loader.classList.add('hidden');
+            btn.disabled = false;
+            if (r2 && r2.ok){
+              fbMsg.textContent = r2.mensaje || '✅ REGISTRO COMPLETADO ✅';
+              fbWrap.className = 'feedback ok';
+              limpiarFormulario(true, { silent:true });
+            } else {
+              fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + ((r2 && r2.errores)||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
+              fbWrap.className = 'feedback err';
+            }
+          })
+          .withFailureHandler(err => {
+            alert(err?.message || String(err));
+            loader.classList.add('hidden');
+            btn.disabled = false;
+          })
+          .registrarHtml_bridge(payloadConfirm, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
         return;
       }
 
-      const payload = {
-        fechaMov: fecha,
-        descripMov: desc,
-        montoMov: monto.replace(/^S\//,''),
-        cuentaUser: AUTH_USER,
-        iDmov: datos,
-        authToken: AUTH_TOKEN
-      };
-
-      fbMsg.textContent = ' ⤴️🖥️ Enviando datos al servidor…';
-      fbMsg.style.color = 'blue'; 
-      loader.classList.remove('hidden');
-      const btn = document.getElementById('btnRegistrar');
-      btn.disabled = true;
-
-      ejecutarServidor('registrarHtml_bridge', payload, AUTH_TOKEN)
-        .then(res => {
-          loader.classList.add('hidden');
-          btn.disabled = false;
-
-          if (res && res.needCode) {
-            const ok = pedirCodigoCliente(res.mensaje, res.code, res.maxAttempts || 3);
-            if (!ok) {
-              fbMsg.textContent = '🚨 OPERACION CANCELADA POR EL USUARIO';
-              fbMsg.style.color = 'red';
-              fbWrap.className = 'feedback err';
-              return;
-            }
-            fbMsg.textContent = 'Validación correcta! ✔️ Registrando…';
-            fbWrap.className = 'feedback ok';
-            loader.classList.remove('hidden');
-            btn.disabled = true;
-
-            ejecutarServidor('registrarHtml_bridge', Object.assign({}, payload, { skipConfirm: true }))
-              .then(r2 => {
-                loader.classList.add('hidden');
-                btn.disabled = false;
-                if (r2.ok){
-                  fbMsg.textContent = r2.mensaje || '✅ REGISTRO COMPLETADO ✅';
-                  fbWrap.className = 'feedback ok';
-                  limpiarFormulario(true, { silent:true });
-                } else {
-                  fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + (r2.errores||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
-                  fbWrap.className = 'feedback err';
-                }
-              })
-              .catch(err => {
-                alert(err.message);
-                loader.classList.add('hidden');
-                btn.disabled = false;
-              });
-            return;
-          }
-
-          if (res.ok){
-            fbMsg.textContent = res.mensaje || '✅ REGISTRO COMPLETADO ✅';
-            fbWrap.className = 'feedback ok';
-            limpiarFormulario(true, { silent:true });
-          } else {
-            fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + (res.errores||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
-            fbWrap.className = 'feedback err';
-          }
-        })
-        .catch(err => {
-          console.error('Error', err);
-          alert(err.message);
-          loader.classList.add('hidden');
-          btn.disabled = false;
-        });
-    });
+      if (res && res.ok){
+        fbMsg.textContent = res.mensaje || '✅ REGISTRO COMPLETADO ✅';
+        fbWrap.className = 'feedback ok';
+        limpiarFormulario(true, { silent:true });
+      } else {
+        fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + ((res && res.errores)||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
+        fbWrap.className = 'feedback err';
+      }
+    })
+    .withFailureHandler(err => {
+      console.error('Error', err);
+      alert(err?.message || String(err));
+      loader.classList.add('hidden');
+      btn.disabled = false;
+    })
+    .registrarHtml_bridge(payload, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
+});
 
     function addError(el,msg){ el.classList.add('error'); el.dataset.err = msg; }
     function resetErrors(){
@@ -471,7 +484,6 @@
       const idRaw = inputDatos.value.trim().toUpperCase();
       const montoStr = limpiarMonto(inputMonto.value).replace(/^S\//,'');
       const montoNum = parseFloat(montoStr.replace(/,/g,'')) || 0;
-
       let mensaje = '';
       let color = '';
 
@@ -493,7 +505,6 @@
           color = '#8B0000';
         }
       }
-
       fbMsg.textContent = mensaje;
       fbMsg.style.color = color || '';
       fbWrap.classList.remove('err','ok');
