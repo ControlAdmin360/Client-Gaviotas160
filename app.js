@@ -61,7 +61,6 @@ window.usuarioActivo = window.usuarioActivo || (() => {
 window.netRun = function () {
   let successFn = () => {};
   let failureFn = () => {};
-
   const proxy = new Proxy({}, {
     get(_t, prop) {
       if (prop === 'withSuccessHandler') {
@@ -85,7 +84,6 @@ window.netRun = function () {
       };
     }
   });
-
   return proxy;
 };
 
@@ -213,31 +211,25 @@ function ensureAuthTokenBanco(){
 document.getElementById('banco-eliminar')?.addEventListener('click', async () => {
   const btn = document.getElementById('banco-eliminar');
   if (!btn) return;
-  
   const oldText = btn.textContent;
-  
   const restore = () => {
     btn.disabled = false;
     btn.textContent = oldText;
     btn.removeAttribute("style");
     btn.className = "btn-redd";
   };
-
   const notificar = (msg) => {
     if (window.toast) window.toast(msg);
     else alert(msg);
   };
-
   try {
     // 1. Autenticación
     let token = null;
     try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-    
     if (!token) {
       notificar('🔐 Autenticación Fallida (⛔)');
       return;
     }
-
     // 2. Estado de carga visual
     btn.disabled = true;
     btn.textContent = '⏳ Procesando...';
@@ -375,98 +367,149 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             restore();
           }
         }
-        // REFRESCA BANCO (Versión Optimizada)
-        function reloadPage(){  // esta OK
-        const btn  = document.getElementById('banco-refresh');
-        const mSel = document.getElementById('banco-month');
-        const ySel = document.getElementById('banco-year');
+        // CARGA PERIODO EN BANCO (Corregido para app.js)
+        async function refreshBanco() {
+          const btn  = document.getElementById('banco-buscar');
+          const mSel = document.getElementById('banco-month');
+          const ySel = document.getElementById('banco-year');
+          const month = Number(mSel?.value);
+          const year  = Number(ySel?.value);
         
-        const restore = () => {
-          if (!btn) return;
-          btn.disabled = false;
-          btn.textContent = btn.dataset._old || '🔄 Actualizar';
-          btn.removeAttribute('style');          // limpia inline styles
-          btn.className = 'btn-blue';            // tu clase final
-        };
-        if (btn){
-          btn.dataset._old = btn.textContent;
-          btn.disabled = true;
-          btn.style.background = '#FAD775';
-          btn.style.color= '#000';
-          btn.textContent = '⏳Espere...';
-        }
-        const month = Number(mSel?.value);
-        const year  = Number(ySel?.value);
-        if (typeof google !== 'undefined' && google.script && google.script.run) {
-          netRun()
-            .withSuccessHandler((data) => {
-              try { 
-                banco_renderStyled(data); 
-              } catch(e) {
-                console.error("Error al renderizar:", e);
-              } finally { 
-                restore(); 
-              }
-            })
-            .withFailureHandler((err) => {
-              console.error("Error en servidor:", err);
+          const restore = () => {
+            if (!btn) return;
+            btn.disabled = false;
+            btn.textContent = btn.dataset._old || '📅 Ver Periodo';
+            btn.removeAttribute('style');
+            btn.className = 'btn-orange';
+          };
+        
+          const setWorking = () => {
+            if (!btn) return;
+            btn.dataset._old = btn.textContent;
+            btn.disabled = true;
+            btn.style.background = '#FAD775';
+            btn.style.color = '#000';
+            btn.textContent = '⏳Actualizando…';
+          };
+        
+          try {
+            // 1. Validar selección de entradas
+            if (!month || !year || Number.isNaN(month) || Number.isNaN(year)) {
+              if (window.toast) toast("⚠️ Seleccione mes y año válidos");
+              else alert('Seleccione mes y año válidos.');
+              return;
+            }
+        
+            // 2. Autenticación
+            let token = null;
+            try { token = await ensureAuthTokenBanco(); } catch { token = null; }
+            if (!token) {
+              if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
+              return;
+            }
+        
+            setWorking();
+        
+            // 3. Consulta directa vía netRun (Sin validar el objeto google)
+            if (typeof netRun === 'function') {
+              const user = typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '';
+              
+              netRun()
+                .withSuccessHandler((data) => {
+                  try {
+                    banco_renderStyled(data);
+                  } catch(e) {
+                    console.error("Error al renderizar:", e);
+                  } finally {
+                    restore();
+                  }
+                })
+                .withFailureHandler((err) => {
+                  console.error("Error en servidor:", err);
+                  restore();
+                  if (window.toast) toast("🔴 Error al cargar periodo");
+                })
+                .api_banco_getDashboardData({ year, month, userAuth: user });
+            } else {
+              console.error("🔴 netRun no está disponible en app.js");
               restore();
-            })
-            .api_banco_getDashboardData({ year, month }); // <-- Invocación exacta al nuevo backend
-        } else {
-          restore();
-          location.reload();
+            }
+          } catch (e) {
+            alert('⚠️ Error al Seleccionar Periodo: ' + e);
+            restore();
+          }
         }
-      }
        // SETEA M3 EN BANCO
       document.getElementById('btn-m3')?.addEventListener('click', async () => {
         const btn = document.getElementById('btn-m3');
         if (!btn) return;
+      
         const restore = () => {
           btn.disabled = false;
           btn.textContent = btn.dataset._old || 'M3';
           btn.style.removeProperty('background');
           btn.style.removeProperty('color');
         };
+      
         try {
           btn.dataset._old = btn.textContent;
           btn.disabled = true;
           btn.style.background = '#FAD775';
           btn.style.color = '#000';
           btn.textContent = '⏳ Solicitando…';
-          let token = null; // 🔐 autenticar (unificado: null o throw → mismo trato)
+      
+          // 1. Autenticación
+          let token = null;
           try { token = await ensureAuthTokenBanco(); } catch { token = null; }
           if (!token) {
             if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
+            restore();
             return;
           }
+      
+          // 2. Captura y parseo del valor
           const raw = prompt('Ingrese lo m3. Indicados en el Recibo');
-          if (raw == null) return;
-          // Parseo mínimo: elimina comas, mantiene punto decimal en-US
+          if (raw == null) {
+            restore();
+            return;
+          }
+      
           const s = String(raw).trim().replace(/\s/g, '');
           const num = Number(s.replace(/,/g, ''));
           if (!isFinite(num)) {
             alert('Valor inválido. Ingrese un número (ej.: 1234.56 o 1,234.56).');
+            restore();
             return;
           }
+      
           const formatted = new Intl.NumberFormat('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
           }).format(num);
+      
           uiPaintCell({
             row: 9 - 3, col: 16, text: formatted,
-            color:'#333333', bg:'#AAAAAA', align:'center', radius:8
+            color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
           });
-          // 2) Guardar en backend
-          await netRun()
-            .withSuccessHandler(() => { if (window.toast) toast("✅ m3 REGISTRADO");})
-            .withFailureHandler(err => { alert('Error al guardar M3: ' + (err?.message || err)); })
-            .api_banco_setM3({ value: num }, window.usuarioActivo());
+      
+          // 3. Guardar en backend (Sin await para evitar la excepción sintáctica)
+          const user = typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '';
+          
+          netRun()
+            .withSuccessHandler(() => {
+              if (window.toast) toast("✅ m3 REGISTRADO");
+              restore();
+            })
+            .withFailureHandler(err => {
+              alert('Error al guardar M3: ' + (err?.message || String(err)));
+              restore();
+            })
+            .api_banco_setM3({ value: num }, user);
+      
         } catch (e) {
           console.error('Error en M3:', e);
           if (window.toast) toast("⚠️ Error al realizar esta acción (⛔)");
           alert(e);
-        } finally {
           restore();
         }
       });
