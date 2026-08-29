@@ -1313,10 +1313,10 @@ function banco_renderStyled(payload) {
           // 🔍 DEPURACIÓN: Inspecciona qué lee exactamente la celda vs qué hay en el Set
   console.log("Comparando celda:", `"${textH}"`, "| Existe en servSet?:", servSet.has(textH), "| Contenido servSet:", Array.from(servSet));
         
-          if (/SALDO/i.test(s)) cls += ' txt-blue';
-          else if (hasServSet && servSet.has(textH)) cls += ' serv';
-          else if (!isNaN(prevN) && prevN < 0) cls += ' gast';
-          else if (!isNaN(prevN) && prevN > 0 && !(hasDepaSet && depaSet.has(textH))) cls += ' entris';
+          //if (/SALDO/i.test(s)) cls += ' txt-blue';
+          //else if (hasServSet && servSet.has(textH)) cls += ' serv';
+          //else if (!isNaN(prevN) && prevN < 0) cls += ' gast';
+          //else if (!isNaN(prevN) && prevN > 0 && !(hasDepaSet && depaSet.has(textH))) cls += ' entris';
         }
 
         const bgBase = isTail ? 'transparent' : (j <= 7 ? (isAlt ? ZEBRA_LEFT_B : ZEBRA_LEFT_A) : (isAlt ? ZEBRA_RIGHT_B : ZEBRA_RIGHT_A));
