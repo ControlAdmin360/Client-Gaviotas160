@@ -277,32 +277,40 @@
 function cargarListasGarantizado() {
   const p = window.parent;
   
-  // 1. Si AMBAS listas existen en la memoria del padre con datos, úsalas de inmediato
-  if (p && p.LISTAS && p.LISTAS.depaIds?.length > 0 && p.LISTAS.servIds?.length > 0) {
-    listaDepas = p.LISTAS.depaIds;
-    listaServs = p.LISTAS.servIds;
-    console.log("🟢 AMBAS LISTAS CARGADAS DESDE MEMORIA:", { depas: listaDepas, servs: listaServs });
+  // Extraer arreglos de la memoria del padre con fallback seguro
+  const depasEnMemoria = p?.LISTAS?.depaIds || [];
+  const servsEnMemoria = p?.LISTAS?.servIds || [];
+
+  // 1. SOLO usar memoria si AMBAS listas contienen al menos 1 elemento
+  if (depasEnMemoria.length > 0 && servsEnMemoria.length > 0) {
+    listaDepas = depasEnMemoria.map(x => String(x).trim().toUpperCase());
+    listaServs = servsEnMemoria.map(x => String(x).trim().toUpperCase());
+    console.log("🟢 AMBAS LISTAS VÁLIDAS EN MEMORIA:", { depas: listaDepas.length, servs: listaServs.length });
     updateTipoMovimiento();
-    return;
+    return; // Sale solo si ambas existen
   }
 
-  // 2. Si falta la lista de servicios (o ambas), pedirlas a Google Apps Script
-  console.log("🟡 Pidiendo listas completas (Depas y Servicios) al servidor...");
+  // 2. Si la memoria está incompleta (servs == 0), consulta OBLIGATORIAMENTE al servidor
+  console.log("🟡 Memoria incompleta. Solicitando listas al servidor GAS...");
   ejecutarServidor('getListasIdBanco')
     .then(res => {
+      console.log("📦 Respuesta bruta recibida:", res);
       const data = res?.result || res || {};
       
-      listaDepas = data.depaIds || (Array.isArray(data) ? data : []);
-      listaServs = data.servIds || [];
+      const rawDepas = data.depaIds || (Array.isArray(data) ? data : []);
+      const rawServs = data.servIds || [];
 
-      // Guardar ambas listas completas en la memoria global del padre
+      listaDepas = rawDepas.map(x => String(x).trim().toUpperCase());
+      listaServs = rawServs.map(x => String(x).trim().toUpperCase());
+
+      // Guardar en la caché global compartida
       if (p) {
         p.LISTAS = p.LISTAS || {};
         p.LISTAS.depaIds = listaDepas;
         p.LISTAS.servIds = listaServs;
       }
 
-      console.log("🟢 LISTAS COMPLETAS CARGADAS DEL SERVIDOR:", { depas: listaDepas, servs: listaServs });
+      console.log("🟢 LISTAS CARGADAS DEL SERVIDOR:", { depas: listaDepas.length, servs: listaServs.length });
       updateTipoMovimiento();
     })
     .catch(err => console.error("🔴 ERROR AL OBTENER LISTAS:", err));
