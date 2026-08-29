@@ -1,4 +1,4 @@
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw-lsG-dMfjny1WrNrPQMZpbMogeeCEHA1W_YLhdk-KDBvzhdIIZjWxcX-Qr14v8r6g/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr0EhrkEdalBHQ1v-gdrP2oFOVZcLImO6obKwFWXpbxe81YBlS1j8C2LtrJsszeb-5/exec";
 
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
