@@ -4351,15 +4351,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   };
-  // Evita duplicar intervalos si el script se inyecta más de una vez
+    // Evita duplicar intervalos si el script se inyecta más de una vez
   if (window.__clockInterval) clearInterval(window.__clockInterval);
   updateClocks(); // pinta de inmediato al cargar
-
-  if (window.__clockInterval) clearInterval(window.__clockInterval);
-  window.__clockInterval = setInterval(() => {
-    if (typeof refreshStatusUI === 'function') {
-      refreshStatusUI();
-    }
-  }, 1000);
+  window.__clockInterval = setInterval(updateClocks, 1000);
 });
 
