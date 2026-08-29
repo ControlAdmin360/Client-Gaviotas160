@@ -46,6 +46,9 @@ function isSessionExpired() {
   if (!expire) return true;
   return Date.now() > parseInt(expire, 10);
 }
+function refreshStatusUI() {
+  updateClocks();
+}
 
 // 1. Verificación al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
@@ -4348,9 +4351,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   };*/
-  function refreshStatusUI() {
-    updateClocks();
-  }
   
   const updateClocks = () => {
   // 1. Reloj de hora y fecha local
