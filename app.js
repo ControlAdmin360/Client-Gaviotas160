@@ -150,9 +150,8 @@ function ensureAuthTokenBanco(){
 }
 
 // --- Utilidades Generales de Interfaz ---
-// (function(){
-  const $$  = s => document.querySelector(s);
-  const $$$ = s => Array.from(document.querySelectorAll(s));
+const $$  = s => document.querySelector(s);
+const $$$ = s => Array.from(document.querySelectorAll(s));
 
   function escapeHTML(x){
     return String(x)
@@ -889,8 +888,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   //window.refreshStatusUI = refreshStatusUI;
 
   // === Mini monitor de red + wrapper drop-in ===
-  // (function () {
-    let inflight = 0, prev = 'IDLE';
+
+  let inflight = 0, prev = 'IDLE';
 
   function setState(next){
     if (next === prev) return;
@@ -920,10 +919,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     busy(){ if (++inflight === 1) setState('BUSY'); },
     idle(){ if (inflight > 0 && --inflight === 0) setState('IDLE'); },
     getState(){ return prev; } 
-  };
-  window.__NetState = Net;
-
-// })();
+};
+window.__NetState = Net;
 
 document.addEventListener('NET_STATE_CHANGED', (e) => {
   const el = document.getElementById('srvStatus');
@@ -1074,7 +1071,6 @@ window.toast = function(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 };
-// })(); // fin IIFE
 
 
 /* =========================
