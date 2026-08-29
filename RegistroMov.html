@@ -268,15 +268,22 @@
       }).getListasIdBanco();
     }
 
-    ejecutarServidor('getCuentaUsuario')
-      .then(meta => {
-        correoUsuario = meta?.email || '';
-        renderMetaUsuario();
-      })
-      .catch(() => {
+    const p = window.parent;
+      if (p && typeof p.netRun === 'function') {
+        p.netRun()
+          .withSuccessHandler(meta => {
+            correoUsuario = meta?.email || '';
+            renderMetaUsuario();
+          })
+          .withFailureHandler(() => {
+            correoUsuario = '';
+            renderMetaUsuario();
+          })
+          .getCuentaUsuario();
+      } else {
         correoUsuario = '';
         renderMetaUsuario();
-      });
+      }
 
     // Cierre local
     document.getElementById('btnSalir')?.addEventListener('click', () => {
