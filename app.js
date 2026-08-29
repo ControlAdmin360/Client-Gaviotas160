@@ -2243,11 +2243,11 @@ async function cons_consultar() {
   const btn = document.getElementById('cons-buscar');
 
   if (!val) {
-    if (window.toast) toast("⚠️ Seleccione el Departamento a Consultar (❓)");
+    if (typeof window.toast === 'function') toast("⚠️ Selecciona el Departamento a Consultar (❓)");
     return;
   }
 
-  // 1. Panel de Saldos - Estado inicial de carga
+  // 1. Loader e interfaz inicial
   const panelSaldos = document.getElementById('panel-saldos-container');
   const loaderSaldos = document.getElementById('s-loader');
   if (panelSaldos) panelSaldos.style.display = 'block';
@@ -2263,8 +2263,7 @@ async function cons_consultar() {
 
   const meta = document.getElementById('cons-meta');
   if (meta) {
-    meta.innerHTML = `<span class="label">Dpto:</span> <span class="value">${escapeHTML(val)}</span> · 
-      <span class="label">Titular:</span> <em> -- </em>`;
+    meta.innerHTML = `<span class="label">Dpto:</span> <span class="value">${escapeHTML(val)}</span> · <span class="label">Titular:</span> <em> -- </em>`;
   }
 
   if (tbl) {
@@ -2272,23 +2271,33 @@ async function cons_consultar() {
     tbl.innerHTML = `
       <tbody>
         <tr>
-          <td colspan="5" class="loading-cell">
+          <td colspan="5" class="loading-cell" style="padding:15px;text-align:center;">
             <i class="fa-solid fa-hourglass-half fa-spin" aria-hidden="true"></i>
-            <span class="tit-value">Cargando Historial…</span>
+            <span class="tit-value"> Cargando Historial…</span>
           </td>
         </tr>
       </tbody>`;
   }
 
-  cons_resetTotales();
+  if (typeof cons_resetTotales === 'function') cons_resetTotales();
 
-  // 2. Autenticación
+  // 2. Intento de autenticación seguro
   let token = null;
-  try { token = await ensureAuthTokenBanco(); } catch { token = null; }
+  try { 
+    if (typeof ensureAuthTokenBanco === 'function') {
+      token = await ensureAuthTokenBanco(); 
+    }
+  } catch (e) { 
+    console.warn("Fallo en auth:", e);
+    token = null; 
+  }
+
+  const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
+
   if (!token) {
     if (tbl) { tbl.removeAttribute('aria-busy'); tbl.innerHTML = ''; }
-    if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
-    if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
+    resetBtn();
+    if (typeof window.toast === 'function') toast("🔐 Autenticación Fallida (⛔)");
     return;
   }
 
@@ -2299,31 +2308,30 @@ async function cons_consultar() {
   // 3. Petición 1: Historial de Recibos y Movimientos
   netRun()
     .withSuccessHandler((data) => {
-      cons_render(data);
+      if (typeof cons_render === 'function') cons_render(data);
       tbl?.removeAttribute('aria-busy');
-      if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
+      resetBtn();
     })
     .withFailureHandler((err) => {
-      if (meta) { meta.textContent = 'No se pudo cargar el titular.'; }
-      alert('❌ Error Consultas: ' + (err?.message || err));
-      cons_resetTotales();
+      console.error("Error getRecibosMovimientos:", err);
+      if (meta) meta.textContent = 'No se pudo cargar el titular.';
+      if (typeof cons_resetTotales === 'function') cons_resetTotales();
       if (tbl) {
-        tbl.innerHTML = `<tbody><tr><td colspan="5" style="padding:12px;color:#fca5a5;text-align:center;">Error al cargar datos.</td></tr></tbody>`;
+        tbl.innerHTML = `<tbody><tr><td colspan="5" style="padding:12px;color:#fca5a5;text-align:center;">Error al cargar datos del servidor.</td></tr></tbody>`;
         tbl.removeAttribute('aria-busy');
       }
-      if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
+      resetBtn();
     })
     .getRecibosMovimientos(val, userActivo);
 
-  // 4. Petición 2: Saldos del Departamento (Panel Derecho) - Instancia independiente
+  // 4. Petición 2: Saldos del Departamento
   netRun()
     .withSuccessHandler((saldosData) => {
       cons_renderSaldos(saldosData);
     })
     .withFailureHandler((err) => {
-      console.error("Error al cargar saldos:", err);
-      const loader = document.getElementById("s-loader");
-      if (loader) loader.classList.add("hidden");
+      console.error("Error api_Saldos_Para_Modal:", err);
+      document.getElementById("s-loader")?.classList.add("hidden");
     })
     .api_Saldos_Para_Modal(val);
 }
