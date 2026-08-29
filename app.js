@@ -1310,6 +1310,8 @@ function banco_renderStyled(payload) {
           cls += ' col-h txt-boldd';
           const textH = hasNorm ? norm(raw) : s.trim().toUpperCase();
           const prevN = parseFloat(String(r[6] ?? '').replace(/[^\d.-]/g, ''));
+          // 🔍 DEPURACIÓN: Inspecciona qué lee exactamente la celda vs qué hay en el Set
+  console.log("Comparando celda:", `"${textH}"`, "| Existe en servSet?:", servSet.has(textH), "| Contenido servSet:", Array.from(servSet));
         
           if (/SALDO/i.test(s)) cls += ' txt-blue';
           else if (hasServSet && servSet.has(textH)) cls += ' serv';
