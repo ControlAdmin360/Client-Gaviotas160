@@ -1052,12 +1052,15 @@ window.$$$ = s => Array.from(document.querySelectorAll(s));
 window.escapeHTML = function(x){
   return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 };
-window.toast = function(msg){
-  const t = document.querySelector('#toast');
-  if (!t) { console.log('Toast:', msg); return; }
+window.toast = function(msg) {
+  const t = document.getElementById('toast');
+  if (!t) { 
+    console.log('Toast:', msg); 
+    return; 
+  }
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 4000);
+  setTimeout(() => t.classList.remove('show'), 4000);
 };
 // })(); // fin IIFE
 
