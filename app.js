@@ -1,26 +1,4 @@
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxE0C8biQECEIzZx70FahNiTZx54axy7Hb82C0SuNCvLT-uxPnKo1oUuoSKdG2wOydK/exec";
 
-function ejecutarServidor(nombreFuncion, ...parametros) {
-  return fetch(GAS_API_URL, {
-    method: "POST",
-    redirect: "follow",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify({
-      functionName: nombreFuncion,
-      parameters: parametros
-    })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error("HTTP error " + res.status);
-    return res.json();
-  })
-  .then(res => {
-    if (res.status === 'error') throw new Error(res.message);
-    return res.result;
-  });
-}
 /**
  * =============================================================================
  * 0. NÚCLEO GLOBAL (Variables, Autenticación y Utilidades)
