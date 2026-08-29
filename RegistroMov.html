@@ -274,52 +274,23 @@
     }
     initIDBlock();
 
-function cargarListasGarantizado() {
-  const p = window.parent;
-  
-  const depasEnMemoria = p?.LISTAS?.depaIds;
-  const servsEnMemoria = p?.LISTAS?.servIds;
-
-  // 1. SOLO usa la memoria si AMBAS variables existen Y tienen elementos (>0)
-  if (Array.isArray(depasEnMemoria) && depasEnMemoria.length > 0 &&
-      Array.isArray(servsEnMemoria) && servsEnMemoria.length > 0) {
-    
-    listaDepas = depasEnMemoria.map(x => String(x).trim().toUpperCase());
-    listaServs = servsEnMemoria.map(x => String(x).trim().toUpperCase());
-    console.log("🟢 AMBAS LISTAS CARGADAS DE MEMORIA:", { depas: listaDepas.length, servs: listaServs.length });
-    updateTipoMovimiento();
-    return;
-  }
-
-  // 2. Si servIds es undefined o está vacío, va al servidor
-  console.log("🟡 servIds es undefined/vacío. Solicitando listas al servidor GAS...");
-  ejecutarServidor('getListasIdBanco')
-    .then(res => {
-      console.log("📦 Respuesta del servidor recibida:", res);
-      const data = res?.result || res || {};
-      
-      const rawDepas = data.depaIds || (Array.isArray(data) ? data : []);
-      const rawServs = data.servIds || [];
-
-      listaDepas = rawDepas.map(x => String(x).trim().toUpperCase());
-      listaServs = rawServs.map(x => String(x).trim().toUpperCase());
-
-      // Guardar ambas listas corregidas en la memoria global del padre
-      if (p) {
-        p.LISTAS = p.LISTAS || {};
-        p.LISTAS.depaIds = listaDepas;
-        p.LISTAS.servIds = listaServs;
-      }
-
-      console.log("🟢 LISTAS RECIBIDAS Y ALMACENADAS:", { depas: listaDepas.length, servs: listaServs.length });
+    const p = window.parent;
+    if (p && p.LISTAS && p.LISTAS.depaIds?.length && p.LISTAS.servIds?.length) {
+      // 1. Si ya existen en memoria, las toma al instante
+      listaDepas = p.LISTAS.depaIds;
+      listaServs = p.LISTAS.servIds;
       updateTipoMovimiento();
-    })
-    .catch(err => console.error("🔴 Error al obtener listas:", err));
-}
-
-// Ejecutar inmediatamente
-cargarListasGarantizado();
-
+    } else if (p && typeof p.netRun === 'function') {
+      // 2. Si no están, las pide directo a Apps Script
+      p.netRun().withSuccessHandler(res => {
+        listaDepas = (res?.depaIds || []).map(x => String(x).trim().toUpperCase());
+        listaServs = (res?.servIds || []).map(x => String(x).trim().toUpperCase());
+        
+        // Guarda en memoria para no volver a pedir
+        p.LISTAS = { depaIds: listaDepas, servIds: listaServs };
+        updateTipoMovimiento();
+      }).getListasIdBanco();
+    }
 
     ejecutarServidor('getCuentaUsuario')
       .then(meta => {
