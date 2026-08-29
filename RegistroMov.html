@@ -277,12 +277,14 @@
     // Cargar listas desde el backend HTTP
     ejecutarServidor('getListasIdBanco')
       .then(res => {
-        if (res) {
-          listaDepas = res.depaIds || [];
-          listaServs = res.servIds || [];
-        }
-      })
-      .catch(err => console.log('Error al cargar listas:', err));
+    // Si viene envuelto por netRun/puente, extrae .result; si no, usa res directo
+    const data = (res && res.depaIds) ? res : (res && res.result ? res.result : {});
+    listaDepas = data.depaIds || [];
+    listaServs = data.servIds || [];
+    // Dispara la reevaluación por si hay valores ya escritos
+    updateTipoMovimiento();
+  })
+  .catch(err => console.error('Error al cargar listas:', err));
 
     ejecutarServidor('getCuentaUsuario')
       .then(meta => {
