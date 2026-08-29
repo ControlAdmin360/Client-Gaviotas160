@@ -1029,16 +1029,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
   }
 
-// --- Temporizador Dinámico (Actualiza cada 1 segundo) ---
-if (window.sessionTimer) clearInterval(window.sessionTimer);
-window.sessionTimer = setInterval(() => {
-  if (sessionStorage.getItem('AUTH_TOKEN')) {
-    refreshStatusUI();
-  }
-}, 1000);
   window.getUserTag = getUserTag;
   window.statusLabel = statusLabel;
-  //window.refreshStatusUI = refreshStatusUI;
 
   // === Mini monitor de red + wrapper drop-in ===
 
@@ -1199,8 +1191,6 @@ function setupNuevo(){
     setupSearch();
     setupNuevo();
     setupSync();
-    
-    if (window.refreshStatusUI) window.refreshStatusUI();
   });
 
   // export helpers
