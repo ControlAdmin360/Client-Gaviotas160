@@ -330,7 +330,7 @@ cargarListasGarantizado();
       try { parent.closeForm('banco'); } catch(e){}
     });
 
-    document.getElementById('btnLimpiar').addEventListener('click', () => limpiarFormulario());
+    document.getElementById('btnLimpiar')?.addEventListener('click', () => limpiarFormulario());
 
     function limpiarFormulario(regenerarId = false, opts = {}){
       inputFecha.value = '';
