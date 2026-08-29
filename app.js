@@ -34,7 +34,10 @@ window.usuarioActivo = window.usuarioActivo || (() => {
   }
 });
 
-// --- Motor Principal netRun (Conexión Directa a Apps Script) ---
+// URL pública de tu Web App en Google Apps Script
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxE0C8biQECEIzZx70FahNiTZx54axy7Hb82C0SuNCvLT-uxPnKo1oUuoSKdG2wOydK/exec";
+
+// --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
   let successFn = () => {};
   let failureFn = () => {};
@@ -50,7 +53,7 @@ window.netRun = function () {
       return (...args) => {
         if (typeof window.__NetState === 'object') window.__NetState.busy();
 
-        // 1. Si estamos dentro del entorno nativo de Google Apps Script
+        // 1. Si estamos dentro del entorno nativo de Google Apps Script (HTML Service iframe)
         if (typeof google !== 'undefined' && google.script && google.script.run) {
           google.script.run
             .withSuccessHandler(res => {
@@ -62,9 +65,34 @@ window.netRun = function () {
               failureFn(err);
             })[prop](...args);
         } else {
-          // 2. Si estamos en GitHub Pages / Web externa, notifica error de entorno si no hay API externa
-          console.warn(`[netRun] Ejecutando '${prop}' fuera del entorno nativo de Apps Script.`);
-          if (typeof window.__NetState === 'object') window.__NetState.idle();
+          // 2. Si estamos en GitHub Pages / Web externa, conectamos vía Fetch API
+          fetch(GAS_API_URL, {
+            method: "POST",
+            redirect: "follow",
+            headers: {
+              "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify({
+              functionName: prop,
+              parameters: args
+            })
+          })
+          .then(res => {
+            if (!res.ok) throw new Error("HTTP error " + res.status);
+            return res.json();
+          })
+          .then(res => {
+            if (typeof window.__NetState === 'object') window.__NetState.idle();
+            if (res && res.status === 'error') {
+              failureFn(new Error(res.message || 'Error en servidor'));
+            } else {
+              successFn(res && 'result' in res ? res.result : res);
+            }
+          })
+          .catch(err => {
+            if (typeof window.__NetState === 'object') window.__NetState.idle();
+            failureFn(err);
+          });
         }
         return proxy;
       };
