@@ -268,7 +268,6 @@
       }).getListasIdBanco();
     }
 
-    const p = window.parent;
       if (p && typeof p.netRun === 'function') {
         p.netRun()
           .withSuccessHandler(meta => {
@@ -382,7 +381,6 @@ f.addEventListener('submit', (e) => {
   const btn = document.getElementById('btnRegistrar');
   btn.disabled = true;
 
-  const p = window.parent;
   if (!p || typeof p.netRun !== 'function') {
     alert('No se pudo conectar con el servidor principal');
     loader.classList.add('hidden');
