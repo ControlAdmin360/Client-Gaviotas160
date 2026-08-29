@@ -169,8 +169,8 @@
     if (params.get('token')) sessionStorage.setItem('AUTH_TOKEN', params.get('token'));
     const AUTH_USER_PARAM = params.get('user') || '';
     const AUTH_USER = AUTH_USER_PARAM || sessionStorage.getItem('AUTH_USER') || '';
-
     const LOCK_MSG = 'Debes Autenticarte Para Registrar Movimientos.';
+    const p = window.parent;
 
     function disableForm(){
       document.querySelectorAll('input, select, textarea, button').forEach(el => {
@@ -191,15 +191,18 @@
       disableForm();
     }
 
-    // Inicialización y Validación Auth
+// Inicialización y Validación Auth
     if (!AUTH_TOKEN) {
       lockAuthUI();
-    } else {
-      ejecutarServidor('api_auth_check', AUTH_TOKEN)
-        .then(res => {
+    } else if (p && typeof p.netRun === 'function') {
+      p.netRun()
+        .withSuccessHandler(res => {
           if (!res || !res.ok) lockAuthUI();
         })
-        .catch(() => lockAuthUI());
+        .withFailureHandler(() => lockAuthUI())
+        .api_auth_check(AUTH_TOKEN);
+    } else {
+      lockAuthUI();
     }
 
     const REG_FECHA = /^\d{2}\/\d{2}\/\d{4}$/;
@@ -250,7 +253,6 @@
     }
     initIDBlock();
 
-    const p = window.parent;
     if (p && p.LISTAS && p.LISTAS.depaIds?.length && p.LISTAS.servIds?.length) {
       // 1. Si ya existen en memoria, las toma al instante
       listaDepas = p.LISTAS.depaIds;
