@@ -1875,32 +1875,6 @@ function contometros_renderStyled(payload) {
     console.error('[LECTURAS] render error:', err);
   }
 }
-    // NOTA DESCOMENTAR ESTO Y COMENTAR EL CONTROL ANTERIOR SEGUN LA VERSION DE: api_contometros_getStyled QUE ENVIA EL SERVIDOR
-    //const adjColWidths = Array.isArray(colWidths) ? colWidths.slice() : [];
-    //while (adjColWidths.length < W) adjColWidths.push(85);
-
-    //adjColWidths[0]  = 56;  // Columna A (DPTO)
-    //adjColWidths[9]  = 72;  // Fecha
-    //adjColWidths[10] = 72;  // TOTAL m3
-    //adjColWidths[11] = 14;  // Negrita delgada
-    
-    //adjColWidths[12] = 50;
-    //adjColWidths[13] = 82;
-    //adjColWidths[14] = 82;
-    //adjColWidths[15] = 85;
-    //adjColWidths[16] = 86;
-
-    //for (let idx = 3; idx <= 8; idx++) {
-      //adjColWidths[idx] = 72;
-    //}
-
-    //tbl.classList.add('sheet-table');
-    //tbl.innerHTML = cont_buildColGroup(adjColWidths) + headHtml + bodyHtml;
-
-  //} catch (err) {
-    //console.error('[LECTURAS] render error:', err);
-  //}
-//}
 
 /** Llama al servidor (GAS) para traer formato+datos de Contómetros */
 function contometros_loadStyled(params, cb) {
@@ -1988,7 +1962,7 @@ function setupConsultasSelect() {
   if (!sel) return;
 
   const items = (typeof LISTAS !== 'undefined' && LISTAS?.depaIds) ? LISTAS.depaIds.slice() : [];
-  const norm = window.norm || (s => String(s || '').trim().toUpperCase());
+  const norm = window.norm || (s => String(s || '').trim());
 
   // Dedupe ordenado
   const seen = new Set();
