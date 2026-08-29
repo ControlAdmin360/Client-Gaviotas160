@@ -1036,7 +1036,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     const timeRemaining = getTokenRemainingTime();
     return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
   }
-  
+  /*
 function refreshStatusUI() {
   const badge = document.getElementById('srvStatus');
   if (!badge) return;
@@ -1061,7 +1061,7 @@ function refreshStatusUI() {
       txtNode.textContent = "IDLE -> OnLine";
     }
   }
-}
+} */
 
 // --- Temporizador Dinámico (Actualiza cada 1 segundo) ---
 if (window.sessionTimer) clearInterval(window.sessionTimer);
@@ -4318,6 +4318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
     timeZone: tz
   });
+  /*
   const updateClocks = () => {
     const now = new Date();
     const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
@@ -4346,7 +4347,68 @@ document.addEventListener('DOMContentLoaded', () => {
         if (t) t.textContent = nuevoTextoCompleto;
       }
     }
-  };
+  };*/
+  const updateClocks = () => {
+  // 1. Reloj de hora/fecha local
+  const now = new Date();
+  const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
+  document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
+  
+  // 2. Comprobación de estado BUSY / Carga
+  const srvStatusEsBusy = document.querySelector('.srv-busy');
+  const netPillEsBusy = document.querySelector('.busy');
+  
+  // Si el sistema está ocupado (BUSY), no tocamos los textos para mantener la alerta amarilla
+  if (srvStatusEsBusy || netPillEsBusy) {
+    return;
+  }
+
+  // 3. Comprobación de Sesión Activa
+  const token = (typeof getAuthToken === 'function') ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
+  const sesionValida = token && typeof isSessionExpired === 'function' && !isSessionExpired();
+
+  // 4. Actualización del Badge principal (#srvStatus)
+  const srv = document.getElementById('srvStatus');
+  if (srv) {
+    const t = srv.querySelector('.txt');
+
+    if (sesionValida) {
+      // AQUÍ SE MANTIENE EL COLOR VERDE ACTIVANDO LA CLASE EN CADA SEGUNDO
+      srv.className = "srv-badge srv-online";
+      
+      if (typeof window.statusLabel === 'function') {
+        if (t) t.textContent = window.statusLabel('IDLE');
+      } else {
+        const user = (typeof window.usuarioActivo === 'function') 
+          ? window.usuarioActivo() 
+          : (sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN');
+        
+        if (t) t.textContent = `IDLE -> OnLine   🧑-> ${user}   ⏱️TimeSession-> ${getTokenRemainingTime()}`;
+      }
+    } else {
+      // Estado cuando no hay sesión
+      srv.className = "srv-badge srv-idle";
+      if (t) t.textContent = "IDLE -> OnLine";
+    }
+  }
+
+  // 5. Actualización de Píldora Secundaria de Red (Si existe)
+  const pill = document.getElementById('netStatePill');
+  if (pill && typeof window.statusLabel === 'function') {
+    pill.textContent = window.statusLabel('IDLE');
+  }
+};
+
+// --- FUNCIÓN REFRESH_STATUS_UI DELEGADA ---
+// Redirige la llamada a updateClocks para evitar duplicidad de lógica
+function refreshStatusUI() {
+  updateClocks();
+}
+
+// --- CONFIGURACIÓN DEL INTERVALO ÚNICO ---
+if (window.__clockInterval) clearInterval(window.__clockInterval);
+updateClocks(); // Pinta inmediatamente al cargar
+window.__clockInterval = setInterval(updateClocks, 1000);
     // Evita duplicar intervalos si el script se inyecta más de una vez
   if (window.__clockInterval) clearInterval(window.__clockInterval);
   updateClocks(); // pinta de inmediato al cargar
