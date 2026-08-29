@@ -1,6 +1,36 @@
 /* ==========================================================================
    1. BASE / VARIABLES / RESET
    ========================================================================== */
+/* LOGIN */
+.login-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #1e293b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.login-card {
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 380px;
+}
+
+.error-msg {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+
 :root {
   --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --fg:#e5e7eb;
   --acc:#22c55e; --bd:#1f2937; --card:#0b1220; --chip:#0b1720;
