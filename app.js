@@ -4354,11 +4354,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
   document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
   
-  // 2. Comprobación de estado BUSY / Carga
-  const srvStatusEsBusy = document.querySelector('.srv-busy');
+  // 2. DETECTOR VISUAL DE ESTADO OCUPADO (BUSY)
+  const srv = document.getElementById('srvStatus');
+  const srvStatusEsBusy = srv && (srv.classList.contains('srv-busy') || srv.classList.contains('busy'));
   const netPillEsBusy = document.querySelector('.busy');
   
-  // Si el sistema está ocupado (BUSY), no tocamos los textos para mantener la alerta amarilla
+  // 🛡️ SI EL SISTEMA ESTÁ EN BUSY: NO TOCAMOS NADA DEL BADGE NI DE LAS CLASES (Mantiene color amarillo)
   if (srvStatusEsBusy || netPillEsBusy) {
     return;
   }
@@ -4368,13 +4369,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const sesionValida = token && typeof isSessionExpired === 'function' && !isSessionExpired();
 
   // 4. Actualización del Badge principal (#srvStatus)
-  const srv = document.getElementById('srvStatus');
   if (srv) {
     const t = srv.querySelector('.txt');
 
     if (sesionValida) {
-      // AQUÍ SE MANTIENE EL COLOR VERDE ACTIVANDO LA CLASE EN CADA SEGUNDO
-      srv.className = "srv-badge srv-online";
+      // Mantiene el color verde asegurando la clase srv-online sin interferir con el resto
+      srv.classList.remove('srv-idle', 'srv-busy', 'busy');
+      srv.classList.add('srv-online');
       
       if (typeof window.statusLabel === 'function') {
         if (t) t.textContent = window.statusLabel('IDLE');
@@ -4386,28 +4387,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (t) t.textContent = `IDLE -> OnLine   🧑-> ${user}   ⏱️TimeSession-> ${getTokenRemainingTime()}`;
       }
     } else {
-      // Estado cuando no hay sesión
-      srv.className = "srv-badge srv-idle";
+      // Estado cuando no hay sesión activa
+      srv.classList.remove('srv-online', 'srv-busy', 'busy');
+      srv.classList.add('srv-idle');
       if (t) t.textContent = "IDLE -> OnLine";
     }
   }
 
-  // 5. Actualización de Píldora Secundaria de Red (Si existe)
+  // 5. Píldora de Red Secundaria
   const pill = document.getElementById('netStatePill');
   if (pill && typeof window.statusLabel === 'function') {
     pill.textContent = window.statusLabel('IDLE');
   }
 };
 
-// --- FUNCIÓN REFRESH_STATUS_UI DELEGADA ---
-// Redirige la llamada a updateClocks para evitar duplicidad de lógica
+// Delegación limpia para evitar duplicidad
 function refreshStatusUI() {
   updateClocks();
 }
 
-// --- CONFIGURACIÓN DEL INTERVALO ÚNICO ---
+// Intervalo Único
 if (window.__clockInterval) clearInterval(window.__clockInterval);
-updateClocks(); // Pinta inmediatamente al cargar
+updateClocks();
 window.__clockInterval = setInterval(updateClocks, 1000);
 });
 
