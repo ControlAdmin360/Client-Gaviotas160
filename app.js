@@ -774,6 +774,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     function ensureInit(view) {
       try {
         if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
+        if (view === 'consultas') { setupConsultas(); }
         // Las demás vistas quedan delegadas a sus respectivas funciones ConAuth en el click
       } catch (e) { 
       console.error('[setupRouter] init error:', e); 
