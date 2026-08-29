@@ -33,6 +33,102 @@ window.usuarioActivo = window.usuarioActivo || (() => {
     return 'UNKNOWN_LOK';
   }
 });
+function clearAuth(){
+  sessionStorage.removeItem('AUTH_TOKEN');
+  sessionStorage.removeItem('AUTH_USER');
+  sessionStorage.removeItem('AUTH_EMAIL');
+  sessionStorage.removeItem('AUTH_EXPIRE');
+}
+
+// Comprobación directa usando la fecha guardada previamente por tu sistema
+function isSessionExpired() {
+  const expire = sessionStorage.getItem('AUTH_EXPIRE');
+  if (!expire) return true;
+  return Date.now() > parseInt(expire, 10);
+}
+
+// 1. Verificación al cargar la página
+document.addEventListener("DOMContentLoaded", () => {
+  const token = getAuthToken();
+  if (token && !isSessionExpired()) {
+    mostrarAplicacion();
+  } else {
+    clearAuth();
+  }
+});
+
+// 2. Validación desde el Formulario
+async function validarIngreso(event) {
+  event.preventDefault();
+
+  const userInput = document.getElementById("login-user").value.trim();
+  const passInput = document.getElementById("login-pass").value.trim();
+  const errorMsg = document.getElementById("login-error");
+  const btnSubmit = event.target.querySelector('button[type="submit"]');
+
+  if (!userInput || !passInput) return;
+
+  btnSubmit.disabled = true;
+  btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
+  if (errorMsg) errorMsg.style.display = "none";
+
+  try {
+    const url = `https://TU_PROYECTO.firebaseio.com/CONFIG/USUARIOS/${userInput}.json`;
+    const response = await fetch(url);
+    
+    if (!response.ok) throw new Error("Error en la respuesta del servidor");
+    
+    const userData = await response.json();
+
+    if (userData && userData.pass === passInput) {
+      const token = userData.token || `TOKEN_${Date.now()}_${userInput}`;
+      
+      setAuthToken(token);
+      setAuthUser(userInput);
+      
+      // AQUÍ: Si tienes una función propia que establece las 2 horas en AUTH_EXPIRE, la llamas directamente:
+      if (typeof tuFuncionParaSetearExpiracion === "function") {
+        tuFuncionParaSetearExpiracion();
+      }
+
+      mostrarAplicacion();
+    } else {
+      if (errorMsg) {
+        errorMsg.style.display = "flex";
+        errorMsg.querySelector('span').textContent = "Usuario o contraseña incorrectos.";
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error de autenticación:", error);
+    if (errorMsg) {
+      errorMsg.style.display = "flex";
+      errorMsg.querySelector('span').textContent = "Error de conexión con la base de datos.";
+    }
+  } finally {
+    btnSubmit.disabled = false;
+    btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
+  }
+}
+
+// 3. Control de Vistas
+function mostrarAplicacion() {
+  const loginScreen = document.getElementById("login-screen");
+  const appContainer = document.getElementById("app-container");
+
+  if (loginScreen) loginScreen.style.display = "none";
+  if (appContainer) appContainer.style.display = "block";
+
+  if (typeof initApp === "function") {
+    initApp();
+  }
+}
+
+function cerrarSesion() {
+  clearAuth();
+  window.location.reload();
+}
+
+
 
 // URL pública de tu Web App en Google Apps Script
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxE0C8biQECEIzZx70FahNiTZx54axy7Hb82C0SuNCvLT-uxPnKo1oUuoSKdG2wOydK/exec";
