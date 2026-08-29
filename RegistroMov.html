@@ -15,29 +15,29 @@
   };
   if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  
+  // comunicacion con el servidor
+  function ejecutarServidor(nombreFuncion, ...parametros) {
+  return new Promise((resolve, reject) => {
+    const requestId = 'req_' + Math.random().toString(36).substring(2, 9);
 
-  // URL de tu API de Apps Script
-  const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzr0EhrkEdalBHQ1v-gdrP2oFOVZcLImO6obKwFWXpbxe81YBlS1j8C2LtrJsszeb-5/exec";
-
-  // Función puente HTTP para ejecutar el backend en .gs
-function ejecutarServidor(nombreFuncion, ...parametros) {
-  return fetch(GAS_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify({
+    function handleResponse(event) {
+      if (event.data && event.data.requestId === requestId) {
+        window.removeEventListener('message', handleResponse);
+        if (event.data.error) {
+          reject(new Error(event.data.error));
+        } else {
+          resolve(event.data.result);
+        }
+      }
+    }
+    window.addEventListener('message', handleResponse);
+    window.parent.postMessage({
+      type: 'GAS_BRIDGE_REQUEST',
+      requestId: requestId,
       functionName: nombreFuncion,
       parameters: parametros
-    })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error("Error HTTP: " + res.status);
-    return res.json();
-  })
-  .then(res => {
-    if (res && res.status === 'error') throw new Error(res.message);
-    return res.result;
+    }, '*');
   });
 }
 </script>
