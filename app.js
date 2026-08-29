@@ -1040,10 +1040,40 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     const timeRemaining = getTokenRemainingTime();
     return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
   }
-  function refreshStatusUI(){
-    const current = (typeof prev !== 'undefined' && prev) ? prev : 'IDLE';
-    document.dispatchEvent(new CustomEvent('NET_STATE_CHANGED', { detail:{ state: current } }));
+  function refreshStatusUI() {
+  const badge = document.getElementById('srvStatus');
+  if (!badge) return;
+
+  const txtNode = badge.querySelector('.txt');
+  const token = sessionStorage.getItem('AUTH_TOKEN');
+  
+  // Obtenemos el nombre del usuario activo (o usa tu función window.usuarioActivo())
+  const user = (typeof window.usuarioActivo === 'function') 
+    ? window.usuarioActivo() 
+    : (sessionStorage.getItem('AUTH_USER') || 'UNKNOWN');
+
+  if (token && !isSessionExpired()) {
+    // Estado Online con el formato solicitado:
+    badge.className = "srv-badge srv-online";
+    if (txtNode) {
+      txtNode.textContent = `IDLE -> OnLine   🧑-> ${user}   ⏱️TimeSession-> ${getTokenRemainingTime()}`;
+    }
+  } else {
+    // Estado cuando no hay sesión activa:
+    badge.className = "srv-badge srv-idle";
+    if (txtNode) {
+      txtNode.textContent = "IDLE -> OnLine";
+    }
   }
+}
+
+// --- Temporizador Dinámico (Actualiza cada 1 segundo) ---
+if (window.sessionTimer) clearInterval(window.sessionTimer);
+window.sessionTimer = setInterval(() => {
+  if (sessionStorage.getItem('AUTH_TOKEN')) {
+    refreshStatusUI();
+  }
+}, 1000);
   window.getUserTag = getUserTag;
   window.statusLabel = statusLabel;
   //window.refreshStatusUI = refreshStatusUI;
