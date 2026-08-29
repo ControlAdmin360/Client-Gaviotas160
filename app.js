@@ -4354,11 +4354,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Evita duplicar intervalos si el script se inyecta más de una vez
   if (window.__clockInterval) clearInterval(window.__clockInterval);
   updateClocks(); // pinta de inmediato al cargar
+
+  if (window.__clockInterval) clearInterval(window.__clockInterval);
   window.__clockInterval = setInterval(() => {
-  const badgeTxt = document.querySelector('#srvStatus .txt');
-  if (badgeTxt && sessionStorage.getItem('AUTH_TOKEN')) {
-    badgeTxt.textContent = `Sesión: ${getTokenRemainingTime()}`;
-  }
-}, 1000);
+    if (typeof refreshStatusUI === 'function') {
+      refreshStatusUI();
+    }
+  }, 1000);
 });
 
