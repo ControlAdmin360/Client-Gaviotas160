@@ -23,6 +23,7 @@
 function ejecutarServidor(nombreFuncion, ...parametros) {
   return fetch(GAS_API_URL, {
     method: "POST",
+    mode: "cors",
     redirect: "follow",
     headers: {
       "Content-Type": "text/plain;charset=utf-8"
@@ -32,9 +33,12 @@ function ejecutarServidor(nombreFuncion, ...parametros) {
       parameters: parametros
     })
   })
-  .then(res => res.json())
   .then(res => {
-    if (res.status === 'error') throw new Error(res.message);
+    if (!res.ok) throw new Error("Error en la respuesta de la red: " + res.status);
+    return res.json();
+  })
+  .then(res => {
+    if (res && res.status === 'error') throw new Error(res.message);
     return res.result;
   });
 }
