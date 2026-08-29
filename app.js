@@ -4348,65 +4348,46 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   };*/
+  function refreshStatusUI() {
+    updateClocks();
+  }
+  
   const updateClocks = () => {
-  // 1. Reloj de hora/fecha local
+  // 1. Reloj de hora y fecha local
   const now = new Date();
   const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
   document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
   
-  // 2. DETECTOR VISUAL DE ESTADO OCUPADO (BUSY)
-  const srv = document.getElementById('srvStatus');
-  const srvStatusEsBusy = srv && (srv.classList.contains('srv-busy') || srv.classList.contains('busy'));
-  const netPillEsBusy = document.querySelector('.busy');
-  
-  // 🛡️ SI EL SISTEMA ESTÁ EN BUSY: NO TOCAMOS NADA DEL BADGE NI DE LAS CLASES (Mantiene color amarillo)
-  if (srvStatusEsBusy || netPillEsBusy) {
-    return;
-  }
+  // 2. Leemos la variable 'prev' de tu motor NetState
+  const estadoActual = (typeof prev !== 'undefined') ? prev : 'IDLE';
 
-  // 3. Comprobación de Sesión Activa
-  const token = (typeof getAuthToken === 'function') ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
-  const sesionValida = token && typeof isSessionExpired === 'function' && !isSessionExpired();
+  // 🛡️ Si el sistema está procesando (BUSY), NetState tiene el control y no sobreescribimos
+  if (estadoActual === 'BUSY') return;
 
-  // 4. Actualización del Badge principal (#srvStatus)
-  if (srv) {
-    const t = srv.querySelector('.txt');
+  // 3. Si está en IDLE, actualizamos el texto dinámico y mantenemos la clase verde (.srv-idle)
+  if (typeof statusLabel === 'function') {
+    const textoActualizado = statusLabel('IDLE');
 
-    if (sesionValida) {
-      // Mantiene el color verde asegurando la clase srv-online sin interferir con el resto
-      srv.classList.remove('srv-idle', 'srv-busy', 'busy');
-      srv.classList.add('srv-online');
-      
-      if (typeof window.statusLabel === 'function') {
-        if (t) t.textContent = window.statusLabel('IDLE');
-      } else {
-        const user = (typeof window.usuarioActivo === 'function') 
-          ? window.usuarioActivo() 
-          : (sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN');
-        
-        if (t) t.textContent = `IDLE -> OnLine   🧑-> ${user}   ⏱️TimeSession-> ${getTokenRemainingTime()}`;
-      }
-    } else {
-      // Estado cuando no hay sesión activa
-      srv.classList.remove('srv-online', 'srv-busy', 'busy');
-      srv.classList.add('srv-idle');
-      if (t) t.textContent = "IDLE -> OnLine";
+    // Píldora #netStatePill
+    const pill = document.getElementById('netStatePill');
+    if (pill) {
+      pill.textContent = textoActualizado;
+      pill.classList.remove('busy');
+      pill.classList.add('idle');
     }
-  }
 
-  // 5. Píldora de Red Secundaria
-  const pill = document.getElementById('netStatePill');
-  if (pill && typeof window.statusLabel === 'function') {
-    pill.textContent = window.statusLabel('IDLE');
+    // Badge #srvStatus
+    const srv = document.getElementById('srvStatus');
+    if (srv) {
+      // Mantiene exactamente las clases de tu CSS (.srv-badge .srv-idle)
+      srv.className = 'srv-badge srv-idle';
+      const t = srv.querySelector('.txt');
+      if (t) t.textContent = textoActualizado;
+    }
   }
 };
 
-// Delegación limpia para evitar duplicidad
-function refreshStatusUI() {
-  updateClocks();
-}
-
-// Intervalo Único
+// Reinicio limpio del intervalo único
 if (window.__clockInterval) clearInterval(window.__clockInterval);
 updateClocks();
 window.__clockInterval = setInterval(updateClocks, 1000);
