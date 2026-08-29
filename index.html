@@ -3,18 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🕊️ Gaviotas 160</title>
-  <!-- Favicon emoji -->
+  <title>Gaviotas 160</title>
+  
+  <!-- Favicon emoji unificado -->
   <link id="favicon-main" rel="icon" type="image/svg+xml" href="">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Enlace CSS estándar (en lugar de <?!= include('CSS'); ?>) -->
   <link rel="stylesheet" href="CSS.css">
 
   <script>
-    // Favicon 🕊️ — crea/actualiza los <link> de icono
-   (function(){
-      // Reutiliza o crea un único enlace de favicon
+    (function(){
       var link = document.getElementById('favicon-main');
       if (!link) {
         link = document.createElement('link');
@@ -22,7 +19,6 @@
         link.rel = 'icon';
         document.head.appendChild(link);
       }
-
       var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>🕊️</text></svg>";
       link.type = 'image/svg+xml';
       link.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
