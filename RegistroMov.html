@@ -274,29 +274,22 @@
     }
     initIDBlock();
 
-if (parentListas && parentListas.depaIds && parentListas.depaIds.length) {
-  // 1. Si app.js ya las tiene cargadas, las toma al instante de la memoria
-  listaDepas = parentListas.depaIds;
-  listaServs = parentListas.servIds || [];
-  updateTipoMovimiento();
-} else {
-  // 2. Si no están en memoria, las pide usando la misma lógica que app.js
-  ejecutarServidor('getListasIdBanco')
-    .then(res => {
-      listaDepas = res?.depaIds || (Array.isArray(res) ? res : []);
-      listaServs = res?.servIds || [];
+ejecutarServidor('getListasIdBanco')
+  .then(res => {
+    const data = res?.result || res || {};
+    listaDepas = data.depaIds || [];
+    listaServs = data.servIds || [];
 
-      // Guarda en el padre para no volver a pedir
-      if (window.parent) {
-        window.parent.LISTAS = window.parent.LISTAS || {};
-        window.parent.LISTAS.depaIds = listaDepas;
-        window.parent.LISTAS.servIds = listaServs;
-      }
+    // Guardar en la caché global del padre
+    if (window.parent) {
+      window.parent.LISTAS = window.parent.LISTAS || {};
+      window.parent.LISTAS.depaIds = listaDepas;
+      window.parent.LISTAS.servIds = listaServs;
+    }
 
-      updateTipoMovimiento();
-    })
-    .catch(err => console.log('Error al cargar listas:', err));
-}
+    updateTipoMovimiento();
+  })
+  .catch(err => console.error('Error al cargar listas:', err));
 
     ejecutarServidor('getCuentaUsuario')
       .then(meta => {
