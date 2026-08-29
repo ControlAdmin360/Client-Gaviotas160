@@ -326,26 +326,21 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             }
             setWorking();
             // 3. Consulta directa al nuevo Backend (Misma lógica ligera que reloadPage)
-            if (typeof google !== 'undefined' && google.script && google.script.run) {
-              netRun()
-                .withSuccessHandler((data) => {
-                  try {
-                    banco_renderStyled(data);
-                  } catch(e) {
-                    console.error("Error al renderizar:", e);
-                  } finally {
-                    restore();
-                  }
-                })
-                .withFailureHandler((err) => {
-                  console.error("Error en servidor:", err);
-                  restore();
-                })
-                .api_banco_getDashboardData({ year, month, userAuth: window.usuarioActivo() });
-            } else {
+            netRun()
+          .withSuccessHandler((data) => {
+            try {
+              banco_renderStyled(data);
+            } catch(e) {
+              console.error("Error al renderizar:", e);
+            } finally {
               restore();
-              location.reload();
             }
+          })
+          .withFailureHandler((err) => {
+            console.error("Error en servidor:", err);
+            restore();
+          })
+          .api_banco_getDashboardData({ year, month, token: token, authToken: token, userAuth: window.usuarioActivo() });
           } catch (e) {
             alert('⚠️ Error al Seleccionar Periodo: ' + e);
             restore();
