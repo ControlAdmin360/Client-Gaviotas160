@@ -28,7 +28,7 @@ function clearAuth(){
 // --- Identificación de Usuario Activo ---
 window.usuarioActivo = window.usuarioActivo || (() => {
   try {
-    return sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN';
+    return sessionStorage.getItem('AUTH_USER') || 'UNKNOWN';
   } catch (e) {
     return 'UNKNOWN_LOK';
   }
@@ -385,8 +385,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             })
             .deleteRow({ 
               confirmed: true, 
-              authToken: token, // 👈 Corregido: envía el token en lugar de usuarioActivo()
-              userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '',
+              authToken: token,
+              userAuth: window.usuarioActivo(),
               codeUsed: res.code 
             });
           return;
@@ -405,7 +405,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
         notificar('❌ Error al preparar eliminación: ' + (err?.message || String(err)));
         restore();
       })
-      .api_banco_delete_prepare(token);
+      .api_banco_delete_prepare(window.usuarioActivo());
 
   } catch (e) {
     console.error('Error al Eliminar:', e);
@@ -437,7 +437,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           let token = null;
           try { token = await ensureAuthTokenBanco(); } catch { token = null; }
           if (!token) {
-            if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
             restore();
             return;
           }
@@ -481,7 +480,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
               alert('Error al guardar M3: ' + (err?.message || String(err)));
               restore();
             })
-            .api_banco_setM3({ value: num }, token); // 👈 TOKEN corregido aquí
+            .api_banco_setM3({ value: num }, window.usuarioActivo());
       
         } catch (e) {
           console.error('Error en M3:', e);
@@ -591,7 +590,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
         
             // 3. Consulta directa vía netRun (Sin validar el objeto google)
             if (typeof netRun === 'function') {
-              const user = typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '';
+              const user = window.usuarioActivo();
               
               netRun()
                 .withSuccessHandler((data) => {
@@ -642,7 +641,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           const month = Number(mSel?.value);
           const year  = Number(ySel?.value);
           const token = typeof getAuthToken === 'function' ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
-          const user  = typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '';
+          const user  = window.usuarioActivo();
         
           netRun()
             .withSuccessHandler((data) => {
@@ -682,8 +681,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             // 2. Seleccionamos el mes y año actual
             mSel.value = current.month;
             ySel.value = current.year;
-
-            // 3. UNA SOLA LLAMADA: Reutilizamos reloadPage() para obtener los datos
             reloadPage(); 
           })
           .withFailureHandler(err => console.error('api_banco_getOptions error:', err))
@@ -806,7 +803,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           if (res?.user) {
             sessionStorage.setItem('AUTH_USER', res.user);
           }
-          // AQUÍ ES EL CAMBIO: Solo generamos y mostramos el botón PDF
           if (res?.ok && res?.urlPDF) {
             linksDiv.innerHTML = getBtnPDF(res); 
           } else {
