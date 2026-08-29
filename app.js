@@ -1258,8 +1258,10 @@ function banco_renderStyled(payload) {
     let bodyHtml = '<tbody>';
     const hasFindMerge = typeof findMerge === 'function';
     const hasNorm = typeof norm === 'function';
-    const hasServSet = typeof SERV_SET !== 'undefined';
-    const hasDepaSet = typeof DEPA_SET !== 'undefined';
+    const servSet = window.SERV_SET;
+    const depaSet = window.DEPA_SET;
+    const hasServSet = servSet && servSet.size > 0;
+    const hasDepaSet = depaSet && depaSet.size > 0;
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
@@ -1305,19 +1307,10 @@ function banco_renderStyled(payload) {
           const textH = hasNorm ? norm(raw) : s.trim().toUpperCase();
           const prevN = parseFloat(String(r[6] ?? '').replace(/[^\d.-]/g, ''));
         
-          // 🔍 DEPURACIÓN: Inspecciona estas variables en la consola de tu navegador
-          console.log({
-            textH: textH,
-            hasServSet: hasServSet,
-            esSet: SERV_SET instanceof Set,
-            existeEnSet: hasServSet && typeof SERV_SET.has === 'function' ? SERV_SET.has(textH) : false,
-            contenidoSet: Array.from(SERV_SET || [])
-          });
-        
           if (/SALDO/i.test(s)) cls += ' txt-blue';
-          else if (hasServSet && SERV_SET.has(textH)) cls += ' serv';
+          else if (hasServSet && servSet.has(textH)) cls += ' serv';
           else if (!isNaN(prevN) && prevN < 0) cls += ' gast';
-          else if (!isNaN(prevN) && prevN > 0 && !(hasDepaSet && DEPA_SET.has(textH))) cls += ' entris';
+          else if (!isNaN(prevN) && prevN > 0 && !(hasDepaSet && depaSet.has(textH))) cls += ' entris';
         }
 
         const bgBase = isTail ? 'transparent' : (j <= 7 ? (isAlt ? ZEBRA_LEFT_B : ZEBRA_LEFT_A) : (isAlt ? ZEBRA_RIGHT_B : ZEBRA_RIGHT_A));
