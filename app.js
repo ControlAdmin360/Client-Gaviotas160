@@ -1011,32 +1011,19 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     return '🧑-> ' + (u || 'LogOff');
   }
   //función auxiliar para calcular el tiempo restante en formato MM:SS u HH:MM
-  function getTokenRemainingTime() {
+   function getTokenRemainingTime() {
     const expireStr = sessionStorage.getItem('AUTH_EXPIRE');
-    const token = sessionStorage.getItem('AUTH_TOKEN');
-
-    if (!token || !expireStr) return '00:00';
-
+    if (!sessionStorage.getItem('AUTH_TOKEN') || !expireStr) return '00:00';
     const remainingMs = Number(expireStr) - Date.now();
-
-    // Si el tiempo expiró o llegó a cero
-    if (remainingMs <= 0) {
-      if (typeof cerrarSesion === 'function') {
-        cerrarSesion(false); // Dispara el retorno automático al formulario de Login
-      }
-      return '⛔Expired';
-    }
-
+    if (remainingMs <= 0) return '⛔Expired';
     const totalSeconds = Math.floor(remainingMs / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-
-    // Si le queda más de una hora, mostramos formato HH:MM:SS
+    // Si le queda más de una hora, mostramos formato H:MM:SS
     if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
-
     // Si queda menos de una hora, formato estándar MM:SS
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
