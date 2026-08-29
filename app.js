@@ -1040,7 +1040,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     const timeRemaining = getTokenRemainingTime();
     return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
   }
-  // --- Versión Original de refreshStatusUI ---
+  /*
 function refreshStatusUI() {
   const badge = document.getElementById('srvStatus');
   if (!badge) return;
@@ -1065,7 +1065,7 @@ function refreshStatusUI() {
       txtNode.textContent = "IDLE -> OnLine";
     }
   }
-}
+}*/
 
 // --- Temporizador Dinámico (Actualiza cada 1 segundo) ---
 if (window.sessionTimer) clearInterval(window.sessionTimer);
