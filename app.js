@@ -1960,25 +1960,41 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupConsultasSelect() {
   const sel = document.getElementById('consulta-depa');
   if (!sel) return;
-
-  const items = (typeof LISTAS !== 'undefined' && LISTAS?.depaIds) ? LISTAS.depaIds.slice() : [];
-  const norm = window.norm || (s => String(s || '').trim());
-
-  // Dedupe ordenado
-  const seen = new Set();
-  const uniques = [];
-  for (const v of items) {
-    const k = norm(v);
-    if (k && !seen.has(k)) { 
-      seen.add(k); 
-      uniques.push(v); 
+  const popularCombo = (depaIds) => {
+    const items = Array.isArray(depaIds) ? depaIds.slice() : [];
+    const norm = window.norm || (s => String(s || '').trim());
+    // Deduplicar y ordenar
+    const seen = new Set();
+    const uniques = [];
+    for (const v of items) {
+      const k = norm(v);
+      if (k && !seen.has(k)) { 
+        seen.add(k); 
+        uniques.push(v); 
+      }
     }
+    uniques.sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' }));
+    sel.innerHTML =
+      `<option value="">Select Depa...</option>` +
+      uniques.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+  };
+  // 1. Si ya existe en memoria global, lo pinta de inmediato
+  if (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds?.length) {
+    popularCombo(window.LISTAS.depaIds);
+    return;
   }
-  uniques.sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' }));
-
-  sel.innerHTML =
-    `<option value="">Select Depa...</option>` +
-    uniques.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+  // 2. Si no existe (en GitHub Pages), lo pide al backend mediante netRun
+  netRun()
+    .withSuccessHandler((res) => {
+      const depas = res?.depaIds || (Array.isArray(res) ? res : []);
+      window.LISTAS = window.LISTAS || {};
+      window.LISTAS.depaIds = depas; // Guardar en caché global
+      popularCombo(depas);
+    })
+    .withFailureHandler((err) => {
+      console.error('Error al cargar lista de departamentos:', err);
+    })
+    .getListasIdBanco();
 }
 
 // HELPERS DE TABLA Y PARSEO
