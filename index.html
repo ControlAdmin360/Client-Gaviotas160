@@ -5,40 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>🕊️ Gaviotas 160</title>
   <!-- Favicon emoji -->
-  <link id="favicon-svg" rel="icon" type="image/svg+xml" href="">
+  <link id="favicon-main" rel="icon" type="image/svg+xml" href="">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link id="favicon-png" rel="icon" type="image/png" sizes="32x32" href="">
   
   <!-- Enlace CSS estándar (en lugar de <?!= include('CSS'); ?>) -->
   <link rel="stylesheet" href="CSS.css">
 
   <script>
     // Favicon 🕊️ — crea/actualiza los <link> de icono
-    (function(){
-      function ensureLink(id, rel, type, sizes){
-        var el = document.getElementById(id);
-        if (!el){
-          el = document.createElement('link');
-          el.id = id;
-          el.rel = rel || 'icon';
-          if (type)  el.type  = type;
-          if (sizes) el.sizes = sizes;
-          document.head.appendChild(el);
-        }
-        return el;
+   (function(){
+      // Reutiliza o crea un único enlace de favicon
+      var link = document.getElementById('favicon-main');
+      if (!link) {
+        link = document.createElement('link');
+        link.id = 'favicon-main';
+        link.rel = 'icon';
+        document.head.appendChild(link);
       }
+
       var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>🕊️</text></svg>";
-      var svgUrl = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-      var pngUrl = "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f54a.png";
-
-      ensureLink('favicon-svg','icon','image/svg+xml').href = svgUrl + "#v=" + Date.now();
-      ensureLink('favicon-png','icon','image/png','32x32').href = pngUrl + "?v=" + Date.now();
-
-      var force = document.createElement('link');
-      force.rel  = 'shortcut icon';
-      force.type = 'image/png';
-      force.href = pngUrl + "?v=" + Date.now();
-      document.head.appendChild(force);
+      link.type = 'image/svg+xml';
+      link.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     })();
   </script>
 </head>
