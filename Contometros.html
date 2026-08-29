@@ -141,54 +141,6 @@
 </div>
 
 <script>
-// ===== COMUNICACIÓN CON EL SERVIDOR GAS =====
-function ejecutarServidor(nombreFuncion, ...parametros) {
-  return new Promise((resolve, reject) => {
-    const requestId = 'req_' + Math.random().toString(36).substring(2, 9);
-
-    function handleResponse(event) {
-      if (event.data && event.data.requestId === requestId) {
-        window.removeEventListener('message', handleResponse);
-        if (event.data.error) {
-          reject(new Error(event.data.error));
-        } else {
-          resolve(event.data.result);
-        }
-      }
-    }
-    window.addEventListener('message', handleResponse);
-    window.parent.postMessage({
-      type: 'GAS_BRIDGE_REQUEST',
-      requestId: requestId,
-      functionName: nombreFuncion,
-      parameters: parametros
-    }, '*');
-  });
-}
-
-window.netRun = function () {
-  let successFn = () => {};
-  let failureFn = () => {};
-
-  const proxy = new Proxy({}, {
-    get(_t, prop) {
-      if (prop === 'withSuccessHandler') {
-        return (fn) => { successFn = fn; return proxy; };
-      }
-      if (prop === 'withFailureHandler') {
-        return (fn) => { failureFn = fn; return proxy; };
-      }
-      return (...args) => {
-        ejecutarServidor(prop, ...args)
-          .then(res => successFn(res))
-          .catch(err => failureFn(err));
-        return proxy;
-      };
-    }
-  });
-
-  return proxy;
-};
 
 (() => {
   // ===== Helpers DOM
@@ -372,68 +324,76 @@ window.netRun = function () {
     }
   }
 
-  function cargarEstado(){
-    const msg = $('msg');
-    text(msg, 'Cargando estado...');
-    
-    netRun()
-      .withSuccessHandler(res => {
-        if (!res || typeof res !== 'object') { text(msg,'Error: Respuesta inválida.'); return; }
-        if (res.ok === false)                { text(msg,'Error: ' + (res.error || 'sin detalle')); return; }
-        
-        if (res.listoParaConsolidar) {
-          const confirmar = confirm(
-            res.mensaje + "\n\n¿Desea Ejecutar el Consolidado de Lecturas Ahora Mismo?⤴️"
-          );
+function cargarEstado(){
+  const msg = $('msg');
+  text(msg, 'Cargando estado...');
+  
+  const p = window.parent;
+  if (!p || typeof p.netRun !== 'function') {
+    text(msg, 'Error: Sin conexión con el servidor principal.');
+    return;
+  }
+  
+  // 1. Llamada al padre para obtener el estado
+  p.netRun()
+    .withSuccessHandler(res => {
+      if (!res || typeof res !== 'object') { text(msg,'Error: Respuesta inválida.'); return; }
+      if (res.ok === false)                { text(msg,'Error: ' + (res.error || 'sin detalle')); return; }
+      
+      if (res.listoParaConsolidar) {
+        const confirmar = confirm(
+          res.mensaje + "\n\n¿Desea Ejecutar el Consolidado de Lecturas Ahora Mismo?⤴️"
+        );
 
-          if (confirmar) {
-            text(msg, '⏳ Espere...');
-            
-            netRun()
-              .withSuccessHandler(resConsolidado => {
-                if (resConsolidado && resConsolidado.ok) {
-                  alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
-                  res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';
-                  if ($('gridIds')) $('gridIds').innerHTML = '';
-                  pintar(res);
-                  text(msg, '');
-                  cerrarModal();
-                } else {
-                  alert("❌ Error al consolidar: " + (resConsolidado ? resConsolidado.error : 'Sin detalle'));
-                  pintar(res);
-                  text(msg, '');
-                }
-              })
-              .withFailureHandler(err => {
-                alert("❌ Error de comunicación: " + (err?.message || err));
+        if (confirmar) {
+          text(msg, '⏳ Espere...');
+          
+          // 2. Llamada al padre para consolidar
+          p.netRun()
+            .withSuccessHandler(resConsolidado => {
+              if (resConsolidado && resConsolidado.ok) {
+                alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
+                res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';
+                if ($('gridIds')) $('gridIds').innerHTML = '';
                 pintar(res);
                 text(msg, '');
-              })
-              .correrContometros(AUTH_TOKEN);
-            return;
-          } else {
-            pintar(res);
-            if ($('idSel')) $('idSel').textContent = '—';
-            if ($('prevVal')) $('prevVal').textContent = '—';
-            if ($('inpValor')) {
-              $('inpValor').value = '';
-              $('inpValor').placeholder = 'Lectura a Registrar...';
-              $('inpValor').disabled = true;
-            }
-            if ($('btnGuardar')) $('btnGuardar').disabled = true;
-            text(msg, '⚠️ El Periodo Actual Debe Consolidarse Antes de Realizar Nuevos Registros.');
-            return;
+                cerrarModal();
+              } else {
+                alert("❌ Error al consolidar: " + (resConsolidado ? resConsolidado.error : 'Sin detalle'));
+                pintar(res);
+                text(msg, '');
+              }
+            })
+            .withFailureHandler(err => {
+              alert("❌ Error de comunicación: " + (err?.message || err));
+              pintar(res);
+              text(msg, '');
+            })
+            .correrContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
+          return;
+        } else {
+          pintar(res);
+          if ($('idSel')) $('idSel').textContent = '—';
+          if ($('prevVal')) $('prevVal').textContent = '—';
+          if ($('inpValor')) {
+            $('inpValor').value = '';
+            $('inpValor').placeholder = 'Lectura a Registrar...';
+            $('inpValor').disabled = true;
           }
+          if ($('btnGuardar')) $('btnGuardar').disabled = true;
+          text(msg, '⚠️ El Periodo Actual Debe Consolidarse Antes de Realizar Nuevos Registros.');
+          return;
         }
+      }
 
-        pintar(res); 
-        text(msg, '');
-      })
-      .withFailureHandler(err => text(msg, 'Error: ' + (err?.message || err)))
-      .getEstadoContometros(AUTH_TOKEN);
-  }
+      pintar(res); 
+      text(msg, '');
+    })
+    .withFailureHandler(err => text(msg, 'Error: ' + (err?.message || err)))
+    .getEstadoContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
+}
 
-  // ===== Listeners
+// ===== Listeners
   $('btnVerLecturas')?.addEventListener('click', () => {
     const msg = $('msg');
     const sel = $('cboFechas');
@@ -444,14 +404,23 @@ window.netRun = function () {
     msg.classList.remove('warn'); msg.classList.add('flat');
     text(msg, 'Cargando lecturas de ' + fechaSel + '…');
 
-    netRun()
+    const p = window.parent;
+    if (!p || typeof p.netRun !== 'function') {
+      msg.classList.remove('flat'); msg.classList.add('warn');
+      text(msg, 'Error: Sin conexión con el servidor principal.');
+      return;
+    }
+
+    p.netRun()
       .withSuccessHandler(r => {
-        const merged = Object.assign({}, EST || {}, r || {}, { viewOnly: true, fechas: r.fechas || [] });
-        EST = merged; pintar(merged); text(msg, 'Listo ✔️');
+        const merged = Object.assign({}, EST || {}, r || {}, { viewOnly: true, fechas: r?.fechas || [] });
+        EST = merged; 
+        pintar(merged); 
+        text(msg, 'Listo ✔️');
       })
       .withFailureHandler(err => {
         msg.classList.remove('flat'); msg.classList.add('warn');
-        text(msg, 'Error al cargar lecturas: ' + (err?.message || 'desconocido'));
+        text(msg, 'Error al cargar lecturas: ' + (err?.message || String(err)));
       })
       .verLecturasPorFecha(fechaSel);
   });
@@ -463,17 +432,24 @@ window.netRun = function () {
   });
 
   let guardandoFecha = false;
-  $('btnGuardarFecha')?.addEventListener('click', () => {
+$('btnGuardarFecha')?.addEventListener('click', () => {
     if (guardandoFecha) return;
     const btn = $('btnGuardarFecha'), msg = $('msg');
     const s = String($('inpFechaNueva')?.value || '').trim();
     if (!s){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Seleccione una fecha valida.'); return; }
 
+    const p = window.parent;
+    if (!p || typeof p.netRun !== 'function') {
+      msg.classList.remove('flat'); msg.classList.add('warn');
+      text(msg, 'Error: Sin conexión con el servidor principal.');
+      return;
+    }
+
     guardandoFecha = true; btn.disabled = true;
     const old = btn.textContent; btn.textContent = 'Registrando...';
     msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Iniciando Periodo...');
 
-    netRun()
+    p.netRun()
       .withSuccessHandler(r => {
         msg.classList.remove('flat'); msg.classList.add('warn');
         if (!r || typeof r !== 'object')       text(msg, 'Error: respuesta inválida al guardar fecha.');
@@ -487,12 +463,12 @@ window.netRun = function () {
       })
       .withFailureHandler(err => {
         guardandoFecha = false; btn.disabled = false;
-        text(msg, 'Error: ' + (err?.message || err)); btn.textContent = old;
+        text(msg, 'Error: ' + (err?.message || String(err))); btn.textContent = old;
       })
-      .guardarFechaNueva(s, AUTH_TOKEN, AUTH_USER);
+      .guardarFechaNueva(s, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '', typeof AUTH_USER !== 'undefined' ? AUTH_USER : '');
   });
 
-  $('btnGuardar')?.addEventListener('click', () => {
+$('btnGuardar')?.addEventListener('click', () => {
     const msg = $('msg');
     if (!EST || EST.doneAll) return;
     if (!seleccionado){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Elija un Dpto.'); return; }
@@ -519,8 +495,6 @@ window.netRun = function () {
     msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Enviando…');
     $('btnGuardar').disabled = true;
 
-    const payload = { row: seleccionado.row, value: valNum, col: EST.lastCol, authToken: AUTH_TOKEN, seleccionado: seleccionado };
-
     function revertUI(){
       if (!btnId || !prevStyle) return;
       btnId.style.backgroundColor = prevStyle.bg;
@@ -536,7 +510,20 @@ window.netRun = function () {
       }
     }
 
-    netRun()
+    const p = window.parent;
+    if (!p || typeof p.netRun !== 'function') {
+      $('btnGuardar').disabled = false;
+      revertUI();
+      msg.classList.remove('flat'); msg.classList.add('warn');
+      text(msg, 'Error: Sin conexión con el servidor principal.');
+      return;
+    }
+
+    const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
+    const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
+    const payload = { row: seleccionado.row, value: valNum, col: EST.lastCol, authToken: token, seleccionado: seleccionado };
+
+    p.netRun()
       .withSuccessHandler(res => {
         $('btnGuardar').disabled = false;
         if (res && !res.ok && res.requiereConfirmacion) {
@@ -544,7 +531,8 @@ window.netRun = function () {
           if (acepta) {
             $('btnGuardar').disabled = true;
             payload.confirmado = true;
-            netRun()
+
+            p.netRun()
               .withSuccessHandler(res2 => {
                 $('btnGuardar').disabled = false;
                 if (!res2 || typeof res2 !== 'object' || !res2.ok) {
@@ -556,9 +544,9 @@ window.netRun = function () {
               })
               .withFailureHandler(err2 => {
                 $('btnGuardar').disabled = false;
-                revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err2?.message || err2));
+                revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err2?.message || String(err2)));
               })
-              .guardarLecturaContometros(payload, AUTH_USER);
+              .guardarLecturaContometros(payload, user);
             return;
           } else {
             revertUI();
@@ -574,9 +562,9 @@ window.netRun = function () {
       })
       .withFailureHandler(err => {
         $('btnGuardar').disabled = false;
-        revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err?.message || err));
+        revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err?.message || String(err)));
       })
-      .guardarLecturaContometros(payload, AUTH_USER);
+      .guardarLecturaContometros(payload, user);
   });
 
   // Validación de lectura en tiempo real
