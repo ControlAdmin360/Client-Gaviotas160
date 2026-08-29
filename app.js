@@ -285,67 +285,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     restore();
   }
 });
-        // CARGA PERIODO EN BANCO
-      async function refreshBanco(){
-        const btn  = document.getElementById('banco-buscar');
-          const mSel = document.getElementById('banco-month');
-          const ySel = document.getElementById('banco-year');
-          const month = Number(mSel?.value);
-          const year  = Number(ySel?.value);
-
-          const restore = () => {
-            if (!btn) return;
-            btn.disabled = false;
-            btn.textContent = btn.dataset._old || '📅 Ver Periodo';
-            btn.removeAttribute('style');
-            btn.className = 'btn-orange';
-          };
-
-          const setWorking = () => {
-            if (!btn) return;
-            btn.dataset._old = btn.textContent;
-            btn.disabled = true;
-            btn.style.background = '#FAD775';
-            btn.style.color = '#000';
-            btn.textContent = '⏳Actualizando…';
-          };
-
-          try {
-            // 1. Validar selección de entradas
-            if (!month || !year || Number.isNaN(month) || Number.isNaN(year)) {
-              if (window.toast) toast("⚠️ Seleccione mes y año válidos");
-              else alert('Seleccione mes y año válidos.');
-              return;
-            }
-            // 2. Autenticación
-            let token = null;
-            try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-            if (!token) {
-              if (window.toast) toast("🔐 Autenticación Fallida (⛔)");
-              return;
-            }
-            setWorking();
-            // 3. Consulta directa al nuevo Backend (Misma lógica ligera que reloadPage)
-            netRun()
-          .withSuccessHandler((data) => {
-            try {
-              banco_renderStyled(data);
-            } catch(e) {
-              console.error("Error al renderizar:", e);
-            } finally {
-              restore();
-            }
-          })
-          .withFailureHandler((err) => {
-            console.error("Error en servidor:", err);
-            restore();
-          })
-          .api_banco_getDashboardData({ year, month, token: token, authToken: token, userAuth: window.usuarioActivo() });
-          } catch (e) {
-            alert('⚠️ Error al Seleccionar Periodo: ' + e);
-            restore();
-          }
-        }
         // CARGA PERIODO EN BANCO (Corregido para app.js)
         async function refreshBanco() {
           const btn  = document.getElementById('banco-buscar');
@@ -417,6 +356,53 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             alert('⚠️ Error al Seleccionar Periodo: ' + e);
             restore();
           }
+        }
+        function reloadPage() {
+          const btn  = document.getElementById('banco-refresh');
+          const mSel = document.getElementById('banco-month');
+          const ySel = document.getElementById('banco-year');
+          
+          const restore = () => {
+            if (!btn) return;
+            btn.disabled = false;
+            btn.textContent = btn.dataset._old || '🔄 Actualizar';
+            btn.removeAttribute('style');
+            btn.className = 'btn-blue';
+          };
+        
+          if (btn) {
+            btn.dataset._old = btn.textContent;
+            btn.disabled = true;
+            btn.style.background = '#FAD775';
+            btn.style.color = '#000';
+            btn.textContent = '⏳Espere...';
+          }
+        
+          const month = Number(mSel?.value);
+          const year  = Number(ySel?.value);
+          const token = typeof getAuthToken === 'function' ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
+          const user  = typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '';
+        
+          netRun()
+            .withSuccessHandler((data) => {
+              try { 
+                if (data && (data.ok === false || data.error)) {
+                  if (window.toast) toast("🔴 " + (data.error || "Error al actualizar"));
+                } else {
+                  banco_renderStyled(data); 
+                }
+              } catch(e) {
+                console.error("Error al renderizar:", e);
+              } finally { 
+                restore(); 
+              }
+            })
+            .withFailureHandler((err) => {
+              console.error("Error en servidor:", err);
+              restore();
+              if (window.toast) toast("🔴 Error al conectar con el servidor");
+            })
+            .api_banco_getDashboardData({ year, month, token: token, authToken: token, userAuth: user });
         }
        // SETEA M3 EN BANCO
       document.getElementById('btn-m3')?.addEventListener('click', async () => {
