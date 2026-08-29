@@ -1,8 +1,6 @@
-
 /**
  * =============================================================================
  * 0. NÚCLEO GLOBAL (Variables, Autenticación y Utilidades)
- * Funciones transversales que afectan a todo el sistema.
  * =============================================================================
  */
 const DEBUG = true;
@@ -24,21 +22,23 @@ function setAuthUser(u){ if (u) sessionStorage.setItem('AUTH_USER', u); }
 function clearAuth(){
   sessionStorage.removeItem('AUTH_TOKEN');
   sessionStorage.removeItem('AUTH_USER');
+  sessionStorage.removeItem('AUTH_EXPIRE');
 }
+
 // --- Identificación de Usuario Activo ---
 window.usuarioActivo = window.usuarioActivo || (() => {
   try {
     return sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN';
   } catch (e) {
-    // Si el navegador bloquea sessionStorage (ej. Incógnito), evita el crash
     return 'UNKNOWN_LOK';
   }
 });
 
-// Usa: netRun(funcion global).withSuccessHandler(...).api_foo(...)
+// --- Motor Principal netRun (Conexión Directa a Apps Script) ---
 window.netRun = function () {
   let successFn = () => {};
   let failureFn = () => {};
+
   const proxy = new Proxy({}, {
     get(_t, prop) {
       if (prop === 'withSuccessHandler') {
@@ -49,15 +49,23 @@ window.netRun = function () {
       }
       return (...args) => {
         if (typeof window.__NetState === 'object') window.__NetState.busy();
-        ejecutarServidor(prop, ...args)
-          .then(res => {
-            if (typeof window.__NetState === 'object') window.__NetState.idle();
-            successFn(res);
-          })
-          .catch(err => {
-            if (typeof window.__NetState === 'object') window.__NetState.idle();
-            failureFn(err);
-          });
+
+        // 1. Si estamos dentro del entorno nativo de Google Apps Script
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+          google.script.run
+            .withSuccessHandler(res => {
+              if (typeof window.__NetState === 'object') window.__NetState.idle();
+              successFn(res);
+            })
+            .withFailureHandler(err => {
+              if (typeof window.__NetState === 'object') window.__NetState.idle();
+              failureFn(err);
+            })[prop](...args);
+        } else {
+          // 2. Si estamos en GitHub Pages / Web externa, notifica error de entorno si no hay API externa
+          console.warn(`[netRun] Ejecutando '${prop}' fuera del entorno nativo de Apps Script.`);
+          if (typeof window.__NetState === 'object') window.__NetState.idle();
+        }
         return proxy;
       };
     }
@@ -66,28 +74,29 @@ window.netRun = function () {
 };
 
 window.eventosCache = [];
+
 // --- Sistema de Autenticación de Usuario + Revalidación de Token ---
-// Valida si existe una sesión o solicita credenciales para acceso a módulos restringidos. 
 function ensureAuthTokenBanco(){
   return new Promise((resolve, reject) => {
     const existing = (typeof getAuthToken === 'function')
       ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
+    
     const pulseUser = (user) => {
       const u = user || '';
-      // guarda usuario (preferir setAuthUser si existe)
-      (typeof setAuthUser === 'function')
-        ? setAuthUser(u) : sessionStorage.setItem('AUTH_USER', u);
+      if (typeof setAuthUser === 'function') setAuthUser(u);
+      else sessionStorage.setItem('AUTH_USER', u);
       if (typeof refreshStatusUI === 'function') refreshStatusUI();
     };
+
     const saveToken = (token) => {
-      (typeof setAuthToken === 'function') ? setAuthToken(token)
-              : sessionStorage.setItem('AUTH_TOKEN', token);
-      // ⏱️ GUARDAR EXPIRACIÓN: 7200 segundos transformados a milisegundos desde "ahora"
-      const expireTime = Date.now() + (7200 * 1000);  // es lo mismo que esta en el backend= const AUTH_TTL_SECONDS  = 7200;
+      if (typeof setAuthToken === 'function') setAuthToken(token);
+      else sessionStorage.setItem('AUTH_TOKEN', token);
+      
+      const expireTime = Date.now() + (7200 * 1000); // 2 horas (7200s)
       sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
-      // Iniciamos el temporizador existente para actualizar
       if (typeof refreshStatusUI === 'function') refreshStatusUI();
     };
+
     const clearAuthSafe = () => {
       try { if (typeof clearAuth === 'function') clearAuth(); } catch(_) {}
       sessionStorage.removeItem('AUTH_TOKEN');
@@ -98,28 +107,25 @@ function ensureAuthTokenBanco(){
 
     // 1) Si no hay token → pedir credenciales
     const promptLogin = () => {
-      const user = (prompt('🧑 USUARIO: email, username')|| '').trim().toUpperCase();
+      const user = (prompt('🧑 USUARIO: email, username') || '').trim().toUpperCase();
       if (!user) return reject(new Error('cancelado'));
-      const pin  = (prompt('🔑 Clave-PIN de acceso:')|| '').trim();
+      const pin = (prompt('🔑 Clave-PIN de acceso:') || '').trim();
       if (!pin) return reject(new Error('cancelado'));
 
-      // Backend: login cuando token vacío
       netRun()
         .withSuccessHandler(res => {
           if (res && res.ok && res.token) {
             saveToken(res.token);
-            pulseUser(res.user || user);              // <<< guarda usuario + refresca UI
+            pulseUser(res.user || user);
             resolve(res.token);
           } else {
-            //alert(res?.error || 'Credenciales inválidas');
-            reject(new Error('login_failed'));
+            reject(new Error(res?.error || 'login_failed'));
           }
         })
         .withFailureHandler(err => {
-          //alert('🚨login_failed🚨 ' + (err?.message || err));
           reject(err);
         })
-        .api_auth_check('', user, pin); // SIN token → login
+        .api_auth_check('', user, pin);
     };
 
     if (!existing) return promptLogin();
@@ -127,21 +133,19 @@ function ensureAuthTokenBanco(){
     // 2) Hay token → revalidar con el backend
     netRun()
       .withSuccessHandler(res => {
-          if (res && res.ok) {
-          // token válido; si backend devuelve usuario, actualiza UI
-          if (res.user) pulseUser(res.user); // <<< guarda usuario + refresca UI
-          return resolve(existing);
+        if (res && res.ok) {
+          if (res.user) pulseUser(res.user);
+          resolve(existing);
+          return;
         }
-        // expiró → limpiar y pedir login
         clearAuthSafe();
-        return promptLogin();
+        promptLogin();
       })
       .withFailureHandler(_ => {
-        // error al validar → pedir login
         clearAuthSafe();
-        return promptLogin();
+        promptLogin();
       })
-      .api_auth_check(existing); // SOLO token para validar
+      .api_auth_check(existing);
   });
 }
 
@@ -189,6 +193,7 @@ function ensureAuthTokenBanco(){
 document.getElementById('banco-eliminar')?.addEventListener('click', async () => {
   const btn = document.getElementById('banco-eliminar');
   if (!btn) return;
+  
   const oldText = btn.textContent;
   const restore = () => {
     btn.disabled = false;
@@ -196,6 +201,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     btn.removeAttribute("style");
     btn.className = "btn-redd";
   };
+  
   const notificar = (msg) => {
     if (window.toast) window.toast(msg);
     else alert(msg);
@@ -206,6 +212,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     try { token = await ensureAuthTokenBanco(); } catch { token = null; }
     if (!token) {
       notificar('🔐 Autenticación Fallida (⛔)');
+      restore(); // 👈 Agregado: restaura el botón si no hay token
       return;
     }
     // 2. Estado de carga visual
@@ -220,17 +227,17 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
         // A) Si hay alerta explícita del servidor
         if (res?.alert) {
           alert(res.alert);
-          return restore();
+          restore();
+          return;
         }
-
         // B) Si requiere código de confirmación del cliente
         if (res?.needCode) {
           btn.textContent = '⏳ Validando Código...';
-          
-          // Esperamos la entrada del usuario de forma asíncrona
           const ok = await pedirCodigoCliente(res.mensaje, res.code, res.maxAttempts || 3);
-          if (!ok) return restore(); // El usuario canceló o falló
-
+          if (!ok) {
+            restore();
+            return;
+          }
           // Confirmación definitiva de borrado
           netRun()
             .withSuccessHandler((r2) => {
@@ -245,18 +252,17 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
               restore();
             })
             .withFailureHandler((err) => {
-              notificar('❌ Error al confirmar: ' + (err?.message || err));
+              notificar('❌ Error al confirmar: ' + (err?.message || String(err)));
               restore();
             })
             .deleteRow({ 
               confirmed: true, 
-              authToken: window.usuarioActivo(), 
+              authToken: token, // 👈 Corregido: envía el token en lugar de usuarioActivo()
+              userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '',
               codeUsed: res.code 
             });
-
           return;
         }
-
         // C) Eliminación directa sin código previo
         if (res?.ok) {
           notificar('✅ Registro eliminado correctamente.');
@@ -268,10 +274,10 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
         restore();
       })
       .withFailureHandler((err) => {
-        notificar('❌ Error al preparar eliminación: ' + (err?.message || err));
+        notificar('❌ Error al preparar eliminación: ' + (err?.message || String(err)));
         restore();
       })
-      .api_banco_delete_prepare(token); // 👈 Pasamos el token validado al servidor
+      .api_banco_delete_prepare(token);
 
   } catch (e) {
     console.error('Error al Eliminar:', e);
@@ -407,7 +413,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
                   restore();
                   if (window.toast) toast("🔴 Error al cargar periodo");
                 })
-                .api_banco_getDashboardData({ year, month, userAuth: user });
+                .api_banco_getDashboardData({ year, month, token: token, authToken: token, userAuth: user })
             } else {
               console.error("🔴 netRun no está disponible en app.js");
               restore();
@@ -436,7 +442,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           btn.style.color = '#000';
           btn.textContent = '⏳ Solicitando…';
       
-          // 1. Autenticación
+          // 1. Autenticación: Capturar TOKEN REAL
           let token = null;
           try { token = await ensureAuthTokenBanco(); } catch { token = null; }
           if (!token) {
@@ -446,7 +452,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           }
       
           // 2. Captura y parseo del valor
-          const raw = prompt('Ingrese lo m3. Indicados en el Recibo');
+          const raw = prompt('Ingrese los m3 indicados en el Recibo:');
           if (raw == null) {
             restore();
             return;
@@ -470,19 +476,21 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
           });
       
-          // 3. Guardar en backend (Sin await para evitar la excepción sintáctica)
-          const user = typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '';
-          
+          // 3. Guardar en backend (Pasando 'token' en el segundo argumento)
           netRun()
-            .withSuccessHandler(() => {
-              if (window.toast) toast("✅ m3 REGISTRADO");
+            .withSuccessHandler((res) => {
+              if (res && res.ok) {
+                if (window.toast) toast("✅ m3 REGISTRADO");
+              } else {
+                alert('Error: ' + (res?.error || 'No se pudo registrar m3'));
+              }
               restore();
             })
             .withFailureHandler(err => {
               alert('Error al guardar M3: ' + (err?.message || String(err)));
               restore();
             })
-            .api_banco_setM3({ value: num }, user);
+            .api_banco_setM3({ value: num }, token); // 👈 TOKEN corregido aquí
       
         } catch (e) {
           console.error('Error en M3:', e);
