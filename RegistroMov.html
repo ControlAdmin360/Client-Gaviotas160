@@ -270,21 +270,21 @@
       }).getListasIdBanco();
     }
 
-      if (p && typeof p.netRun === 'function') {
-        p.netRun()
-          .withSuccessHandler(meta => {
-            correoUsuario = meta?.email || '';
-            renderMetaUsuario();
-          })
-          .withFailureHandler(() => {
-            correoUsuario = '';
-            renderMetaUsuario();
-          })
-          .getCuentaUsuario();
-      } else {
-        correoUsuario = '';
-        renderMetaUsuario();
-      }
+    if (p && typeof p.netRun === 'function') {
+      p.netRun()
+        .withSuccessHandler(meta => {
+          correoUsuario = meta?.email || AUTH_USER || 'Sistema Local';
+          renderMetaUsuario();
+        })
+        .withFailureHandler(() => {
+          correoUsuario = AUTH_USER || '—';
+          renderMetaUsuario();
+        })
+        .getCuentaUsuario();
+    } else {
+      correoUsuario = AUTH_USER || '—';
+      renderMetaUsuario();
+    }
 
     // Cierre local
     document.getElementById('btnSalir')?.addEventListener('click', () => {
