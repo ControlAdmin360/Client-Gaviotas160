@@ -100,8 +100,12 @@ window.netRun = function () {
   });
   return proxy;
 };
-
 window.eventosCache = [];
+
+window.norm = window.norm || (s => String(s ?? '').trim().toUpperCase());
+window.DEPA_SET = window.DEPA_SET || new Set();
+window.SERV_SET = window.SERV_SET || new Set();
+window.LISTAS = window.LISTAS || { depaIds: [], servIds: [] };
 
 // --- Sistema de Autenticación de Usuario + Revalidación de Token ---
 function ensureAuthTokenBanco(){
@@ -1258,8 +1262,8 @@ function banco_renderStyled(payload) {
     let bodyHtml = '<tbody>';
     const hasFindMerge = typeof findMerge === 'function';
     const hasNorm = typeof norm === 'function';
-    const servSet = window.SERV_SET;
-    const depaSet = window.DEPA_SET;
+    const servSet = window.SERV_SET || new Set();
+    const depaSet = window.DEPA_SET || new Set();
     const hasServSet = servSet && servSet.size > 0;
     const hasDepaSet = depaSet && depaSet.size > 0;
 
@@ -2001,10 +2005,21 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupConsultasSelect() {
   const sel = document.getElementById('consulta-depa');
   if (!sel) return;
+
+  const norm = window.norm || (s => String(s || '').trim().toUpperCase());
+
+  // Helper para actualizar los Sets globales de la app
+  const hidratarSetsGlobales = (depas, servs) => {
+    if (Array.isArray(depas) && depas.length) {
+      window.DEPA_SET = new Set(depas.map(norm));
+    }
+    if (Array.isArray(servs) && servs.length) {
+      window.SERV_SET = new Set(servs.map(norm));
+    }
+  };
+
   const popularCombo = (depaIds) => {
     const items = Array.isArray(depaIds) ? depaIds.slice() : [];
-    const norm = window.norm || (s => String(s || '').trim());
-    // Deduplicar y ordenar
     const seen = new Set();
     const uniques = [];
     for (const v of items) {
@@ -2019,17 +2034,27 @@ function setupConsultasSelect() {
       `<option value="">Select Depa...</option>` +
       uniques.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
   };
-  // 1. Si ya existe en memoria global, lo pinta de inmediato
+
+  // 1. Si ya existe en memoria global, lo pinta e hidrata los Sets de inmediato
   if (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds?.length) {
+    hidratarSetsGlobales(window.LISTAS.depaIds, window.LISTAS.servIds);
     popularCombo(window.LISTAS.depaIds);
     return;
   }
-  // 2. Si no existe (en GitHub Pages), lo pide al backend mediante netRun
+
+  // 2. Si no existe (en GitHub Pages), pide al backend y guarda en memoria global + Sets
   netRun()
     .withSuccessHandler((res) => {
       const depas = res?.depaIds || (Array.isArray(res) ? res : []);
+      const servs = res?.servIds || [];
+
       window.LISTAS = window.LISTAS || {};
       window.LISTAS.depaIds = depas; // Guardar en caché global
+      window.LISTAS.servIds = servs;
+
+      // 👈 AQUÍ POBLAMOS LOS SETS PARA QUE BANCO_RENDERSTYLED TENGA ACCESO
+      hidratarSetsGlobales(depas, servs);
+
       popularCombo(depas);
     })
     .withFailureHandler((err) => {
