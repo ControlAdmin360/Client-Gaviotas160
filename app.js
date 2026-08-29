@@ -2247,7 +2247,7 @@ async function cons_consultar() {
     return;
   }
 
-  // Panel de Saldos
+  // 1. Panel de Saldos - Estado inicial de carga
   const panelSaldos = document.getElementById('panel-saldos-container');
   const loaderSaldos = document.getElementById('s-loader');
   if (panelSaldos) panelSaldos.style.display = 'block';
@@ -2282,7 +2282,7 @@ async function cons_consultar() {
 
   cons_resetTotales();
 
-  // Autenticación
+  // 2. Autenticación
   let token = null;
   try { token = await ensureAuthTokenBanco(); } catch { token = null; }
   if (!token) {
@@ -2292,37 +2292,40 @@ async function cons_consultar() {
     return;
   }
 
-  const gs = (typeof google !== 'undefined' && google?.script?.run) ? netRun() : null;
-  if (gs) {
-    gs.withSuccessHandler((data) => {
-        cons_render(data);
-        tbl?.removeAttribute('aria-busy');
-        if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
-      })
-      .withFailureHandler((err) => {
-        if (meta) { meta.textContent = 'No se pudo cargar el titular.'; }
-        alert('❌ Error Consultas: ' + (err?.message || err));
-        cons_resetTotales();
-        if (tbl) {
-          tbl.innerHTML = `<tbody><tr><td colspan="5" style="padding:12px;color:#fca5a5;text-align:center;">Error al cargar datos.</td></tr></tbody>`;
-          tbl.removeAttribute('aria-busy');
-        }
-        if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
-      })
-      .getRecibosMovimientos(val, window.usuarioActivo());
+  const userActivo = (typeof window.usuarioActivo === 'function') 
+    ? window.usuarioActivo() 
+    : (sessionStorage.getItem('AUTH_USER') || 'UNKNOWN');
 
-    // Carga de Saldos (Panel Derecho)
-    gs.withSuccessHandler((saldosData) => {
-        cons_renderSaldos(saldosData);
-      }) 
-      .api_Saldos_Para_Modal(val);
+  // 3. Petición 1: Historial de Recibos y Movimientos
+  netRun()
+    .withSuccessHandler((data) => {
+      cons_render(data);
+      tbl?.removeAttribute('aria-busy');
+      if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
+    })
+    .withFailureHandler((err) => {
+      if (meta) { meta.textContent = 'No se pudo cargar el titular.'; }
+      alert('❌ Error Consultas: ' + (err?.message || err));
+      cons_resetTotales();
+      if (tbl) {
+        tbl.innerHTML = `<tbody><tr><td colspan="5" style="padding:12px;color:#fca5a5;text-align:center;">Error al cargar datos.</td></tr></tbody>`;
+        tbl.removeAttribute('aria-busy');
+      }
+      if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
+    })
+    .getRecibosMovimientos(val, userActivo);
 
-  } else {
-    if (window.toast) toast("❌ Servidor no disponible");
-    cons_resetTotales();
-    if (tbl) { tbl.removeAttribute('aria-busy'); tbl.innerHTML = ''; }
-    if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; }
-  }
+  // 4. Petición 2: Saldos del Departamento (Panel Derecho) - Instancia independiente
+  netRun()
+    .withSuccessHandler((saldosData) => {
+      cons_renderSaldos(saldosData);
+    })
+    .withFailureHandler((err) => {
+      console.error("Error al cargar saldos:", err);
+      const loader = document.getElementById("s-loader");
+      if (loader) loader.classList.add("hidden");
+    })
+    .api_Saldos_Para_Modal(val);
 }
 
 function cons_renderSaldos(data) {
