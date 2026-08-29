@@ -274,21 +274,20 @@
     }
     initIDBlock();
 
-if (window.parent && window.parent.LISTAS) {
-  listaDepas = window.parent.LISTAS.depaIds || [];
-  listaServs = window.parent.LISTAS.servIds || [];
-  updateTipoMovimiento();
-} else {
-  // Si aún no están en memoria, las solicita a app.js
-  ejecutarServidor('getListasIdBanco')
-    .then(res => {
-      const data = (res && res.depaIds) ? res : (res && res.result ? res.result : res);
-      listaDepas = data?.depaIds || [];
-      listaServs = data?.servIds || [];
-      updateTipoMovimiento();
-    })
-    .catch(err => console.error('Error al obtener listas:', err));
-}
+ejecutarServidor('getListasIdBanco')
+  .then(res => {
+    // Extrae la respuesta independientemente de cómo venga empaquetada
+    const data = (res && res.depaIds) ? res : (res && res.result ? res.result : res);
+    
+    listaDepas = data?.depaIds || [];
+    listaServs = data?.servIds || [];
+
+    console.log('Listas actualizadas:', { listaDepas, listaServs });
+
+    // Disparar reevaluación si ya hay texto en el formulario
+    updateTipoMovimiento();
+  })
+  .catch(err => console.error('Error al cargar listas:', err));
 
     ejecutarServidor('getCuentaUsuario')
       .then(meta => {
