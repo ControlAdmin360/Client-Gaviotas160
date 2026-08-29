@@ -275,45 +275,47 @@
     initIDBlock();
 
 function cargarListasGarantizado() {
+  // 1. Intentar leer del padre (app.js)
   const p = window.parent;
-
-  // 1. Si AMBAS listas están completas en la memoria del navegador, usarlas
-  if (p && p.LISTAS && p.LISTAS.depaIds?.length > 0 && p.LISTAS.servIds?.length > 0) {
-    listaDepas = p.LISTAS.depaIds.map(x => String(x).trim().toUpperCase());
-    listaServs = p.LISTAS.servIds.map(x => String(x).trim().toUpperCase());
-    console.log("🟢 LISTAS CARGADAS DE MEMORIA:", { listaDepas, listaServs });
+  
+  if (p && p.LISTAS && (p.LISTAS.depaIds || p.LISTAS.servIds)) {
+    // Extraer sin importar la estructura
+    listaDepas = p.LISTAS.depaIds || (Array.isArray(p.LISTAS) ? p.LISTAS : []);
+    listaServs = p.LISTAS.servIds || [];
+    
+    console.log("🟢 LISTAS ENCONTRADAS EN MEMORIA:", { depas: listaDepas, servs: listaServs });
     updateTipoMovimiento();
     return;
   }
 
-  // 2. Pedir al servidor Google Apps Script
+  // 2. Si no están en memoria, solicitarlas por el puente
+  console.log("🟡 Pidiendo listas al servidor...");
   ejecutarServidor('getListasIdBanco')
     .then(res => {
-      // Extraer datos (desempaquetando por si viene envuelto)
+      console.log("📦 RESPUESTA CRUDA DEL SERVIDOR:", res);
+      
+      // Desempaquetar cualquier estructura que devuelva GAS
       const data = res?.result || res || {};
       
-      const rawDepas = data.depaIds || (Array.isArray(data) ? data : []);
-      const rawServs = data.servIds || [];
+      listaDepas = data.depaIds || (Array.isArray(data) ? data : []);
+      listaServs = data.servIds || [];
 
-      // Convertir todo a String y Mayúsculas obligatorias para comparaciones exactas
-      listaDepas = rawDepas.map(x => String(x).trim().toUpperCase());
-      listaServs = rawServs.map(x => String(x).trim().toUpperCase());
-
-      // Actualizar la caché global del padre
+      // Guardar en la caché global del padre
       if (p) {
         p.LISTAS = p.LISTAS || {};
         p.LISTAS.depaIds = listaDepas;
         p.LISTAS.servIds = listaServs;
       }
 
-      console.log("🟢 LISTAS RECIBIDAS DEL SERVIDOR:", { listaDepas, listaServs });
+      console.log("🟢 LISTAS CARGADAS DESDE SERVIDOR:", { depas: listaDepas, servs: listaServs });
       updateTipoMovimiento();
     })
-    .catch(err => console.error("🔴 Error al obtener listas:", err));
+    .catch(err => console.error("🔴 ERROR AL PEDIR LISTAS:", err));
 }
 
 // Ejecutar inmediatamente
 cargarListasGarantizado();
+
 
     ejecutarServidor('getCuentaUsuario')
       .then(meta => {
