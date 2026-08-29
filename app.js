@@ -195,7 +195,6 @@ const $$$ = s => Array.from(document.querySelectorAll(s));
   }
   function toast(msg){
     const t = $$('#toast');
-    if (!t) { console.log('Toast:', msg); return; }
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(()=> t.classList.remove('show'), 4000);
@@ -925,11 +924,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
 
   function setState(next){
     if (next === prev) return;
-    console.log(`Net state changed from ${prev} to ${next}`);
     prev = next;
-
      document.dispatchEvent(new CustomEvent('NET_STATE_CHANGED', { detail:{ state: next } })); // ✅
-
     // 1) Pill simple: #netStatePill
     const pill = document.getElementById('netStatePill');
     if (pill){
@@ -1095,8 +1091,7 @@ window.escapeHTML = function(x){
 };
 window.toast = function(msg) {
   const t = document.getElementById('toast');
-  if (!t) { 
-    console.log('Toast:', msg); 
+  if (!t) {  
     return; 
   }
   t.textContent = msg;
@@ -2995,13 +2990,9 @@ function validarYGuardarExon() {
 }
 
 // abrir el modal de Multas
-/*function abrirModalMultas() {
+function abrirModalMultas() {
   const modal = document.getElementById('modal-multas-sanciones');
   
-  if (!modal) {
-    console.error('⛔ No se encontró el modal "modal-multas-sanciones" en el DOM.');
-    return;
-  }
   modal.style.display = 'flex';
   // Poblar el combo de departamentos de forma segura
   const selectDepa = document.getElementById('multas-depa');
@@ -3016,58 +3007,6 @@ function validarYGuardarExon() {
       selectDepa.appendChild(opt);
     });
   }
-}*/
-function abrirModalMultas() {
-  console.group('🔍 [LOGGER] Ejecutando abrirModalMultas()');
-
-  // 1. Rastreo del Modal
-  const modal = document.getElementById('modal-multas-sanciones');
-  console.log('1. Búsqueda de #modal-multas-sanciones:', modal);
-
-  if (!modal) {
-    console.error('❌ ERROR FATAL: El elemento <div id="modal-multas-sanciones"> NO EXISTE en el index.html actual.');
-    console.groupEnd();
-    alert('No se encontró el contenedor HTML del modal de multas (id: modal-multas-sanciones).');
-    return;
-  }
-
-  // Si existe, intentamos mostrarlo
-  modal.style.display = 'flex';
-  console.log('✅ Modal mostrado correctamente con display: flex');
-
-  // 2. Rastreo del Select de Departamentos
-  const selectDepa = document.getElementById('multas-depa');
-  console.log('2. Búsqueda de <select id="multas-depa">:', selectDepa);
-
-  if (!selectDepa) {
-    console.warn('⚠️ ADVERTENCIA: No se encontró el <select id="multas-depa"> dentro del modal.');
-    console.groupEnd();
-    return;
-  }
-
-  // 3. Rastreo de los Datos en window.LISTAS
-  console.log('3. Estado actual de window.LISTAS:', window.LISTAS);
-  const depas = (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
-  console.log('   Departamentos encontrados para poblar:', depas);
-
-  if (selectDepa.options.length <= 1) {
-    if (depas.length === 0) {
-      console.warn('⚠️ La lista de departamentos está vacía en window.LISTAS');
-    }
-    
-    selectDepa.innerHTML = '<option value="">Seleccione Departamento...</option>';
-    depas.forEach(id => {
-      let opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = id;
-      selectDepa.appendChild(opt);
-    });
-    console.log(`✅ Select poblado exitosamente con ${depas.length} opciones.`);
-  } else {
-    console.log('ℹ️ El select ya estaba poblado previamente, no se modificó.');
-  }
-
-  console.groupEnd();
 }
 
 // cerrar el modal de Multas
@@ -3441,7 +3380,6 @@ function setupComuna(){
 
   netRun()
     .withSuccessHandler(res => {
-      console.log('[Comuna] Respuesta:', res);
       if (!res) { toast?.('Sin respuesta de servidor'); return; }
       if (res.error) { console.error(res.error); toast?.('Error: '+res.error); return; }
       // Soporta res.header O res.headers (según cómo devuelva el GAS)
