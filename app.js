@@ -2995,8 +2995,8 @@ function validarYGuardarExon() {
 }
 
 // abrir el modal de Multas
-function abrirModalMultas() {
-  const modal = document.getElementById('modal-multas-sanciones') || document.getElementById('modalMultas');
+/*function abrirModalMultas() {
+  const modal = document.getElementById('modal-multas-sanciones');
   
   if (!modal) {
     console.error('⛔ No se encontró el modal "modal-multas-sanciones" en el DOM.');
@@ -3016,6 +3016,58 @@ function abrirModalMultas() {
       selectDepa.appendChild(opt);
     });
   }
+}*/
+function abrirModalMultas() {
+  console.group('🔍 [LOGGER] Ejecutando abrirModalMultas()');
+
+  // 1. Rastreo del Modal
+  const modal = document.getElementById('modal-multas-sanciones');
+  console.log('1. Búsqueda de #modal-multas-sanciones:', modal);
+
+  if (!modal) {
+    console.error('❌ ERROR FATAL: El elemento <div id="modal-multas-sanciones"> NO EXISTE en el index.html actual.');
+    console.groupEnd();
+    alert('No se encontró el contenedor HTML del modal de multas (id: modal-multas-sanciones).');
+    return;
+  }
+
+  // Si existe, intentamos mostrarlo
+  modal.style.display = 'flex';
+  console.log('✅ Modal mostrado correctamente con display: flex');
+
+  // 2. Rastreo del Select de Departamentos
+  const selectDepa = document.getElementById('multas-depa');
+  console.log('2. Búsqueda de <select id="multas-depa">:', selectDepa);
+
+  if (!selectDepa) {
+    console.warn('⚠️ ADVERTENCIA: No se encontró el <select id="multas-depa"> dentro del modal.');
+    console.groupEnd();
+    return;
+  }
+
+  // 3. Rastreo de los Datos en window.LISTAS
+  console.log('3. Estado actual de window.LISTAS:', window.LISTAS);
+  const depas = (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
+  console.log('   Departamentos encontrados para poblar:', depas);
+
+  if (selectDepa.options.length <= 1) {
+    if (depas.length === 0) {
+      console.warn('⚠️ La lista de departamentos está vacía en window.LISTAS');
+    }
+    
+    selectDepa.innerHTML = '<option value="">Seleccione Departamento...</option>';
+    depas.forEach(id => {
+      let opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      selectDepa.appendChild(opt);
+    });
+    console.log(`✅ Select poblado exitosamente con ${depas.length} opciones.`);
+  } else {
+    console.log('ℹ️ El select ya estaba poblado previamente, no se modificó.');
+  }
+
+  console.groupEnd();
 }
 
 // cerrar el modal de Multas
