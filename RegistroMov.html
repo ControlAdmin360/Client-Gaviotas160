@@ -186,7 +186,8 @@
 
     // --- Inicialización y Validación Auth ---
     if (!AUTH_TOKEN) {
-      lockAuthUI('USUARIO RESTRINGIDO');
+      fbMsg.textContent = 'USUARIO RESTRINGIDO';
+      fbMsg.style.color = 'red';
     } else {
       fbMsg.textContent = `¡Hola ${AUTH_USER}! Todo Listo.`;
       fbMsg.style.color = '#0249FA';
