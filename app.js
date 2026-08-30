@@ -524,7 +524,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           cargarEventosLogger(); // Consulta y renderiza Firebase al presionar
         });*/
 
-      // CARGA PERIODO EN BANCO (Corregido para app.js)
+      // CARGA PERIODO EN BANCO
         async function refreshBanco() {
           const btn  = document.getElementById('banco-buscar');
           const mSel = document.getElementById('banco-month');
@@ -556,13 +556,13 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
               else alert('Seleccione mes y año válidos.');
               return;
             }
-        
+            /*
             // 2. Autenticación
             let token = null;
             try { token = await ensureAuthTokenBanco(); } catch { token = null; }
             if (!token) {
               return;
-            }
+            }*/
         
             setWorking();
         
@@ -1052,10 +1052,10 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
     });
   }
     // Abre el formulario Contómetros en el modal-iframe
-function setupNuevo(){
+function setupContometros(){
   // evita registrarlo dos veces si tu init corre más de una vez
-  if (window.__setupNuevoReady) return;
-  window.__setupNuevoReady = true;
+  if (window.__setupContometrosReady) return;
+  window.__setupContometrosReady = true;
 
   const btnNuevo = $$('#btnNuevo');
   const dlg      = $$('#dlgContometros');
@@ -1133,7 +1133,7 @@ function setupNuevo(){
     setupRouter();
     setupFullscreen();
     setupSearch();
-    setupNuevo();
+    setupContometros();
     setupSync();
   });
 
@@ -2397,6 +2397,7 @@ async function cons_consultar() {
   if (typeof cons_resetTotales === 'function') cons_resetTotales();
 
   // 2. Intento de autenticación seguro
+  /*
   let token = null;
   try { 
     if (typeof ensureAuthTokenBanco === 'function') {
@@ -2405,7 +2406,7 @@ async function cons_consultar() {
   } catch (e) { 
     console.warn("Fallo en auth:", e);
     token = null; 
-  }
+  }*/
 
   const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
 
@@ -2505,13 +2506,13 @@ async function cons_abrirReciboPDF() {
     if (window.toast) toast("⚠️ Selecciona el Departamento a Consultar (❓)"); 
     return; 
   }
-
+  /*
   let token = null;
   try { token = await ensureAuthTokenBanco(); } catch (e) { token = null; }
   if (!token) { 
     if (window.toast) toast("🔐 Autenticación Fallida (⛔)"); 
     return; 
-  }
+  }*/
 
   btn.disabled = true;
   btn.textContent = '⏳ Espere...';
@@ -2571,13 +2572,13 @@ async function cons_ReciboActualPDF() {
     if (window.toast) toast("⚠️ Selecciona el Departamento a Consultar (❓)"); 
     return; 
   }
-
+  /*
   let token = null;
   try { token = await ensureAuthTokenBanco(); } catch (e) { token = null; }
   if (!token) { 
     if (window.toast) toast("🔐 Autenticación Fallida (⛔)"); 
     return; 
-  }
+  }*/
 
   btn.disabled = true;
   btn.textContent = '⏳ Espere...';
