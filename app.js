@@ -943,7 +943,6 @@ function setupRouter(){
       if (view === 'consultas') { setupConsultas(); }
       if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
       if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComunaConAuth?.(); }
-      }
       
       // ✅ Cierre de llaves corregido
       if (view === 'eventos') {
