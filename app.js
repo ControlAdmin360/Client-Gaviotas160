@@ -937,8 +937,8 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
       const v = a.getAttribute('data-view');
 
       // 🔄 CONTROL DE EXPIRACIÓN: Verifica el token antes de cambiar de vista
+      /*
       const tieneTokenLocal = !!(typeof getAuthToken === 'function' ? getAuthToken() : sessionStorage.getItem('AUTH_TOKEN'));
-
       if (!tieneTokenLocal) {
         // Reseteamos estados de carga
         loaded.comunal = false;
@@ -954,6 +954,7 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
         }
         return; // Frenamos en seco el clic
       }
+     
 
       // 🛡️ BLOQUEO PREVENTIVO: Evalúa si debe pedir credenciales para accesos restringidos
       if ((v === 'comunal' && !loaded.comunal) || (v === 'recibo' && !loaded.recibo)) {
@@ -969,6 +970,7 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
         // Si no quedó autorizada la vista, se detiene
         if (!loaded[v]) return; 
       }
+       */
 
       // --- CAMBIO VISUAL DE VISTA (Solo si se pasó la seguridad) ---
       $$$('.sidebar a').forEach(x => x.classList.remove('active'));
