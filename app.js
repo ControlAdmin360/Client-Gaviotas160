@@ -52,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- Validación desde el Formulario conectada a tu Backend ---
-// --- Validación desde el Formulario conectada a tu Backend ---
 function validarIngreso(event) {
   event.preventDefault();
 
@@ -503,7 +502,7 @@ document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco)
 document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
 
 // Mensajes de sesión expirada
-window.addEventListener('message', ev => {
+ /*window.addEventListener('message', ev => {
         if (ev?.data?.type === 'contometros-auth-expired' || ev?.data?.type === 'banco-auth-expired') {
           // Si existe la función global de cierre de sesión, la ejecutamos
           if (typeof cerrarSesion === 'function') {
@@ -518,8 +517,7 @@ window.addEventListener('message', ev => {
             if (appContainer) appContainer.style.display = "none";
             if (loginScreen) loginScreen.style.display = "flex";
           }
-        }
-});
+        }});*/
 
 // CARGA PERIODO EN BANCO
 async function refreshBanco() {
@@ -922,6 +920,7 @@ async function refreshBanco() {
       if (sec) sec.classList.add('show');
       ensureInit(v);
     });
+
     // Inicializar la vista activa por defecto al cargar la app
     const current = side.querySelector('a.active')?.getAttribute('data-view');
     if (current) ensureInit(current);
@@ -1114,12 +1113,12 @@ async function refreshBanco() {
     btnClose?.addEventListener('click', () => dlg.close());
 
     // Mensajes desde el iframe (cerrar/toast)
-    window.addEventListener('message', (ev) => {
+    /* window.addEventListener('message', (ev) => {
       const d = ev?.data;
       if (!d || typeof d !== 'object') return;
       if (d.type === 'closeContometros') dlg.close();
       if (d.type === 'toast') toast(String(d.message || ''));
-    });
+    });*/
   }
 
   function setupSync(){
@@ -1129,13 +1128,14 @@ async function refreshBanco() {
   }
 
   // Boot de UI base (router + helpers ligeros)
+  /*
   window.addEventListener('DOMContentLoaded', () => {
     setupRouter();
     setupFullscreen();
     setupSearch();
     setupContometros();
     setupSync();
-  });
+  });*/
 
   // export helpers
   // window.$$ = $$; window.$$$ = $$$; window.escapeHTML = escapeHTML; window.toast = toast;
@@ -1494,7 +1494,6 @@ function uiPaintCell(opt){
 window.uiPaintCell = uiPaintCell;
 
 /// seccion Registro
-
 function setupBancoFormModal(){
   const btn = document.getElementById('banco-nuevo');
   const dlg = document.getElementById('dlgBancoForm');
@@ -1547,13 +1546,13 @@ function setupBancoFormModal(){
   
   btnClose?.addEventListener('click', closeBancoForm);
   // Escucha mensajes del iframe
-  window.addEventListener('message', (ev) => {
+  /* window.addEventListener('message', (ev) => {
     const d = ev?.data;
     if (d === 'banco-form-close' || d?.type === 'banco-form-close' ||
         d === 'closeBancoForm'   || d?.type === 'closeBancoForm') {
       closeBancoForm();
     }
-  });
+  });*/
 }
 
 window.addEventListener('DOMContentLoaded', setupBancoFormModal);
@@ -1744,12 +1743,15 @@ function setupDeudas() {
   recargar();
 }
 
+window.addEventListener('DOMContentLoaded', setupDeudas);
+
+/*
 // Inicialización segura según estado del DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupDeudas);
   } else {
   setupDeudas();
-}
+}*/
 
 /* ====================================
    LECTURAS / CONTÓMETROS 
@@ -2025,16 +2027,14 @@ function closeContometrosForm() {
 }
 
 // Inicialización de Listeners segura
-document.addEventListener('DOMContentLoaded', () => {
-  setupLecturas();
-
-  document.getElementById('btnFormClose')?.addEventListener('click', closeContometrosForm);
-
-  window.addEventListener('message', (e) => {
+  document.addEventListener('DOMContentLoaded', () => {setupLecturas();
+  //document.getElementById('btnFormClose')?.addEventListener('click', closeContometrosForm);
+  
+  /*window.addEventListener('message', (e) => {
     if (e?.data && (e.data === 'contometros-close' || e.data.type === 'contometros-close')) {
       closeContometrosForm();
     }
-  });
+  });*/
 
   document.getElementById('btnRecargarConto')?.addEventListener('click', () => {
     const b = document.getElementById('btnRecargarConto');
@@ -2053,6 +2053,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(e);
     }
   });
+
 });
 
 /* =========================
@@ -2119,6 +2120,14 @@ function setupConsultasSelect() {
     })
     .getListasIdBanco();
 }
+
+// Inicialización segura del DOM
+/*
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupConsultas);
+  } else {
+  setupConsultas();
+}*/
 
 // HELPERS DE TABLA Y PARSEO
 function cons_buildThead() {
@@ -2612,16 +2621,6 @@ async function cons_ReciboActualPDF() {
     .generarPDFParaDepartamento(dpto);
 }
 
-
-
-// Inicialización segura del DOM
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupConsultas);
-} else {
-  setupConsultas();
-}
-
-
 /* ====================================
    Control&Op. // (A1:Q77)
    api_Recibos_getData(params)
@@ -2826,7 +2825,6 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
     .verificarFormulaDepa(idDepa);
 }); 
 
-
 // Ejecutar esto dentro de una etiqueta <script> o donde inicialices tus eventos
 document.getElementById('exon-moras-check')?.addEventListener('change', function(e) {
   const inputCombo = document.getElementById('exon-concepto');
@@ -2895,6 +2893,26 @@ document.getElementById('exon-actual-moras-check')?.addEventListener('change', f
     inputMonto.style.backgroundColor = "#fff";
   }
 });
+
+document.getElementById('config-depa')?.addEventListener('change', function() {
+  const idDepa = this.value;
+  if (!idDepa) return;
+  netRun()
+    .withSuccessHandler(res => {
+      if (res) {
+        document.getElementById('config-cuota-extra').value = res.valorCuota;
+        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
+      } else {
+        document.getElementById('config-cuota-extra').value = "";
+        document.getElementById('config-descrip-cuota-extra').value = "";
+      }
+    })
+    .withFailureHandler(err => {
+      // Usamos la función flash si la tienes, o una alerta limpia de error
+      alert("❌ Error al conectar con el servidor: " + (err?.message || err));
+    })
+    .obtenerConfiguracionIdDepa(idDepa);
+})
 
 // 3. Validaciones
 function validarYGuardarExon() {
@@ -3183,25 +3201,6 @@ function abrirModalConfig() {
     })
     .obtenerConfiguracionesIniciales();
 }
-document.getElementById('config-depa')?.addEventListener('change', function() {
-  const idDepa = this.value;
-  if (!idDepa) return;
-  netRun()
-    .withSuccessHandler(res => {
-      if (res) {
-        document.getElementById('config-cuota-extra').value = res.valorCuota;
-        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
-      } else {
-        document.getElementById('config-cuota-extra').value = "";
-        document.getElementById('config-descrip-cuota-extra').value = "";
-      }
-    })
-    .withFailureHandler(err => {
-      // Usamos la función flash si la tienes, o una alerta limpia de error
-      alert("❌ Error al conectar con el servidor: " + (err?.message || err));
-    })
-    .obtenerConfiguracionIdDepa(idDepa);
-})
 
 function cerrarModalConfig() {
   document.getElementById('modal-configuraciones').style.display = 'none';
@@ -3540,6 +3539,7 @@ function setupComuna(){
     .api_comuna_getData();
 }
 document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna);
+
 
 // Lógica para el buscador de la tabla
 const searchInput = document.getElementById('comuna-search');
@@ -3937,12 +3937,9 @@ document.addEventListener('click', (e) => {
 let cacheServicios = [];
 
 // Inicialización de Eventos del Módulo
-document.addEventListener("DOMContentLoaded", function() {
-  // CARGA AUTOMÁTICA AL INICIAR LA APPWEB
-  cargarModuloServicios();
-
+document.addEventListener("DOMContentLoaded", function() {cargarModuloServicios();
   // Evento para el botón de actualizar
-  document.getElementById("servicios-refresh")?.addEventListener("click", cargarModuloServicios);
+  //document.getElementById("servicios-refresh")?.addEventListener("click", cargarModuloServicios);
 
   // Evento para el buscador en tiempo real
   const inputSearch = document.getElementById("servicios-search");
@@ -4284,5 +4281,241 @@ document.addEventListener('DOMContentLoaded', () => {
 if (window.__clockInterval) clearInterval(window.__clockInterval);
 updateClocks();
 window.__clockInterval = setInterval(updateClocks, 1000);
+});
+
+// =========================================================================
+// --- Escuchador Global Único para Mensajes de IFrames ---
+// =========================================================================
+window.addEventListener('message', (ev) => {
+  const d = ev?.data;
+  if (!d) return;
+
+  // 1. Mensajes simples en formato texto (Strings)
+  if (d === 'contometros-close') closeContometrosForm?.();
+  if (d === 'banco-form-close' || d === 'closeBancoForm') closeBancoForm?.();
+
+  // 2. Mensajes en formato Objeto { type, message, ... }
+  if (typeof d === 'object') {
+    // Cierre de modales/diálogos
+    if (d.type === 'contometros-close') closeContometrosForm?.();
+    if (d.type === 'banco-form-close' || d.type === 'closeBancoForm') closeBancoForm?.();
+    if (d.type === 'closeContometros') dlg?.close();
+
+    // Notificaciones Toast
+    if (d.type === 'toast') toast?.(String(d.message || ''));
+
+    // Expiración de sesión
+    if (d.type === 'contometros-auth-expired' || d.type === 'banco-auth-expired') {
+      if (typeof cerrarSesion === 'function') {
+        cerrarSesion();
+      } else {
+        if (typeof clearAuth === 'function') clearAuth();
+        else {
+          sessionStorage.removeItem('AUTH_TOKEN');
+          sessionStorage.removeItem('AUTH_USER');
+          sessionStorage.removeItem('AUTH_EXPIRE');
+        }
+        const loginScreen = document.getElementById("login-screen");
+        const appContainer = document.getElementById("app-container");
+        if (appContainer) appContainer.style.display = "none";
+        if (loginScreen) loginScreen.style.display = "flex";
+      }
+    }
+  }
+});
+
+// =========================================================================
+// BLOQUE ÚNICO DE INICIALIZACIÓN DE LA APLICACIÓN
+// =========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+
+  // 1. Inicialización de la App y Router
+  setupRouter();
+  setupFullscreen();
+  setupSearch();
+  setupContometros();
+  setupSync();
+  setupLecturas();
+
+  // 2. Modales y Navegación
+  document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
+  document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
+  document.getElementById('banco-refresh')?.addEventListener('click', reloadPage);
+  document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
+  document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
+  document.getElementById('servicios-refresh')?.addEventListener('click', cargarModuloServicios);
+
+  // 3. Buscador en tiempo real de servicios
+  document.getElementById('servicios-search')?.addEventListener('input', (e) => {
+    const termino = e.target.value.toLowerCase().trim();
+    filtrarYMostrarServicios(termino);
+  });
+
+  // 4. Recarga de Contómetros
+  document.getElementById('btnRecargarConto')?.addEventListener('click', () => {
+    const b = document.getElementById('btnRecargarConto');
+    const old = b.textContent;
+    b.disabled = true;
+    b.textContent = 'Actualizando…';
+    try {
+      contometros_loadStyled({}, data => {
+        contometros_renderStyled(data);
+        b.disabled = false;
+        b.textContent = old;
+      });
+    } catch (e) {
+      b.disabled = false;
+      b.textContent = old;
+      alert(e);
+    }
+  });
+
+  // 5. Botones de Reportes (Mantienen tu código actual intacto)
+  document.getElementById('btnRepGen')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnRepGen');
+    const linksDiv = document.getElementById('reportLinks');
+    if (!btn || !linksDiv) return;
+
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Reporte…';
+    linksDiv.innerHTML = '';
+
+    let token = null;
+    try { token = await ensureAuthTokenBanco(); } catch { token = null; }
+    if (!token) {
+      btn.disabled = false;
+      btn.textContent = btn.dataset._old;
+      return;
+    }
+
+    netRun()
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '✅ Reporte Generado';
+        if (res?.user) sessionStorage.setItem('AUTH_USER', res.user);
+        if (res?.ok && res?.urlPDF) {
+          linksDiv.innerHTML = getBtnPDF(res);
+        } else {
+          linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
+        }
+      })
+      .withFailureHandler(err => {
+        btn.disabled = false;
+        btn.textContent = btn.dataset._old;
+        linksDiv.textContent = 'Error: ' + (err?.message || String(err));
+      })
+      .reporteGeneral_web({
+        authToken: token,
+        userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
+      });
+  });
+
+  document.getElementById('btnDeudas')?.addEventListener('click', () => {
+    const btn = document.getElementById('btnDeudas');
+    const linksDiv = document.getElementById('deudasLinks');
+    const $minInput = document.getElementById('deu-min');
+    const valorMin = $minInput ? Number($minInput.value) : 15;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Lista...';
+    linksDiv.innerHTML = "";
+    netRun()
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '✅ Lista Generada';
+        if (res?.urlDrive) {
+          linksDiv.innerHTML = getBtnPDF(res);
+        } else {
+          linksDiv.textContent = "❌ No se pudo generar el reporte";
+        }
+      })
+      .withFailureHandler(err => {
+        btn.disabled = false;
+        btn.textContent = '📊 Listar Deudas';
+        linksDiv.textContent = "Error: " + (err.message || err);
+      })
+      .generarReporteDeudas_web(window.usuarioActivo(), valorMin);
+  });
+
+  document.getElementById('btnRecExel')?.addEventListener('click', () => {
+    const btn = document.getElementById('btnRecExel');
+    const linksDiv = document.getElementById('exportLinks');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Recibos...';
+    linksDiv.innerHTML = "";
+    netRun()
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '✅ Recibos Procesados';
+        if (res?.urlDrive) {
+          linksDiv.innerHTML = getBtnDrive(res) + getBtnExcel(res);
+        } else {
+          linksDiv.textContent = "❌ No se pudo generar el archivo";
+        }
+      })
+      .withFailureHandler(err => {
+        btn.disabled = false;
+        btn.textContent = '📤 Recibos en Excel';
+        linksDiv.textContent = "Error: " + (err.message || err);
+      })
+      .downloadSheetAsXlsx_web(window.usuarioActivo());
+  });
+
+  document.getElementById('btnRepAguas')?.addEventListener('click', () => {
+    const btn = document.getElementById('btnRepAguas');
+    const linksDiv = document.getElementById('aguasLinks');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Reportes...';
+    linksDiv.innerHTML = '';
+
+    const setError = (err) => {
+      btn.disabled = false;
+      btn.textContent = '📤 Generar Reportes';
+      linksDiv.textContent = 'Error: ' + (err?.message || err);
+    };
+
+    netRun()
+      .withSuccessHandler((resXlsx) => {
+        netRun()
+          .withSuccessHandler((resPdf) => {
+            btn.disabled = false;
+            btn.textContent = '✅ Reportes Generados';
+            const parts = [];
+            if (resXlsx?.urlDrive) parts.push(getBtnDrive(resXlsx));
+            if (resXlsx?.urlDownload) parts.push(getBtnExcel(resXlsx));
+            if (resPdf?.urlPDF) parts.push(getBtnPDF(resPdf));
+            linksDiv.innerHTML = parts.join('') || '❌ No se pudo generar el archivo';
+          })
+          .withFailureHandler(setError)
+          .reporteAguasPDF_Web();
+      })
+      .withFailureHandler(setError)
+      .downloadComtometsXlsx_web(window.usuarioActivo());
+  });
+
+  // 6. Listener Unificado de Mensajes
+  window.addEventListener('message', (ev) => {
+    const data = ev?.data;
+    if (!data) return;
+
+    if (data === 'contometros-close' || data.type === 'contometros-close') {
+      closeForm('contometros');
+    }
+
+    if (data.type === 'contometros-auth-expired' || data.type === 'banco-auth-expired') {
+      if (typeof cerrarSesion === 'function') {
+        cerrarSesion();
+      } else {
+        sessionStorage.removeItem('AUTH_TOKEN');
+        sessionStorage.removeItem('AUTH_USER');
+        sessionStorage.removeItem('AUTH_EXPIRE');
+        const loginScreen = document.getElementById("login-screen");
+        const appContainer = document.getElementById("app-container");
+        if (appContainer) appContainer.style.display = "none";
+        if (loginScreen) loginScreen.style.display = "flex";
+      }
+    }
+  });
+
 });
 
