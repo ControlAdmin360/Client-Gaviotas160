@@ -41,17 +41,6 @@ function isSessionExpired() {
   return Date.now() > parseInt(expire, 10);
 }
 
-// 1. Verificación al cargar la página
-/*
-document.addEventListener("DOMContentLoaded", () => {
-  const token = getAuthToken();
-  if (token && !isSessionExpired()) {
-    mostrarAplicacion();
-  } else {
-    clearAuth();
-  }
-});*/
-
 // --- Validación desde el Formulario conectada a tu Backend ---
 function validarIngreso(event) {
   event.preventDefault();
@@ -303,11 +292,13 @@ function toast(msg){
     setTimeout(()=> t.classList.remove('show'), 4000);
 }
   
-// ELIMINA ULTIMO REGISTRO EN BANCO
+// =========================================================================
+// 1. ELIMINAR ÚLTIMO REGISTRO EN BANCO
+// =========================================================================
 document.getElementById('banco-eliminar')?.addEventListener('click', async () => {
   const btn = document.getElementById('banco-eliminar');
   if (!btn) return;
-  
+
   const oldText = btn.textContent;
   const restore = () => {
     btn.disabled = false;
@@ -315,35 +306,38 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     btn.removeAttribute("style");
     btn.className = "btn-redd";
   };
-  
+
   const notificar = (msg) => {
     if (window.toast) window.toast(msg);
     else alert(msg);
   };
+
   try {
-    // 1. Autenticación
+    // A) Autenticación
     let token = null;
     try { token = await ensureAuthTokenBanco(); } catch { token = null; }
     if (!token) {
       restore();
       return;
     }
-    // 2. Estado de carga visual
+
+    // B) Estado de carga visual
     btn.disabled = true;
     btn.textContent = '⏳ Procesando...';
     btn.style.color = '#000';
     btn.style.background = '#FAD775';
 
-    // 3. Preparar eliminación en Backend
+    // C) Preparar eliminación en Backend
     netRun()
       .withSuccessHandler(async (res) => {
-        // A) Si hay alerta explícita del servidor
+        // Alerta explícita del servidor
         if (res?.alert) {
           alert(res.alert);
           restore();
           return;
         }
-        // B) Si requiere código de confirmación del cliente
+
+        // Requiere código de confirmación
         if (res?.needCode) {
           btn.textContent = '⏳ Validando Código...';
           const ok = await pedirCodigoCliente(res.mensaje, res.code, res.maxAttempts || 3);
@@ -351,7 +345,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             restore();
             return;
           }
-          // Confirmación definitiva de borrado
+
+          // Confirmación definitiva
           netRun()
             .withSuccessHandler((r2) => {
               if (r2?.ok) {
@@ -376,16 +371,21 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             });
           return;
         }
-        // C) Eliminación directa sin código previo
+
+        // Eliminación directa
         if (res?.ok) {
           notificar('✅ Registro eliminado correctamente.');
           document.getElementById('recibos-refresh')?.click();
           if (typeof reloadPage === 'function') reloadPage();
-        } else { notificar(res?.error || '⛔ No se pudo eliminar el Registro.');
-        } restore();})
+        } else { 
+          notificar(res?.error || '⛔ No se pudo eliminar el Registro.');
+        } 
+        restore();
+      })
       .withFailureHandler((err) => {
         notificar('❌ Error al preparar eliminación: ' + (err?.message || String(err)));
-        restore();})
+        restore();
+      })
       .api_banco_delete_prepare({ authToken: token, userAuth: window.usuarioActivo() });
 
   } catch (e) {
@@ -394,8 +394,11 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     restore();
   }
 });
-      
-// SETEA M3 EN BANCO
+
+
+// =========================================================================
+// 2. SETEAR METROS CÚBICOS (M3) EN BANCO
+// =========================================================================
 document.getElementById('btn-m3')?.addEventListener('click', async () => {
   const btn = document.getElementById('btn-m3');
   if (!btn) return;
@@ -408,46 +411,38 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
   };
 
   try {
+    // A) Capturar el valor PRIMERO (evita bloquear la UI antes del prompt)
+    const raw = prompt('Ingrese los m3 indicados en el Recibo:');
+    if (raw == null) return; // Usuario canceló
+
+    const s = String(raw).trim().replace(/\s/g, '');
+    const num = Number(s.replace(/,/g, ''));
+    if (!isFinite(num)) {
+      alert('Valor inválido. Ingrese un número (ej.: 1234.56 o 1,234.56).');
+      return;
+    }
+
+    // B) Si el valor es válido, activamos el estado visual de carga
     btn.dataset._old = btn.textContent;
     btn.disabled = true;
     btn.style.background = '#FAD775';
     btn.style.color = '#000';
     btn.textContent = '⏳ Solicitando…';
 
-    // 1. Autenticación: Capturar TOKEN REAL
-    let token = null;
-    try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-    if (!token) {
-      restore();
-      return;
-    }
-
-    // 2. Captura y parseo del valor
-    const raw = prompt('Ingrese los m3 indicados en el Recibo:');
-    if (raw == null) {
-      restore();
-      return;
-    }
-
-    const s = String(raw).trim().replace(/\s/g, '');
-    const num = Number(s.replace(/,/g, ''));
-    if (!isFinite(num)) {
-      alert('Valor inválido. Ingrese un número (ej.: 1234.56 o 1,234.56).');
-      restore();
-      return;
-    }
-
+    // C) Pintar celda localmente inmediatamente
     const formatted = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(num);
 
-    uiPaintCell({
-      row: 9 - 3, col: 16, text: formatted,
-      color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
-    });
+    if (typeof uiPaintCell === 'function') {
+      uiPaintCell({
+        row: 9 - 3, col: 16, text: formatted,
+        color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
+      });
+    }
 
-    // 3. Guardar en backend (Pasando 'token' en el segundo argumento)
+    // D) Enviar al backend
     netRun()
       .withSuccessHandler((res) => {
         if (res && res.ok) {
@@ -461,7 +456,7 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
         alert('Error al guardar M3: ' + (err?.message || String(err)));
         restore();
       })
-      .api_banco_setM3({ value: num }, window.usuarioActivo());
+      .api_banco_setM3({ value: num, userAuth: window.usuarioActivo() });
 
   } catch (e) {
     console.error('Error en M3:', e);
@@ -493,12 +488,17 @@ async function abrirContometrosForm(){
 }
 
 // CARGA PERIODO EN BANCO
+// =========================================================================
+// 1. CONSULTA DE PERIODO ESPECÍFICO
+// =========================================================================
 async function refreshBanco() {
   const btn  = document.getElementById('banco-buscar');
   const mSel = document.getElementById('banco-month');
   const ySel = document.getElementById('banco-year');
+  
   const month = Number(mSel?.value);
   const year  = Number(ySel?.value);
+
   const restore = () => {
     if (!btn) return;
     btn.disabled = false;
@@ -506,113 +506,108 @@ async function refreshBanco() {
     btn.removeAttribute('style');
     btn.className = 'btn-orange';
   };
-        
+
   const setWorking = () => {
-      if (!btn) return;
-      btn.dataset._old = btn.textContent;
-      btn.disabled = true;
-      btn.style.background = '#FAD775';
-      btn.style.color = '#000';
-      btn.textContent = '⏳Actualizando…';
-    };
-  
-    try {
-      // 1. Validar selección de entradas
-      if (!month || !year || Number.isNaN(month) || Number.isNaN(year)) {
-        if (window.toast) toast("⚠️ Seleccione mes y año válidos");
-        else alert('Seleccione mes y año válidos.');
-        return;
-      }
-      /*
-      // 2. Autenticación
-      let token = null;
-      try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-      if (!token) {
-        return;
-      }*/
-  
-      setWorking();
-  
-      // 3. Consulta directa vía netRun (Sin validar el objeto google)
-      if (typeof netRun === 'function') {
-        const user = window.usuarioActivo();
-        
-        netRun()
-          .withSuccessHandler((data) => {
-            try {
-              banco_renderStyled(data);
-            } catch(e) {
-              console.error("Error al renderizar:", e);
-            } finally {
-              restore();
-            }
-          })
-          .withFailureHandler((err) => {
-            console.error("Error en servidor:", err);
+    if (!btn) return;
+    btn.dataset._old = btn.textContent;
+    btn.disabled = true;
+    btn.style.background = '#FAD775';
+    btn.style.color = '#000';
+    btn.textContent = '⏳Actualizando…';
+  };
+
+  try {
+    // A) Validar selección antes de deshabilitar
+    if (!month || !year || Number.isNaN(month) || Number.isNaN(year)) {
+      if (window.toast) toast("⚠️ Seleccione mes y año válidos");
+      else alert('Seleccione mes y año válidos.');
+      return;
+    }
+
+    setWorking();
+
+    // B) Ejecución de petición al backend
+    if (typeof netRun === 'function') {
+      const user = window.usuarioActivo();
+
+      netRun()
+        .withSuccessHandler((data) => {
+          try {
+            banco_renderStyled(data);
+          } catch(e) {
+            console.error("Error al renderizar:", e);
+          } finally {
             restore();
-            if (window.toast) toast("🔴 Error al cargar periodo");
-          })
-          .api_banco_getDashboardData({ year, month, userAuth: user })
-      } else {
-        console.error("🔴 netRun no está disponible en app.js");
-        restore();
-      }
-    } catch (e) {
-      alert('⚠️ Error al Seleccionar Periodo: ' + e);
+          }
+        })
+        .withFailureHandler((err) => {
+          console.error("Error en servidor:", err);
+          restore();
+          if (window.toast) toast("🔴 Error al cargar periodo");
+        })
+        .api_banco_getDashboardData({ year, month, userAuth: user }); // 👈 Punto y coma asegurado
+    } else {
+      console.error("🔴 netRun no está disponible");
       restore();
     }
+  } catch (e) {
+    alert('⚠️ Error al Seleccionar Periodo: ' + e);
+    restore();
+  }
+}
+
+// =========================================================================
+// 2. RECARGAR/ACTUALIZAR DATOS DEL PERIODO ACTUAL
+// =========================================================================
+function reloadPage() {
+  const btn  = document.getElementById('banco-refresh');
+  const mSel = document.getElementById('banco-month');
+  const ySel = document.getElementById('banco-year');
+
+  const restore = () => {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.textContent = btn.dataset._old || '🔄 Actualizar';
+    btn.removeAttribute('style');
+    btn.className = 'btn-blue';
+  };
+
+  if (btn) {
+    btn.dataset._old = btn.textContent;
+    btn.disabled = true;
+    btn.style.background = '#FAD775';
+    btn.style.color = '#000';
+    btn.textContent = '⏳Espere...';
   }
 
-  function reloadPage() {
-    const btn  = document.getElementById('banco-refresh');
-    const mSel = document.getElementById('banco-month');
-    const ySel = document.getElementById('banco-year');
-    
-    const restore = () => {
-      if (!btn) return;
-      btn.disabled = false;
-      btn.textContent = btn.dataset._old || '🔄 Actualizar';
-      btn.removeAttribute('style');
-      btn.className = 'btn-blue';
-    };
-  
-    if (btn) {
-      btn.dataset._old = btn.textContent;
-      btn.disabled = true;
-      btn.style.background = '#FAD775';
-      btn.style.color = '#000';
-      btn.textContent = '⏳Espere...';
-    }
-  
-    const month = Number(mSel?.value);
-    const year  = Number(ySel?.value);
-    const token = typeof getAuthToken === 'function' ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
-    const user  = window.usuarioActivo();
-  
-    netRun()
-      .withSuccessHandler((data) => {
-        try { 
-          if (data && (data.ok === false || data.error)) {
-            if (window.toast) toast("🔴 " + (data.error || "Error al actualizar"));
-          } else {
-            banco_renderStyled(data); 
-          }
-        } catch(e) {
-          console.error("Error al renderizar:", e);
-        } finally { 
-          restore(); 
+  const month = Number(mSel?.value);
+  const year  = Number(ySel?.value);
+  const user  = window.usuarioActivo();
+
+  netRun()
+    .withSuccessHandler((data) => {
+      try { 
+        if (data && (data.ok === false || data.error)) {
+          if (window.toast) toast("🔴 " + (data.error || "Error al actualizar"));
+        } else {
+          banco_renderStyled(data); 
         }
-      })
-      .withFailureHandler((err) => {
-        console.error("Error en servidor:", err);
-        restore();
-        if (window.toast) toast("🔴 Error al conectar con el servidor");
-      })
-      .api_banco_getDashboardData({ year, month, userAuth: user });
-  }
+      } catch(e) {
+        console.error("Error al renderizar:", e);
+      } finally { 
+        restore(); 
+      }
+    })
+    .withFailureHandler((err) => {
+      console.error("Error en servidor:", err);
+      restore();
+      if (window.toast) toast("🔴 Error al conectar con el servidor");
+    })
+    .api_banco_getDashboardData({ year, month, userAuth: user });
+}
 
-  // Rellenar combos e iniciar carga del mes en curso
-  function initBancoCombosFromSheet(){
+// Rellenar combos e iniciar carga del mes en curso
+function initBancoCombosFromSheet(){
     const mSel = document.getElementById('banco-month');
     const ySel = document.getElementById('banco-year');
     if (!mSel || !ySel) return;
@@ -630,202 +625,205 @@ async function refreshBanco() {
       })
       .withFailureHandler(err => console.error('api_banco_getOptions error:', err))
       .api_banco_getOptions();
-  }
+}
 
-     // RECARGA RECIBOS
-  function reloadRecibos(){
-    const btn  = document.getElementById('recibos-refresh');
-    if (!btn) return;
-    // --- pintar estado trabajando
-    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
-    btn.disabled = true;
-    btn.style.background = '#FAD775';
-    btn.style.color= '#000';
-    btn.textContent = '⏳Actualizando...';
-    const restore = () => {
-      btn.disabled = false;
-      btn.textContent = btn.dataset._old || '🔄 Actualizar';
-      btn.style.background = '';
-      btn.style.color = '';
-      btn.className = 'btn-blue';
-    };
-    let restored = false;
-    const safeRestore = () => {
-      if (restored) return;
-      restored = true;
-      restore();
-    };
-    // Observa cambios en la tabla para restaurar al terminar el render
-    const tbl = document.getElementById('tabla-recibos');
-    let obs;
-    try {
-      if (tbl) {
-        const target = tbl.tBodies && tbl.tBodies[0] ? tbl.tBodies[0] : tbl;
-        obs = new MutationObserver(() => {
-          // desconecta y restaura tras el próximo frame
-          obs.disconnect();
-          requestAnimationFrame(safeRestore);
-        });
-        obs.observe(target, { childList: true, subtree: true });
-      }
-      setupRecibos();
-      // Fallback: si nada cambió en 6s, restauramos igual
-      setTimeout(safeRestore, 6000);
-    } catch (e){
-      console.error('reloadRecibos error:', e);
-      if (obs) obs.disconnect();
-      safeRestore();
-      toast?.('Error al recargar Recibos');
-    }
-  }
+// RECARGA RECIBOS  
+function reloadRecibos(){
+  const btn  = document.getElementById('recibos-refresh');
+  if (!btn) return;
+  // --- pintar estado trabajando
+  if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+  btn.disabled = true;
+  btn.style.background = '#FAD775';
+  btn.style.color= '#000';
+  btn.textContent = '⏳Actualizando...';
 
-  function pedirCodigoCliente(mensaje, code, maxAttempts){
-    const intentosMax = Math.max(1, Number(maxAttempts) || 1);
-    const promptMsg = (mensaje ? mensaje + '\n\n' : '') +
-      '🔒 Código de validación: ' + String(code) + '\n' +
-      'Introduzca el Código Para Validar esta Operación:';
-    for (let i = 0; i < intentosMax; i++){
-      const ingreso = window.prompt(promptMsg, '');
-      if (ingreso === null){
-        if (window.toast) toast("⚠️ Operación cancelada (🛑)");
-        return false;
-      }
-      if (String(ingreso).trim() === String(code)){
-        return true;
-      }
-      const restantes = intentosMax - i - 1;
-      if (restantes > 0){
-        window.alert(`⛔ Código incorrecto. Intentos restantes: ${restantes}`);
-      } else {
-        if (window.toast) toast("⚠️ Maximo de intentos Permitidos. Operación cancelada (🛑)");
-      }
-    }
-    return false;
-  }
-    // ==========================
-    // Router con carga perezosa
-    // ==========================
-  function setupRouter(){
-    const side = $$('.sidebar');
-    if (!side) return;
-
-    // banderas de inicialización por vista (una vez) – compatible (sin ||=)
-    const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
-      banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
-    });
-
-    function ensureInit(view) {
-      try {
-        if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
-        if (view === 'consultas') { setupConsultas(); }
-        if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
-        if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
-        
-        // ✅ Cierre de llaves corregido
-        if (view === 'eventos') { cargarEventosLogger(); }
-      } catch (e) { 
-        console.error('[setupRouter] init error:', e); 
-      }
-    }
-    // Navegación principal del Sidebar
-    side.addEventListener('click', async e => {
-      const a = e.target.closest('a[data-view]');
-      if (!a) return;
-      const v = a.getAttribute('data-view');
-      // --- CAMBIO VISUAL DE VISTA ---
-      $$$('.sidebar a').forEach(x => x.classList.remove('active'));
-      a.classList.add('active');
-      $$$('.view').forEach(sec => sec.classList.remove('show'));
-      const sec = $$('#view-' + v);
-      if (sec) sec.classList.add('show');
-      ensureInit(v);
-    });
-
-    // Inicializar la vista activa por defecto al cargar la app
-    const current = side.querySelector('a.active')?.getAttribute('data-view');
-    if (current) ensureInit(current);
-  }
-
-  function setupFullscreen(){
-    const btn = $$('#btnFull');
-    if (!btn) return;
-    btn.addEventListener('click', async () => {
-      try{
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-        } else {
-          await document.exitFullscreen();
-        }
-      }catch(e){}
-    });
-  }
-  // ====== Badge de estado servidor y User Logg ======
-  function getUserTag(){
-    const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
-    return '🧑-> ' + (user);
-  }
-  //función auxiliar para calcular el tiempo restante en formato MM:SS u HH:MM
-   function getTokenRemainingTime() {
-    const expireStr = sessionStorage.getItem('AUTH_EXPIRE');
-    if (!sessionStorage.getItem('AUTH_TOKEN') || !expireStr) return '00:00';
-    const remainingMs = Number(expireStr) - Date.now();
-    if (remainingMs <= 0) return '⛔Expired';
-    const totalSeconds = Math.floor(remainingMs / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    // Si le queda más de una hora, mostramos formato H:MM:SS
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-    }
-    // Si queda menos de una hora, formato estándar MM:SS
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  function statusLabel(state) {
-    // 🛡️ Sincronización Maestra: Leemos la variable global 'prev' de tu sistema
-    const estadoRealSistema = (typeof prev !== 'undefined') ? prev : state;
-    // Forzamos los textos exactos que usa tu HTML y tus estilos CSS
-    const base = (estadoRealSistema === 'BUSY') ? 'BUSY · Working' : 'IDLE -> OnLine';
-    const timeRemaining = getTokenRemainingTime();
-    return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
-  }
-
-  window.getUserTag = getUserTag;
-  window.statusLabel = statusLabel;
-
-  // === Mini monitor de red + wrapper drop-in ===
-  let inflight = 0, prev = 'IDLE';
-
-  function setState(next){
-    if (next === prev) return;
-    prev = next;
-     document.dispatchEvent(new CustomEvent('NET_STATE_CHANGED', { detail:{ state: next } })); // ✅
-    // 1) Pill simple: #netStatePill
-    const pill = document.getElementById('netStatePill');
-    if (pill){
-      const label = statusLabel(next);
-      pill.textContent = label;
-      pill.classList.toggle('busy', next === 'BUSY');
-      pill.classList.toggle('idle', next === 'IDLE');
-    }
-    // 2) Badge anterior: #srvStatus (opcional)
-    const srv = document.getElementById('srvStatus');
-    if (srv){
-      srv.classList.remove('srv-busy','srv-idle');
-      srv.classList.add(next === 'BUSY' ? 'srv-busy' : 'srv-idle');
-      const t = srv.querySelector('.txt');
-      if (t) t.textContent = statusLabel(next);
-    }
-  }
-  const Net = {
-    busy(){ if (++inflight === 1) setState('BUSY'); },
-    idle(){ if (inflight > 0 && --inflight === 0) setState('IDLE'); },
-    getState(){ return prev; } 
+  const restore = () => {
+    btn.disabled = false;
+    btn.textContent = btn.dataset._old || '🔄 Actualizar';
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.className = 'btn-blue';
   };
-  window.__NetState = Net;
 
-  document.addEventListener('NET_STATE_CHANGED', (e) => {
+  let restored = false;
+  const safeRestore = () => {
+    if (restored) return;
+    restored = true;
+    restore();
+  };
+  // Observa cambios en la tabla para restaurar al terminar el render
+  const tbl = document.getElementById('tabla-recibos');
+  let obs;
+
+  try {
+    if (tbl) {
+      const target = tbl.tBodies && tbl.tBodies[0] ? tbl.tBodies[0] : tbl;
+      obs = new MutationObserver(() => {
+        // desconecta y restaura tras el próximo frame
+        obs.disconnect();
+        requestAnimationFrame(safeRestore);
+      });
+      obs.observe(target, { childList: true, subtree: true });
+    }
+    setupRecibos();
+    // Fallback: si nada cambió en 6s, restauramos igual
+    setTimeout(safeRestore, 6000);
+  } catch (e){
+    console.error('reloadRecibos error:', e);
+    if (obs) obs.disconnect();
+    safeRestore();
+    toast?.('Error al recargar Recibos');
+  }
+}
+
+function pedirCodigoCliente(mensaje, code, maxAttempts){
+  const intentosMax = Math.max(1, Number(maxAttempts) || 1);
+  const promptMsg = (mensaje ? mensaje + '\n\n' : '') +
+    '🔒 Código de validación: ' + String(code) + '\n' +
+    'Introduzca el Código Para Validar esta Operación:';
+  for (let i = 0; i < intentosMax; i++){
+    const ingreso = window.prompt(promptMsg, '');
+    if (ingreso === null){
+      if (window.toast) toast("⚠️ Operación cancelada (🛑)");
+      return false;
+    }
+    if (String(ingreso).trim() === String(code)){
+      return true;
+    }
+    const restantes = intentosMax - i - 1;
+    if (restantes > 0){
+      window.alert(`⛔ Código incorrecto. Intentos restantes: ${restantes}`);
+    } else {
+      if (window.toast) toast("⚠️ Maximo de intentos Permitidos. Operación cancelada (🛑)");
+    }
+  }
+  return false;
+}
+// ==========================
+// Router con carga perezosa
+// ==========================
+function setupRouter(){
+  const side = $$('.sidebar');
+  if (!side) return;
+
+  // banderas de inicialización por vista (una vez) – compatible (sin ||=)
+  const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
+    banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
+  });
+
+  function ensureInit(view) {
+    try {
+      if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
+      if (view === 'consultas') { setupConsultas(); }
+      if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
+      if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
+      
+      // ✅ Cierre de llaves corregido
+      if (view === 'eventos') { cargarEventosLogger(); }
+    } catch (e) { 
+      console.error('[setupRouter] init error:', e); 
+    }
+  }
+  // Navegación principal del Sidebar
+  side.addEventListener('click', async e => {
+    const a = e.target.closest('a[data-view]');
+    if (!a) return;
+    const v = a.getAttribute('data-view');
+    // --- CAMBIO VISUAL DE VISTA ---
+    $$$('.sidebar a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    $$$('.view').forEach(sec => sec.classList.remove('show'));
+    const sec = $$('#view-' + v);
+    if (sec) sec.classList.add('show');
+    ensureInit(v);
+  });
+
+  // Inicializar la vista activa por defecto al cargar la app
+  const current = side.querySelector('a.active')?.getAttribute('data-view');
+  if (current) ensureInit(current);
+}
+
+function setupFullscreen(){
+  const btn = $$('#btnFull');
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    try{
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    }catch(e){}
+  });
+}
+// ====== Badge de estado servidor y User Logg ======
+function getUserTag(){
+  const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
+  return '🧑-> ' + (user);
+}
+//función auxiliar para calcular el tiempo restante en formato MM:SS u HH:MM
+function getTokenRemainingTime() {
+  const expireStr = sessionStorage.getItem('AUTH_EXPIRE');
+  if (!sessionStorage.getItem('AUTH_TOKEN') || !expireStr) return '00:00';
+  const remainingMs = Number(expireStr) - Date.now();
+  if (remainingMs <= 0) return '⛔Expired';
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  // Si le queda más de una hora, mostramos formato H:MM:SS
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+  // Si queda menos de una hora, formato estándar MM:SS
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function statusLabel(state) {
+  // 🛡️ Sincronización Maestra: Leemos la variable global 'prev' de tu sistema
+  const estadoRealSistema = (typeof prev !== 'undefined') ? prev : state;
+  // Forzamos los textos exactos que usa tu HTML y tus estilos CSS
+  const base = (estadoRealSistema === 'BUSY') ? 'BUSY · Working' : 'IDLE -> OnLine';
+  const timeRemaining = getTokenRemainingTime();
+  return `${base} \u00A0 ${getUserTag()} \u00A0 ⏱️TimeSession-> ${timeRemaining}`;
+}
+
+window.getUserTag = getUserTag;
+window.statusLabel = statusLabel;
+
+// === Mini monitor de red + wrapper drop-in ===
+let inflight = 0, prev = 'IDLE';
+
+function setState(next){
+  if (next === prev) return;
+  prev = next;
+    document.dispatchEvent(new CustomEvent('NET_STATE_CHANGED', { detail:{ state: next } })); // ✅
+  // 1) Pill simple: #netStatePill
+  const pill = document.getElementById('netStatePill');
+  if (pill){
+    const label = statusLabel(next);
+    pill.textContent = label;
+    pill.classList.toggle('busy', next === 'BUSY');
+    pill.classList.toggle('idle', next === 'IDLE');
+  }
+  // 2) Badge anterior: #srvStatus (opcional)
+  const srv = document.getElementById('srvStatus');
+  if (srv){
+    srv.classList.remove('srv-busy','srv-idle');
+    srv.classList.add(next === 'BUSY' ? 'srv-busy' : 'srv-idle');
+    const t = srv.querySelector('.txt');
+    if (t) t.textContent = statusLabel(next);
+  }
+}
+const Net = {
+  busy(){ if (++inflight === 1) setState('BUSY'); },
+  idle(){ if (inflight > 0 && --inflight === 0) setState('IDLE'); },
+  getState(){ return prev; } 
+};
+window.__NetState = Net;
+
+document.addEventListener('NET_STATE_CHANGED', (e) => {
     const el = document.getElementById('srvStatus');
     if (!el) return;
     const s = e.detail?.state;
@@ -958,7 +956,6 @@ window.toast = function(msg) {
 /* =========================
   BANCO
   ========================= */
-
 const BANCO_HIDDEN_COLS = [8, 9, 10];      // I, J, K ocultas
 const BANCO_RIGHT_START = 11;              // L
 const BANCO_RIGHT_HEAD_OMIT_ROWS = 2;      // omitir filas 1 y 2 SOLO en L:P
@@ -1531,7 +1528,6 @@ function setupDeudas() {
 
   recargar();
 }
-
 
 /* ====================================
    LECTURAS / CONTÓMETROS 
@@ -2230,9 +2226,8 @@ function cons_renderSaldos(data) {
 }
 
 /* ==========================================================
-   VISUALIZACIÓN DE RECIBOS PDF
-   ========================================================== */
-
+VISUALIZACIÓN DE RECIBOS PDF
+========================================================== */
 async function cons_abrirReciboPDF() {
   const btn = document.getElementById('btn-ver-recibo');
   if (!btn) return;
@@ -2360,10 +2355,9 @@ async function cons_ReciboActualPDF() {
 }
 
 /* ====================================
-   Control&Op. // (A1:Q77)
-   api_Recibos_getData(params)
-   ==================================== */
-
+Control&Op. // (A1:Q77)
+api_Recibos_getData(params)
+==================================== */
 function recibos_renderBody(payload){
   const tbl = document.getElementById('tabla-recibos');
   if (!tbl) return;
@@ -3089,11 +3083,11 @@ function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCach
       porton, percent, exonerados, AUTH_TOKEN, esConfirmacion
     );
 }
-/* ====================================
-   COMUNA // (A1:N76) CLIENTES
-   api_Recibos_getData(params)
-   ==================================== */
 
+/* ====================================
+COMUNA // (A1:N76) CLIENTES
+api_Recibos_getData(params)
+==================================== */
 // --- Mapeo columnas por letra --> índice ---
 const COL = { A:0, B:1, C:2, D:3, E:4, F:5, G:6, H:7, I:8, J:9, K:10, L:11, M:12, N:13 };
 // --- Helpers de validación/formato ---
@@ -3274,8 +3268,6 @@ function setupComuna(){
     })
     .api_comuna_getData();
 }
-document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna);
-
 
 // Lógica para el buscador de la tabla
 const searchInput = document.getElementById('comuna-search');
@@ -4077,6 +4069,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
   document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
   document.getElementById('servicios-refresh')?.addEventListener('click', cargarModuloServicios);
+  document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna);
 
   // 3. Buscador en tiempo real de servicios
   document.getElementById('servicios-search')?.addEventListener('input', (e) => {
