@@ -182,23 +182,27 @@
       const mu = document.getElementById('metaUsuario');
       if (!mu) return;
       mu.innerHTML = `<strong>Admin Account:</strong> ${correoUsuario || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${AUTH_USER || '—'}`;
-    }
+     }
 
-    function setMensajeAuth(texto, color) {
+    function setMensajeAuth(texto, color, esError = false) {
       if (!fbMsg) return;
       fbMsg.textContent = texto;
       fbMsg.style.color = color;
-      if (fbWrap) fbWrap.style.display = 'block'; // Asegura que el contenedor CSS sea visible
+      
+      if (fbWrap) {
+        fbWrap.style.display = 'block';
+        fbWrap.className = 'feedback ' + (esError ? 'err' : 'ok');
+      }
     }
     
     // 2. Función para evaluar el estado y decidir qué mensaje mostrar
     function validarMensajeInicial() {
       if (!AUTH_TOKEN) {
-        setMensajeAuth('USUARIO RESTRINGIDO', 'red');
+        setMensajeAuth('USUARIO RESTRINGIDO', 'red', true);
         disableForm();
       } else {
         const usuario = AUTH_USER || 'Usuario';
-        setMensajeAuth(`¡Hola ${usuario}! Todo Listo.`, '#0249FA');
+        setMensajeAuth(`¡Hola ${usuario}! Todo Listo.`, '#0249FA', false);
       }
     }
     
@@ -487,10 +491,10 @@ f.addEventListener('submit', (e) => {
           color = '#8B0000';
         }
       }
-      fbMsg.textContent = mensaje;
-      fbMsg.style.color = color || '';
-      fbWrap.classList.remove('err','ok');
-      if (mensaje) fbWrap.classList.add('ok');
+      if (mensaje) {
+        fbMsg.textContent = mensaje;
+        fbMsg.style.color = color;
+        if (fbWrap) fbWrap.className = 'feedback ok';
     }
 
     inputDatos.addEventListener('input', updateTipoMovimiento);
