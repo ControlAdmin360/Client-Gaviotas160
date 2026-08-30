@@ -4012,7 +4012,7 @@ window.addEventListener('message', (ev) => {
     // Cierre de modales/diálogos
     if (d.type === 'contometros-close') closeContometrosForm?.();
     if (d.type === 'banco-form-close' || d.type === 'closeBancoForm') closeBancoForm?.();
-    if (d.type === 'closeContometros') dlg?.close();
+    if (d.type === 'closeContometros') closeContometrosForm?.();
 
     // Notificaciones Toast
     if (d.type === 'toast') toast?.(String(d.message || ''));
