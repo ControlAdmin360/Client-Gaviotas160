@@ -310,11 +310,12 @@
 
       <!-- Control&Op. -->
       <section id="view-recibo" class="view" aria-labelledby="h-recibo">
+
         <div class="view-header">
           <h1 id="h-recibo" style="margin:0;">Resumen De Recibos En Desarollo</h1>
           <span class="clock-24h" style="white-space:nowrap; font-weight:600; color:#A4E3FF;"></span>
 
-          <div style="display:flex; align-items:center; justify-space-between; margin:8px 0; width: 100%;">
+          <div style="display:flex; align-items:center; justify-content: space-between; margin:8px 0; width: 100%;">
             <div style="display:flex; align-items:center; gap:8px;">
               <button id="btnRecExel" style="padding:10px 14px; background:#647AEB; color:#fff; border:none; border-radius:7px; font-size:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
                 📤 Recibos en Excel
@@ -322,8 +323,9 @@
               <button id="recibos-refresh" class="btn-blue">🔄 Actualizar</button>
             </div>
 
-            <div id="exportLinks" style="display:flex; gap:8px;padding:10px 14px;"></div>
-            <div style="display:flex; gap:8px; align-items:right;">
+            <div id="exportLinks" style="display:flex; gap:8px; padding:10px 14px;"></div>
+
+            <div style="display:flex; gap:8px; justify-content: flex-end; align-items: center;">
               <button id="recibos-consolidados" class="btn-blue" onclick="window.open('https://drive.google.com/drive/folders/1a2-ApIJ63jFeyRZR2OyDw5bXm6AcgEVA', '_blank')">🗂️ Recibos Consolidados</button> 
               <button id="exon-desc" class="btn-orange" style="padding: 5px 14px;" onclick="abrirModalExon()">💸 Exoneraciones <br> Reintegros</button> 
               <button id="multas-btn" class="btn-redd" style="padding: 5px 14px;" onclick="abrirModalMultas()">🚨 Multas <br> Sanciones</button>
