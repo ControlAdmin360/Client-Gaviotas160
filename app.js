@@ -514,7 +514,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
         }
       }
 
-
       // Botones Main iniciadores
       document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
       document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
@@ -536,7 +535,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             sessionStorage.removeItem('AUTH_TOKEN');
             sessionStorage.removeItem('AUTH_USER');
             sessionStorage.removeItem('AUTH_EXPIRE');
-
             const loginScreen = document.getElementById("login-screen");
             const appContainer = document.getElementById("app-container");
             if (appContainer) appContainer.style.display = "none";
@@ -792,26 +790,22 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
     btn.disabled = true;
     btn.textContent = '⏳ Generando Reporte…';
   };
-
   const restore = () => {
     btn.disabled = false;
     btn.textContent = btn.dataset._old;
   };
 
   linksDiv.innerHTML = '';
-
   let token = null;
   try { 
     token = await ensureAuthTokenBanco(); 
   } catch { 
     token = null; 
   }
-
   if (!token) {
     restore(); // 👈 Si no hay token, restaura el estado del botón
     return; 
   }
-
   setWorking();
 
   netRun()
@@ -865,6 +859,7 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
         })
         .generarReporteDeudas_web(window.usuarioActivo(), valorMin);
     });
+
     // REPORTE RECIBOS
     document.getElementById('btnRecExel')?.addEventListener('click', () => {
       const btn = document.getElementById('btnRecExel');
@@ -947,6 +942,8 @@ function setupRouter(){
       if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
       if (view === 'consultas') { setupConsultas(); }
       if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
+      if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComunaConAuth?.(); }
+      }
       
       // ✅ Cierre de llaves corregido
       if (view === 'eventos') {
@@ -1050,7 +1047,6 @@ function setupRouter(){
   window.statusLabel = statusLabel;
 
   // === Mini monitor de red + wrapper drop-in ===
-
   let inflight = 0, prev = 'IDLE';
 
   function setState(next){
@@ -1595,18 +1591,17 @@ function setupBancoFormModal(){
   
   // 💎 PROTEGIDO: Volvemos el listener asíncrono para evaluar el token primero
   btn.addEventListener('click', async () => {
-    /*
+    
     let token = null;
     try { 
       token = await ensureAuthTokenBanco(); 
     } catch (e) { 
       token = null; 
     }
-    
     // 2. Freno si no se autoriza
     if (!token) {
       return; 
-    }*/
+    }
     // 3. Apertura inmediata del formulario
     const url = buildUrl();
     if (!url) return;
