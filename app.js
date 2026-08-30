@@ -19,10 +19,14 @@ if (DEBUG) {
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
 function setAuthToken(t){ if (t) sessionStorage.setItem('AUTH_TOKEN', t); }
 function setAuthUser(u){ if (u) sessionStorage.setItem('AUTH_USER', u); }
-function clearAuth(){
-  sessionStorage.removeItem('AUTH_TOKEN');
-  sessionStorage.removeItem('AUTH_USER');
-  sessionStorage.removeItem('AUTH_EXPIRE');
+function clearAuth() {
+  try {
+    sessionStorage.removeItem('AUTH_TOKEN');
+    sessionStorage.removeItem('AUTH_USER');
+    sessionStorage.removeItem('AUTH_EXPIRE');
+  } catch (e) {
+    console.warn('Error al limpiar sesión:', e);
+  }
 }
 
 // --- Identificación de Usuario Activo ---
@@ -240,16 +244,9 @@ function ensureAuthTokenBanco(){
       sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
     };
 
-    const clearAuthSafe = () => {
-      try { if (typeof clearAuth === 'function') clearAuth(); } catch(_) {}
-      sessionStorage.removeItem('AUTH_TOKEN');
-      sessionStorage.removeItem('AUTH_USER');
-      sessionStorage.removeItem('AUTH_EXPIRE');
-    };
-
     // 1) Si no hay token → redirigir al formulario de login en pantalla
     const promptLogin = () => {
-      clearAuthSafe();
+      clearAuth();
       const loginScreen = document.getElementById("login-screen");
       const appContainer = document.getElementById("app-container");
       // Transición de interfaz hacia la pantalla de acceso
@@ -267,11 +264,11 @@ function ensureAuthTokenBanco(){
           resolve(existing);
           return;
         }
-        clearAuthSafe();
+        clearAuth();
         promptLogin();
       })
       .withFailureHandler(_ => {
-        clearAuthSafe();
+        clearAuth();
         promptLogin();
       })
       .api_auth_check(existing);
