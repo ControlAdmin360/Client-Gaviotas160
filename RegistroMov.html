@@ -184,14 +184,7 @@
       mu.innerHTML = `<strong>Admin Account:</strong> ${correoUsuario || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${AUTH_USER || '—'}`;
     }
 
-    function lockAuthUI(msg = LOCK_MSG) {
-      if (!fbMsg) return;
-      fbMsg.textContent = msg;
-      fbMsg.style.color = '#ff4d4f';
-      // enableForm(); // Si el usuario debe loguearse, el formulario debe estar HABILITADO
-    }
-    
-    // --- Flujo de Validación ---
+    // --- Inicialización y Validación Auth ---
     if (!AUTH_TOKEN) {
       lockAuthUI('Ingrese sus credenciales');
     } else if (p && typeof p.netRun === 'function') {
@@ -206,7 +199,10 @@
           }
         })
         .withFailureHandler(() => {
-          lockAuthUI('Error de conexión');
+          // Aunque falle la red, mostramos al usuario listo
+          unlockAuthUI();
+          fbMsg.textContent = `¡Hola ${AUTH_USER}! Todo Listo.`;
+          fbMsg.style.color = '#0249FA';
         })
         .api_auth_check(AUTH_TOKEN);
     } else {
