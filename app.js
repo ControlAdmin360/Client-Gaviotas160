@@ -324,7 +324,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     let token = null;
     try { token = await ensureAuthTokenBanco(); } catch { token = null; }
     if (!token) {
-      restore(); // 👈 Agregado: restaura el botón si no hay token
+      restore();
       return;
     }
     // 2. Estado de carga visual
@@ -585,7 +585,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
                   restore();
                   if (window.toast) toast("🔴 Error al cargar periodo");
                 })
-                .api_banco_getDashboardData({ year, month, token: token, authToken: token, userAuth: user })
+                .api_banco_getDashboardData({ year, month, userAuth: user })
             } else {
               console.error("🔴 netRun no está disponible en app.js");
               restore();
@@ -640,7 +640,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
               restore();
               if (window.toast) toast("🔴 Error al conectar con el servidor");
             })
-            .api_banco_getDashboardData({ year, month, token: token, authToken: token, userAuth: user });
+            .api_banco_getDashboardData({ year, month, userAuth: user });
         }
 
 
@@ -1052,7 +1052,7 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
     });
   }
     // Abre el formulario Contómetros en el modal-iframe
-function setupContometros(){
+  function setupContometros(){
   // evita registrarlo dos veces si tu init corre más de una vez
   if (window.__setupContometrosReady) return;
   window.__setupContometrosReady = true;
