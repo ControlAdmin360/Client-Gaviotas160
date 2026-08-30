@@ -2406,7 +2406,7 @@ async function cons_consultar() {
   } catch (e) { 
     console.warn("Fallo en auth:", e);
     token = null; 
-  }*/
+  }
 
   const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
 
@@ -2415,7 +2415,7 @@ async function cons_consultar() {
     resetBtn();
     if (typeof window.toast === 'function') toast("🔐 Autenticación Fallida (⛔)");
     return;
-  }
+  }*/
 
   const userActivo = (typeof window.usuarioActivo === 'function') 
     ? window.usuarioActivo() 
