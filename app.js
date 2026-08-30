@@ -146,7 +146,7 @@ function cerrarSesion(forceReload = false) {
 
 
 // URL pública de tu Web App en Google Apps Script
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxqB6uFWml7TVWKr29nAadewIGlOfIMEhiZqRSg-1UVsQIDqyOycj7ndgpQM8nJ2aBYCA/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycby-8oPBqRUd6PwD9Zcg6cd1qWKh82ynJWacXG1V8v6C-FYLedwXf8zHNmNVG_iIhgXzYg/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
@@ -396,16 +396,12 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           notificar('✅ Registro eliminado correctamente.');
           document.getElementById('recibos-refresh')?.click();
           if (typeof reloadPage === 'function') reloadPage();
-        } else {
-          notificar(res?.error || '⛔ No se pudo eliminar el Registro.');
-        }
-        restore();
-      })
+        } else { notificar(res?.error || '⛔ No se pudo eliminar el Registro.');
+        } restore();})
       .withFailureHandler((err) => {
         notificar('❌ Error al preparar eliminación: ' + (err?.message || String(err)));
-        restore();
-      })
-      .api_banco_delete_prepare(window.usuarioActivo());
+        restore();})
+      .api_banco_delete_prepare({ authToken: token, userAuth: window.usuarioActivo() });
 
   } catch (e) {
     console.error('Error al Eliminar:', e);
