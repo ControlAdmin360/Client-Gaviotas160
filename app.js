@@ -302,29 +302,6 @@ const $$$ = s => Array.from(document.querySelectorAll(s));
     setTimeout(()=> t.classList.remove('show'), 4000);
   }
   
-  async function setupRecibosConAuth() {
-      let token = null;
-      try { 
-        token = await ensureAuthTokenBanco(); 
-      } catch (e) { 
-        token = null; 
-      } 
-      if (token && typeof token === 'string' && token.trim() !== '') {
-        window.__viewsLoaded.recibo = true; // Marcamos como cargado
-        setupRecibos(); // Cargamos los datos de la tabla
-      } else {
-        window.__viewsLoaded.recibo = false;
-        if (typeof cerrarSesion === 'function') {
-          cerrarSesion();
-        } else {
-          clearAuth();
-          const loginScreen = document.getElementById("login-screen");
-          const appContainer = document.getElementById("app-container");
-          if (appContainer) appContainer.style.display = "none";
-          if (loginScreen) loginScreen.style.display = "flex";
-        }
-      }
-    }
 // ELIMINA ULTIMO REGISTRO EN BANCO
 document.getElementById('banco-eliminar')?.addEventListener('click', async () => {
   const btn = document.getElementById('banco-eliminar');
@@ -757,27 +734,7 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       }
       return false;
     }
-  async function setupComunaConAuth() {
-    
-    /*let token = null;
-    try { 
-      token = await ensureAuthTokenBanco(); 
-    } catch (e) { 
-      token = null; 
-    }*/
-    if (token && typeof token === 'string' && token.trim() !== '') {
-      // Acceso concedido
-      window.__viewsLoaded.comunal = true;
-      setupComuna(); // Carga los datos de la vista comunal
-    } else {
-      // Acceso denegado o sesión expirada
-      window.__viewsLoaded.comunal = false;
-      // Si no existe token, aseguramos la redirección al formulario de Login
-      if (typeof cerrarSesion === 'function') {
-        cerrarSesion(false);
-      }
-    }
-  }
+
 document.getElementById('btnRepGen')?.addEventListener('click', async () => {
   const btn = document.getElementById('btnRepGen');
   const linksDiv = document.getElementById('reportLinks');
@@ -942,7 +899,7 @@ function setupRouter(){
       if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
       if (view === 'consultas') { setupConsultas(); }
       if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
-      if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComunaConAuth?.(); }
+      if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
       
       // ✅ Cierre de llaves corregido
       if (view === 'eventos') {
@@ -959,31 +916,6 @@ function setupRouter(){
     const a = e.target.closest('a[data-view]');
     if (!a) return;
     const v = a.getAttribute('data-view');
-
-    /* 🔄 CONTROL DE EXPIRACIÓN Y AUTENTICACIÓN COMENTADO
-    const tieneTokenLocal = !!(typeof getAuthToken === 'function' ? getAuthToken() : sessionStorage.getItem('AUTH_TOKEN'));
-    if (!tieneTokenLocal) {
-      loaded.comunal = false;
-      loaded.recibo = false;
-      if (typeof window.__viewsLoaded === 'object') {
-        window.__viewsLoaded.comunal = false;
-        window.__viewsLoaded.recibo = false;
-      }
-      if (typeof cerrarSesion === 'function') {
-        cerrarSesion(false);
-      }
-      return;
-    }
-    if ((v === 'comunal' && !loaded.comunal) || (v === 'recibo' && !loaded.recibo)) {
-      if (v === 'comunal') await setupComunaConAuth();
-      if (v === 'recibo')  await setupRecibosConAuth(); 
-      if (typeof window.__viewsLoaded === 'object') {
-        loaded.comunal = window.__viewsLoaded.comunal;
-        loaded.recibo = window.__viewsLoaded.recibo;
-      }
-      if (!loaded[v]) return; 
-    }
-    */
     // --- CAMBIO VISUAL DE VISTA ---
     $$$('.sidebar a').forEach(x => x.classList.remove('active'));
     a.classList.add('active');
