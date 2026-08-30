@@ -4219,36 +4219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
     timeZone: tz
   });
-  /*
-  const updateClocks = () => {
-    const now = new Date();
-    const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
-    document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
-    
-    // 🔍 DETECTOR VISUAL DIRECTO (Usando el "Content" / Clases del HTML)
-    // Buscamos si existe en pantalla alguna etiqueta con la clase de ocupado
-    const srvStatusEsBusy = document.querySelector('.srv-busy');
-    const netPillEsBusy = document.querySelector('.busy');
-    
-    // 🛡️ Si el color ya cambió a amarillo en el HTML, DETENEMOS el reloj aquí mismo
-    if (srvStatusEsBusy || netPillEsBusy) {
-      return; // Sincronización perfecta: si el color es amarillo, el texto no se toca
-    }
-
-    // Si no están las clases de BUSY, el sistema está en IDLE y actualizamos los segundos
-    if (typeof window.statusLabel === 'function') {
-      const nuevoTextoCompleto = window.statusLabel('IDLE');
-      
-      const pill = document.getElementById('netStatePill');
-      if (pill) pill.textContent = nuevoTextoCompleto;
-      
-      const srv = document.getElementById('srvStatus');
-      if (srv) {
-        const t = srv.querySelector('.txt');
-        if (t) t.textContent = nuevoTextoCompleto;
-      }
-    }
-  };*/
+ 
   
 const updateClocks = () => {
   // 🛡️ 1. Control de Expiración de Sesión en Tiempo Real
