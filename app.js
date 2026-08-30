@@ -898,11 +898,7 @@ async function refreshBanco() {
         if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
         
         // ✅ Cierre de llaves corregido
-        if (view === 'eventos') {
-          if (typeof cargarEventosLogger === 'function') {
-            cargarEventosLogger();
-          }
-        }
+        if (view === 'eventos') { cargarEventosLogger(); }
       } catch (e) { 
         console.error('[setupRouter] init error:', e); 
       }
@@ -1127,19 +1123,6 @@ async function refreshBanco() {
     btn?.addEventListener('click', cargarTabla);
   }
 
-  // Boot de UI base (router + helpers ligeros)
-  /*
-  window.addEventListener('DOMContentLoaded', () => {
-    setupRouter();
-    setupFullscreen();
-    setupSearch();
-    setupContometros();
-    setupSync();
-  });*/
-
-  // export helpers
-  // window.$$ = $$; window.$$$ = $$$; window.escapeHTML = escapeHTML; window.toast = toast;
-  // Por esto (asignación directa):
   window.$$ = s => document.querySelector(s);
   window.$$$ = s => Array.from(document.querySelectorAll(s));
   window.escapeHTML = function(x){
@@ -2014,10 +1997,6 @@ function contometros_loadStyled(params, cb) {
     .api_contometros_getStyled({});
 }
 
-function setupLecturas() {
-  contometros_loadStyled({}, contometros_renderStyled);
-}
-
 function closeContometrosForm() {
   const dlg = document.getElementById('dlgContometros');
   const ifr = document.getElementById('frmContometros');
@@ -2025,36 +2004,6 @@ function closeContometrosForm() {
   if (ifr) ifr.src = 'about:blank';
   contometros_loadStyled({}, contometros_renderStyled);
 }
-
-// Inicialización de Listeners segura
-  document.addEventListener('DOMContentLoaded', () => {setupLecturas();
-  //document.getElementById('btnFormClose')?.addEventListener('click', closeContometrosForm);
-  
-  /*window.addEventListener('message', (e) => {
-    if (e?.data && (e.data === 'contometros-close' || e.data.type === 'contometros-close')) {
-      closeContometrosForm();
-    }
-  });*/
-
-  document.getElementById('btnRecargarConto')?.addEventListener('click', () => {
-    const b = document.getElementById('btnRecargarConto');
-    const old = b.textContent; 
-    b.disabled = true; 
-    b.textContent = 'Actualizando…';
-    try { 
-      contometros_loadStyled({}, data => {
-        contometros_renderStyled(data);
-        b.disabled = false;
-        b.textContent = old;
-      });
-    } catch (e) {
-      b.disabled = false;
-      b.textContent = old;
-      alert(e);
-    }
-  });
-
-});
 
 /* =========================
    CONSULTAS - Lógica General
@@ -2120,14 +2069,6 @@ function setupConsultasSelect() {
     })
     .getListasIdBanco();
 }
-
-// Inicialización segura del DOM
-/*
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupConsultas);
-  } else {
-  setupConsultas();
-}*/
 
 // HELPERS DE TABLA Y PARSEO
 function cons_buildThead() {
@@ -3936,21 +3877,6 @@ document.addEventListener('click', (e) => {
 // Variable global para almacenar los datos temporalmente y poder filtrarlos localmente sin recargar
 let cacheServicios = [];
 
-// Inicialización de Eventos del Módulo
-document.addEventListener("DOMContentLoaded", function() {cargarModuloServicios();
-  // Evento para el botón de actualizar
-  //document.getElementById("servicios-refresh")?.addEventListener("click", cargarModuloServicios);
-
-  // Evento para el buscador en tiempo real
-  const inputSearch = document.getElementById("servicios-search");
-  if (inputSearch) {
-    inputSearch.addEventListener("input", function(e) {
-      const termino = e.target.value.toLowerCase().trim();
-      filtrarYMostrarServicios(termino);
-    });
-  }
-});
-
 /**
  * Llama al backend en GAS y trae los datos
  */
@@ -4330,12 +4256,14 @@ window.addEventListener('message', (ev) => {
 document.addEventListener('DOMContentLoaded', () => {
 
   // 1. Inicialización de la App y Router
+  loaded.comunal = true;
+  setupComuna?.();
   setupRouter();
   setupFullscreen();
   setupSearch();
+  contometros_loadStyled({}, contometros_renderStyled);
   setupContometros();
   setupSync();
-  setupLecturas();
 
   // 2. Modales y Navegación
   document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
