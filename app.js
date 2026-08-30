@@ -52,27 +52,42 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- Validación desde el Formulario conectada a tu Backend ---
+// --- Validación desde el Formulario conectada a tu Backend ---
 function validarIngreso(event) {
   event.preventDefault();
 
   const userEl = document.getElementById("login-user");
   const passEl = document.getElementById("login-pass");
-  const userInput = (userEl.value || '').trim().toUpperCase();
-  const passInput = (passEl.value || '').trim();
+  const userInput = (userEl?.value || '').trim().toUpperCase();
+  const passInput = (passEl?.value || '').trim();
   const errorMsg = document.getElementById("login-error");
-  const btnSubmit = event.target.querySelector('button[type="submit"]');
+  
+  // Resguardo para encontrar el botón de envío
+  const form = event.target;
+  const btnSubmit = form.querySelector('button[type="submit"]') || form.querySelector('button') || document.getElementById('btnLogin');
 
-  if (!userInput || !passInput) return;
+  if (!userInput || !passInput) {
+    if (errorMsg) {
+      errorMsg.style.display = "flex";
+      const txt = errorMsg.querySelector('span') || errorMsg;
+      txt.textContent = "Ingrese usuario y contraseña.";
+    }
+    return;
+  }
 
   // Estado de carga visual en el botón
-  btnSubmit.disabled = true;
-  btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
+  if (btnSubmit) {
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
+  }
   if (errorMsg) errorMsg.style.display = "none";
 
   netRun()
     .withSuccessHandler(res => {
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
+      }
 
       if (res && res.ok && res.token) {
         // 1. Guardar Token
@@ -87,34 +102,39 @@ function validarIngreso(event) {
         sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
 
         // 4. Limpiar campos al ingresar con éxito
-        userEl.value = '';
-        passEl.value = '';
+        if (userEl) userEl.value = '';
+        if (passEl) passEl.value = '';
 
         // 5. Ocultar Login y Mostrar App
         mostrarAplicacion();
       } else {
-        // Error de credenciales: Notifica y borra la contraseña
+        // Error de credenciales
         if (errorMsg) {
           errorMsg.style.display = "flex";
           const txt = errorMsg.querySelector('span') || errorMsg;
           txt.textContent = res?.error || "Usuario o PIN incorrectos.";
         }
-        passEl.value = ''; // Limpia el PIN para reintentar
-        passEl.focus();
+        if (passEl) {
+          passEl.value = '';
+          passEl.focus();
+        }
       }
     })
     .withFailureHandler(err => {
-      btnSubmit.disabled = false;
-      btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<span>Iniciar Sesión</span> <i class="fa-solid fa-arrow-right"></i>';
+      }
 
       console.error("❌ Error de red o servidor:", err);
       if (errorMsg) {
         errorMsg.style.display = "flex";
         const txt = errorMsg.querySelector('span') || errorMsg;
-        txt.textContent = "Error de conexión con el servidor.";
+        txt.textContent = "Error de conexión con el servidor: " + (err?.message || String(err));
       }
-      passEl.value = ''; // Limpia el PIN ante fallo de conexión
+      if (passEl) passEl.value = '';
     })
+    // ✅ Se envían solo usuario y contraseña para la autenticación inicial
     .api_auth_check('', userInput, passInput);
 }
     
@@ -140,7 +160,7 @@ function cerrarSesion(forceReload = false) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // URL pública de tu Web App en Google Apps Script COEXION AL SERVIDOR GAS
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxUCsVb58tJwtuGCcShzqWTGnMtCmW95EbAlOJKf-3JxKlfUB2zGfEjGGIXlqEwb6zM5A/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzG5Cql9kqmiwjy_FUAANj0tUparfQxlAAkfeV2z8uVEML17bUaJcT5r7NlqQZyDNS7NA/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
