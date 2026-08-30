@@ -2395,6 +2395,7 @@ async function cons_consultar() {
   }
 
   if (typeof cons_resetTotales === 'function') cons_resetTotales();
+  const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
 
   // 2. Intento de autenticación seguro
   /*
@@ -2408,7 +2409,7 @@ async function cons_consultar() {
     token = null; 
   }
 
-  const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
+  
 
   if (!token) {
     if (tbl) { tbl.removeAttribute('aria-busy'); tbl.innerHTML = ''; }
