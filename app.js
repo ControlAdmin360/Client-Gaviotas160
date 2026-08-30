@@ -24,18 +24,14 @@ function clearAuth() {
     sessionStorage.removeItem('AUTH_TOKEN');
     sessionStorage.removeItem('AUTH_USER');
     sessionStorage.removeItem('AUTH_EXPIRE');
-  } catch (e) {
-    console.warn('Error al limpiar sesión:', e);
-  }
+  } catch (e) {console.warn('Error al limpiar sesión:', e);}
 }
 
 // --- Identificación de Usuario Activo ---
 window.usuarioActivo = window.usuarioActivo || (() => {
   try {
     return sessionStorage.getItem('AUTH_USER') || 'UNKNOWN';
-  } catch (e) {
-    return 'UNKNOWN_LOK';
-  }
+  } catch (e) {return 'UNKNOWN_LOK';}
 });
 
 // Comprobación directa usando la fecha guardada previamente por tu sistema
@@ -126,39 +122,30 @@ function validarIngreso(event) {
 function mostrarAplicacion() {
   const loginScreen = document.getElementById("login-screen");
   const appContainer = document.getElementById("app-container");
-
   if (loginScreen) loginScreen.style.display = "none";
   if (appContainer) appContainer.style.display = "block";
-
   if (typeof initApp === "function") {
-    initApp();
-  }
+    initApp();}
 }
 
 function cerrarSesion(forceReload = false) {
   clearAuth();
-  
   const loginScreen = document.getElementById("login-screen");
   const appContainer = document.getElementById("app-container");
-
   if (appContainer) appContainer.style.display = "none";
   if (loginScreen) loginScreen.style.display = "flex";
-
-  if (forceReload) {
-    window.location.reload();
-  }
+  if (forceReload) {window.location.reload();}
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-// URL pública de tu Web App en Google Apps Script
+// URL pública de tu Web App en Google Apps Script COEXION AL SERVIDOR GAS
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxUCsVb58tJwtuGCcShzqWTGnMtCmW95EbAlOJKf-3JxKlfUB2zGfEjGGIXlqEwb6zM5A/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
   let successFn = () => {};
   let failureFn = () => {};
-
   const proxy = new Proxy({}, {
     get(_t, prop) {
       if (prop === 'withSuccessHandler') {
@@ -217,14 +204,15 @@ window.netRun = function () {
   });
   return proxy;
 };
-window.eventosCache = [];
 
+window.eventosCache = [];
 window.norm = window.norm || (s => String(s ?? '').trim().toUpperCase());
 window.DEPA_SET = window.DEPA_SET || new Set();
 window.SERV_SET = window.SERV_SET || new Set();
 window.LISTAS = window.LISTAS || { depaIds: [], servIds: [] };
 
 // --- Sistema de Autenticación de Usuario + Revalidación de Token ---
+// se ejecuta antes de realizar acciones sensibles (como eliminar registros, generar reportes o guardar movimientos).
 function ensureAuthTokenBanco(){
   return new Promise((resolve, reject) => {
     const existing = (typeof getAuthToken === 'function')
@@ -752,13 +740,13 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       return false;
     }
   async function setupComunaConAuth() {
-    // 🔐 Reutilizamos el sistema de autenticación
-    let token = null;
+    
+    /*let token = null;
     try { 
       token = await ensureAuthTokenBanco(); 
     } catch (e) { 
       token = null; 
-    }
+    }*/
     if (token && typeof token === 'string' && token.trim() !== '') {
       // Acceso concedido
       window.__viewsLoaded.comunal = true;
@@ -1587,9 +1575,10 @@ function setupBancoFormModal(){
     }catch(e){}
   }
   window.closeBancoForm = closeBancoForm;
+  
   // 💎 PROTEGIDO: Volvemos el listener asíncrono para evaluar el token primero
   btn.addEventListener('click', async () => {
-    // 1. Una única llamada limpia de verificación
+    /*
     let token = null;
     try { 
       token = await ensureAuthTokenBanco(); 
@@ -1600,7 +1589,7 @@ function setupBancoFormModal(){
     // 2. Freno si no se autoriza
     if (!token) {
       return; 
-    }
+    }*/
     // 3. Apertura inmediata del formulario
     const url = buildUrl();
     if (!url) return;
@@ -1608,6 +1597,7 @@ function setupBancoFormModal(){
     dlg.showModal();
     requestAnimationFrame(() => { ifr.src = url; });
   });
+  
   btnClose?.addEventListener('click', closeBancoForm);
   // Escucha mensajes del iframe
   window.addEventListener('message', (ev) => {
