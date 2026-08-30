@@ -146,7 +146,7 @@ function cerrarSesion(forceReload = false) {
 
 
 // URL pública de tu Web App en Google Apps Script
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycby-8oPBqRUd6PwD9Zcg6cd1qWKh82ynJWacXG1V8v6C-FYLedwXf8zHNmNVG_iIhgXzYg/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzXXLpP57qQArepQCD9sCs-lTi03FvbtSuYrIsg0sNJu1CIQh7iPbA4kIubS7-3BJBOsQ/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
