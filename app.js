@@ -1,6 +1,6 @@
 /**
  * =============================================================================
- * 0. NÚCLEO GLOBAL (Variables, Autenticación y Utilidades)
+ * 0. NÚCLEO GLOBAL (Variables, Autenticación y Utilidades) vs
  * =============================================================================
  */
 const DEBUG = true;
