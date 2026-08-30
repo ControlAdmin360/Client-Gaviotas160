@@ -944,8 +944,8 @@ function setupRouter(){
   }
   // ====== Badge de estado servidor y User Logg ======
   function getUserTag(){
-    const u = sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || '';
-    return '🧑-> ' + (u || 'LogOff');
+    const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
+    return '🧑-> ' + (user);
   }
   //función auxiliar para calcular el tiempo restante en formato MM:SS u HH:MM
    function getTokenRemainingTime() {
@@ -2983,7 +2983,7 @@ function validarYGuardarExon() {
     btnSave.style.backgroundColor = "#0354f4";
     btnSave.style.color = "#ffffff";
     btnSave.style.cursor = "not-allowed";
-    const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN';
+    const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
     netRun()
       .withSuccessHandler((res) => {
         // Notificación de éxito
@@ -2997,7 +2997,7 @@ function validarYGuardarExon() {
         alert("❌ Error al Guardar: " + (error.message || error));
         restaurarBoton();
       })
-      .procesarGuardadoExon(depa, finalMonto, finalConcepto, finalMoras, sinMoraActual, finalDescrip, AUTH_TOKEN);
+      .procesarGuardadoExon(depa, finalMonto, finalConcepto, finalMoras, sinMoraActual, finalDescrip, user);
 };
   // Solo validamos si NO es eliminar, NO es congelar moras y el concepto es de deuda
   if (!eliminar && !definitivo && ["MORAS", "MULTAS", "MORAS&MULTAS"].includes(concepto)) {
@@ -3079,7 +3079,7 @@ function validarYGuardarMulta() {
   }
 
   if (!confirm(`❓ ¿Confirma el registro de ${tipo} por S/. ${monto} al departamento: ${depa}?`)) return;
-  const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN';
+  const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
 
   btn.disabled = true;
   btn.textContent = "⏳ Espere...";
@@ -3111,7 +3111,7 @@ netRun()
     btn.style.backgroundColor = ""; 
     btn.style.color = "";
   })
-  .procesarMultas(depa, Math.abs(monto), tipo, AUTH_TOKEN);
+  .procesarMultas(depa, Math.abs(monto), tipo, user);
 }
 // session de Configuracion
 function cerrarModalMultas() {
@@ -3281,7 +3281,7 @@ function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCach
     if (!confirm("❓ ¿Desea guardar los cambios en la configuración global y cuotas?")) return;
   }
 
-  const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || sessionStorage.getItem('AUTH_EMAIL') || 'UNKNOWN';
+  const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || 'unknonw';
   if (cuota <= 0) { cuotaDescrip = ""; }
 
   btn.disabled = true;
