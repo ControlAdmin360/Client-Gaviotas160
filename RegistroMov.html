@@ -184,13 +184,22 @@
       mu.innerHTML = `<strong>Admin Account:</strong> ${correoUsuario || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${AUTH_USER || '—'}`;
     }
 
-    // --- Inicialización y Validación Auth ---
-    if (!AUTH_TOKEN) {
-      fbMsg.textContent = 'USUARIO RESTRINGIDO';
-      fbMsg.style.color = 'red';
-    } else {
-      fbMsg.textContent = `¡Hola ${AUTH_USER}! Todo Listo.`;
-      fbMsg.style.color = '#0249FA';
+    function setMensajeAuth(texto, color) {
+      if (!fbMsg) return;
+      fbMsg.textContent = texto;
+      fbMsg.style.color = color;
+      if (fbWrap) fbWrap.style.display = 'block'; // Asegura que el contenedor CSS sea visible
+    }
+    
+    // 2. Función para evaluar el estado y decidir qué mensaje mostrar
+    function validarMensajeInicial() {
+      if (!AUTH_TOKEN) {
+        setMensajeAuth('USUARIO RESTRINGIDO', 'red');
+        disableForm();
+      } else {
+        const usuario = AUTH_USER || 'Usuario';
+        setMensajeAuth(`¡Hola ${usuario}! Todo Listo.`, '#0249FA');
+      }
     }
     
 
@@ -241,6 +250,7 @@
       renderMetaUsuario();
     }
     initIDBlock();
+    validarMensajeInicial();
 
     if (p && p.LISTAS && p.LISTAS.depaIds?.length && p.LISTAS.servIds?.length) {
       // 1. Si ya existen en memoria, las toma al instante
