@@ -287,20 +287,21 @@ function ensureAuthTokenBanco(){
 const $$  = s => document.querySelector(s);
 const $$$ = s => Array.from(document.querySelectorAll(s));
 
-  function escapeHTML(x){
+function escapeHTML(x){
     return String(x)
       .replace(/&/g,'&amp;')
       .replace(/</g,'&lt;')
       .replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;')
       .replace(/'/g,'&#39;');
-  }
-  function toast(msg){
+}
+
+function toast(msg){
     const t = $$('#toast');
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(()=> t.classList.remove('show'), 4000);
-  }
+}
   
 // ELIMINA ULTIMO REGISTRO EN BANCO
 document.getElementById('banco-eliminar')?.addEventListener('click', async () => {
@@ -394,8 +395,8 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
   }
 });
       
-       // SETEA M3 EN BANCO
-      document.getElementById('btn-m3')?.addEventListener('click', async () => {
+// SETEA M3 EN BANCO
+document.getElementById('btn-m3')?.addEventListener('click', async () => {
         const btn = document.getElementById('btn-m3');
         if (!btn) return;
       
@@ -468,10 +469,10 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           alert(e);
           restore();
         }
-      });
+});
       
-      // ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
-      async function abrirContometrosForm(){
+// ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
+async function abrirContometrosForm(){
         try {
           // 1. Validar/Obtener Token (redirige al login automáticamente si falla)
           const token = await ensureAuthTokenBanco();
@@ -489,20 +490,20 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
           console.error('No se abrió Contómetros:', e); 
           // Se captura silenciosamente el fallo/cancelación sin lanzar alertas molestas
         }
-      }
+}
 
-      // Botones Main iniciadores
-      document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
-      document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
-      // Clicks principales
-      //document.getElementById('btnNuevo')?.addEventListener('click', abrirContometrosForm);
-      //document.getElementById('banco-nuevo')?.addEventListener('click', abrirBancoForm);
-      document.getElementById('banco-refresh')?.addEventListener('click', reloadPage);
-      document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
-      document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
+// Botones Main iniciadores
+document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
+document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
+// Clicks principales
+//document.getElementById('btnNuevo')?.addEventListener('click', abrirContometrosForm);
+//document.getElementById('banco-nuevo')?.addEventListener('click', abrirBancoForm);
+document.getElementById('banco-refresh')?.addEventListener('click', reloadPage);
+document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
+document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
 
-      // Mensajes de sesión expirada
-      window.addEventListener('message', ev => {
+// Mensajes de sesión expirada
+window.addEventListener('message', ev => {
         if (ev?.data?.type === 'contometros-auth-expired' || ev?.data?.type === 'banco-auth-expired') {
           // Si existe la función global de cierre de sesión, la ejecutamos
           if (typeof cerrarSesion === 'function') {
@@ -518,416 +519,413 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
             if (loginScreen) loginScreen.style.display = "flex";
           }
         }
-      });
+});
 
-      /*document.getElementById('nav-eventos')?.addEventListener('click', () => {
-          cargarEventosLogger(); // Consulta y renderiza Firebase al presionar
-        });*/
-
-      // CARGA PERIODO EN BANCO
-        async function refreshBanco() {
-          const btn  = document.getElementById('banco-buscar');
-          const mSel = document.getElementById('banco-month');
-          const ySel = document.getElementById('banco-year');
-          const month = Number(mSel?.value);
-          const year  = Number(ySel?.value);
+// CARGA PERIODO EN BANCO
+async function refreshBanco() {
+  const btn  = document.getElementById('banco-buscar');
+  const mSel = document.getElementById('banco-month');
+  const ySel = document.getElementById('banco-year');
+  const month = Number(mSel?.value);
+  const year  = Number(ySel?.value);
+  const restore = () => {
+    if (!btn) return;
+    btn.disabled = false;
+    btn.textContent = btn.dataset._old || '📅 Ver Periodo';
+    btn.removeAttribute('style');
+    btn.className = 'btn-orange';
+  };
         
-          const restore = () => {
-            if (!btn) return;
-            btn.disabled = false;
-            btn.textContent = btn.dataset._old || '📅 Ver Periodo';
-            btn.removeAttribute('style');
-            btn.className = 'btn-orange';
-          };
-        
-          const setWorking = () => {
-            if (!btn) return;
-            btn.dataset._old = btn.textContent;
-            btn.disabled = true;
-            btn.style.background = '#FAD775';
-            btn.style.color = '#000';
-            btn.textContent = '⏳Actualizando…';
-          };
-        
-          try {
-            // 1. Validar selección de entradas
-            if (!month || !year || Number.isNaN(month) || Number.isNaN(year)) {
-              if (window.toast) toast("⚠️ Seleccione mes y año válidos");
-              else alert('Seleccione mes y año válidos.');
-              return;
-            }
-            /*
-            // 2. Autenticación
-            let token = null;
-            try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-            if (!token) {
-              return;
-            }*/
-        
-            setWorking();
-        
-            // 3. Consulta directa vía netRun (Sin validar el objeto google)
-            if (typeof netRun === 'function') {
-              const user = window.usuarioActivo();
-              
-              netRun()
-                .withSuccessHandler((data) => {
-                  try {
-                    banco_renderStyled(data);
-                  } catch(e) {
-                    console.error("Error al renderizar:", e);
-                  } finally {
-                    restore();
-                  }
-                })
-                .withFailureHandler((err) => {
-                  console.error("Error en servidor:", err);
-                  restore();
-                  if (window.toast) toast("🔴 Error al cargar periodo");
-                })
-                .api_banco_getDashboardData({ year, month, userAuth: user })
-            } else {
-              console.error("🔴 netRun no está disponible en app.js");
-              restore();
-            }
-          } catch (e) {
-            alert('⚠️ Error al Seleccionar Periodo: ' + e);
-            restore();
-          }
-        }
-        function reloadPage() {
-          const btn  = document.getElementById('banco-refresh');
-          const mSel = document.getElementById('banco-month');
-          const ySel = document.getElementById('banco-year');
-          
-          const restore = () => {
-            if (!btn) return;
-            btn.disabled = false;
-            btn.textContent = btn.dataset._old || '🔄 Actualizar';
-            btn.removeAttribute('style');
-            btn.className = 'btn-blue';
-          };
-        
-          if (btn) {
-            btn.dataset._old = btn.textContent;
-            btn.disabled = true;
-            btn.style.background = '#FAD775';
-            btn.style.color = '#000';
-            btn.textContent = '⏳Espere...';
-          }
-        
-          const month = Number(mSel?.value);
-          const year  = Number(ySel?.value);
-          const token = typeof getAuthToken === 'function' ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
-          const user  = window.usuarioActivo();
-        
-          netRun()
-            .withSuccessHandler((data) => {
-              try { 
-                if (data && (data.ok === false || data.error)) {
-                  if (window.toast) toast("🔴 " + (data.error || "Error al actualizar"));
-                } else {
-                  banco_renderStyled(data); 
-                }
-              } catch(e) {
-                console.error("Error al renderizar:", e);
-              } finally { 
-                restore(); 
-              }
-            })
-            .withFailureHandler((err) => {
-              console.error("Error en servidor:", err);
-              restore();
-              if (window.toast) toast("🔴 Error al conectar con el servidor");
-            })
-            .api_banco_getDashboardData({ year, month, userAuth: user });
-        }
-
-
-      // Rellenar combos e iniciar carga del mes en curso
-      function initBancoCombosFromSheet(){
-        const mSel = document.getElementById('banco-month');
-        const ySel = document.getElementById('banco-year');
-        if (!mSel || !ySel) return;
-
-        netRun()
-          .withSuccessHandler(({ months, years, current }) => {
-            // 1. Inyectamos las opciones dinámicas
-            mSel.innerHTML = months.map(m => `<option value="${m.n}">${m.name}</option>`).join('');
-            ySel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-
-            // 2. Seleccionamos el mes y año actual
-            mSel.value = current.month;
-            ySel.value = current.year;
-            reloadPage(); 
-          })
-          .withFailureHandler(err => console.error('api_banco_getOptions error:', err))
-          .api_banco_getOptions();
-      }
-
-     // RECARGA RECIBOS
-    function reloadRecibos(){
-      const btn  = document.getElementById('recibos-refresh');
+  const setWorking = () => {
       if (!btn) return;
-      // --- pintar estado trabajando
-      if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+      btn.dataset._old = btn.textContent;
       btn.disabled = true;
       btn.style.background = '#FAD775';
-      btn.style.color= '#000';
-      btn.textContent = '⏳Actualizando...';
-      const restore = () => {
-        btn.disabled = false;
-        btn.textContent = btn.dataset._old || '🔄 Actualizar';
-        btn.style.background = '';
-        btn.style.color = '';
-        btn.className = 'btn-blue';
-      };
-      let restored = false;
-      const safeRestore = () => {
-        if (restored) return;
-        restored = true;
-        restore();
-      };
-      // Observa cambios en la tabla para restaurar al terminar el render
-      const tbl = document.getElementById('tabla-recibos');
-      let obs;
-      try {
-        if (tbl) {
-          const target = tbl.tBodies && tbl.tBodies[0] ? tbl.tBodies[0] : tbl;
-          obs = new MutationObserver(() => {
-            // desconecta y restaura tras el próximo frame
-            obs.disconnect();
-            requestAnimationFrame(safeRestore);
-          });
-          obs.observe(target, { childList: true, subtree: true });
-        }
-        setupRecibos();
-        // Fallback: si nada cambió en 6s, restauramos igual
-        setTimeout(safeRestore, 6000);
-      } catch (e){
-        console.error('reloadRecibos error:', e);
-        if (obs) obs.disconnect();
-        safeRestore();
-        toast?.('Error al recargar Recibos');
-      }
-    }
-    function pedirCodigoCliente(mensaje, code, maxAttempts){
-      const intentosMax = Math.max(1, Number(maxAttempts) || 1);
-      const promptMsg = (mensaje ? mensaje + '\n\n' : '') +
-        '🔒 Código de validación: ' + String(code) + '\n' +
-        'Introduzca el Código Para Validar esta Operación:';
-      for (let i = 0; i < intentosMax; i++){
-        const ingreso = window.prompt(promptMsg, '');
-        if (ingreso === null){
-          if (window.toast) toast("⚠️ Operación cancelada (🛑)");
-          return false;
-        }
-        if (String(ingreso).trim() === String(code)){
-          return true;
-        }
-        const restantes = intentosMax - i - 1;
-        if (restantes > 0){
-          window.alert(`⛔ Código incorrecto. Intentos restantes: ${restantes}`);
-        } else {
-          if (window.toast) toast("⚠️ Maximo de intentos Permitidos. Operación cancelada (🛑)");
-        }
-      }
-      return false;
-    }
-
-document.getElementById('btnRepGen')?.addEventListener('click', async () => {
-  const btn = document.getElementById('btnRepGen');
-  const linksDiv = document.getElementById('reportLinks');
-  if (!btn || !linksDiv) return;
-
-  // Guardamos el texto original del botón si no existe
-  if (!btn.dataset._old) btn.dataset._old = btn.textContent;
-
-  const setWorking = () => {
-    btn.disabled = true;
-    btn.textContent = '⏳ Generando Reporte…';
-  };
-  const restore = () => {
-    btn.disabled = false;
-    btn.textContent = btn.dataset._old;
-  };
-
-  linksDiv.innerHTML = '';
-  let token = null;
-  try { 
-    token = await ensureAuthTokenBanco(); 
-  } catch { 
-    token = null; 
-  }
-  if (!token) {
-    restore(); // 👈 Si no hay token, restaura el estado del botón
-    return; 
-  }
-  setWorking();
-
-  netRun()
-    .withSuccessHandler(res => {
-      btn.disabled = false;
-      btn.textContent = '✅ Reporte Generado';
-
-      if (res?.user) {
-        sessionStorage.setItem('AUTH_USER', res.user);
-      }
-
-      if (res?.ok && res?.urlPDF) {
-        linksDiv.innerHTML = getBtnPDF(res); 
-      } else {
-        linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
-      }
-    })
-    .withFailureHandler(err => {
-      restore();
-      linksDiv.textContent = 'Error: ' + (err?.message || String(err));
-    })
-    // ✅ Envia el token y el usuario en un objeto estructurado
-    .reporteGeneral_web({
-      authToken: token,
-      userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
-    }); 
-});
-    // GENERA REPORTE DEUDAS desde Boton
-    document.getElementById('btnDeudas')?.addEventListener('click', () => {
-      const btn = document.getElementById('btnDeudas');
-      const linksDiv = document.getElementById('deudasLinks');
-      const $minInput = document.getElementById('deu-min'); 
-      const valorMin = $minInput ? Number($minInput.value) : 15;
-      btn.disabled = true;
-      btn.textContent = '⏳ Generando Lista...';
-      linksDiv.innerHTML = "";
-      netRun()
-        .withSuccessHandler(res => {
-          btn.disabled = false;
-          btn.textContent = '✅ Lista Generada';
-          if (res?.urlDrive) {
-            linksDiv.innerHTML = getBtnPDF(res);
-          } else {
-            linksDiv.textContent = "❌ No se pudo generar el reporte";
-          }
-        })
-        .withFailureHandler(err => {
-          btn.disabled = false;
-          btn.textContent = '📊 Listar Deudas';
-          linksDiv.textContent = "Error: " + (err.message || err);
-        })
-        .generarReporteDeudas_web(window.usuarioActivo(), valorMin);
-    });
-
-    // REPORTE RECIBOS
-    document.getElementById('btnRecExel')?.addEventListener('click', () => {
-      const btn = document.getElementById('btnRecExel');
-      const linksDiv = document.getElementById('exportLinks');
-      btn.disabled = true;
-      btn.textContent = '⏳ Generando Recibos...';
-      linksDiv.innerHTML = "";
-      netRun()
-      .withSuccessHandler(res => {
-          btn.disabled = false;
-          btn.textContent = '✅ Recibos Prosesados';
-          if (res?.urlDrive) {
-            linksDiv.innerHTML = getBtnDrive(res) + getBtnExcel(res);
-          } else {
-            linksDiv.textContent = "❌ No se pudo generar el archivo";
-          }
-        })
-        .withFailureHandler(err => {
-          btn.disabled = false;
-          btn.textContent = '📤 Recibos en Excel';
-          linksDiv.textContent = "Error: " + (err.message || err);
-        })
-        .downloadSheetAsXlsx_web(window.usuarioActivo());
-    });
-
-    // REPORTE AGUAS
-    document.getElementById('btnRepAguas')?.addEventListener('click', () => {
-      const btn = document.getElementById('btnRepAguas');
-      const linksDiv = document.getElementById('aguasLinks');
-      const setWorking = () => {
-        btn.disabled = true;
-        btn.textContent = '⏳ Generando Reportes...';
-        linksDiv.innerHTML = '';
-      };
-      const setDone = () => {
-        btn.disabled = false;
-        btn.textContent = '✅ Reportes Generados';
-      };
-      const setError = (err) => {
-        btn.disabled = false;
-        btn.textContent = '📤 Generar Reportes';
-        linksDiv.textContent = 'Error: ' + (err?.message || err);
-      };
-      setWorking();
-      // 1) Genera Excel / Drive
-      netRun()
-        .withSuccessHandler((resXlsx) => {
-          // 2) Genera PDF (proyección/alerta + export)
-          netRun()
-            .withSuccessHandler((resPdf) => {
-              setDone();
-
-              const parts = [];
-              if (resXlsx?.urlDrive)    parts.push(getBtnDrive(resXlsx));
-              if (resXlsx?.urlDownload) parts.push(getBtnExcel(resXlsx));
-              if (resPdf?.urlPDF)       parts.push(getBtnPDF(resPdf));
-
-              linksDiv.innerHTML = parts.join('') || '❌ No se pudo generar el archivo';
-            })
-            .withFailureHandler(setError)
-            .reporteAguasPDF_Web();     // ← ahora devuelve { urlPDF }
-        })
-        .withFailureHandler(setError)
-        .downloadComtometsXlsx_web(window.usuarioActivo());
-    });
-  // ==========================
-  // Router con carga perezosa
-  // ==========================
-function setupRouter(){
-  const side = $$('.sidebar');
-  if (!side) return;
-
-  // banderas de inicialización por vista (una vez) – compatible (sin ||=)
-  const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
-    banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
-  });
-
-  function ensureInit(view) {
+      btn.style.color = '#000';
+      btn.textContent = '⏳Actualizando…';
+    };
+  
     try {
-      if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
-      if (view === 'consultas') { setupConsultas(); }
-      if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
-      if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
-      
-      // ✅ Cierre de llaves corregido
-      if (view === 'eventos') {
-        if (typeof cargarEventosLogger === 'function') {
-          cargarEventosLogger();
-        }
+      // 1. Validar selección de entradas
+      if (!month || !year || Number.isNaN(month) || Number.isNaN(year)) {
+        if (window.toast) toast("⚠️ Seleccione mes y año válidos");
+        else alert('Seleccione mes y año válidos.');
+        return;
       }
-    } catch (e) { 
-      console.error('[setupRouter] init error:', e); 
+      /*
+      // 2. Autenticación
+      let token = null;
+      try { token = await ensureAuthTokenBanco(); } catch { token = null; }
+      if (!token) {
+        return;
+      }*/
+  
+      setWorking();
+  
+      // 3. Consulta directa vía netRun (Sin validar el objeto google)
+      if (typeof netRun === 'function') {
+        const user = window.usuarioActivo();
+        
+        netRun()
+          .withSuccessHandler((data) => {
+            try {
+              banco_renderStyled(data);
+            } catch(e) {
+              console.error("Error al renderizar:", e);
+            } finally {
+              restore();
+            }
+          })
+          .withFailureHandler((err) => {
+            console.error("Error en servidor:", err);
+            restore();
+            if (window.toast) toast("🔴 Error al cargar periodo");
+          })
+          .api_banco_getDashboardData({ year, month, userAuth: user })
+      } else {
+        console.error("🔴 netRun no está disponible en app.js");
+        restore();
+      }
+    } catch (e) {
+      alert('⚠️ Error al Seleccionar Periodo: ' + e);
+      restore();
     }
   }
-  // Navegación principal del Sidebar
-  side.addEventListener('click', async e => {
-    const a = e.target.closest('a[data-view]');
-    if (!a) return;
-    const v = a.getAttribute('data-view');
-    // --- CAMBIO VISUAL DE VISTA ---
-    $$$('.sidebar a').forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
-    $$$('.view').forEach(sec => sec.classList.remove('show'));
-    const sec = $$('#view-' + v);
-    if (sec) sec.classList.add('show');
-    ensureInit(v);
+
+  function reloadPage() {
+    const btn  = document.getElementById('banco-refresh');
+    const mSel = document.getElementById('banco-month');
+    const ySel = document.getElementById('banco-year');
+    
+    const restore = () => {
+      if (!btn) return;
+      btn.disabled = false;
+      btn.textContent = btn.dataset._old || '🔄 Actualizar';
+      btn.removeAttribute('style');
+      btn.className = 'btn-blue';
+    };
+  
+    if (btn) {
+      btn.dataset._old = btn.textContent;
+      btn.disabled = true;
+      btn.style.background = '#FAD775';
+      btn.style.color = '#000';
+      btn.textContent = '⏳Espere...';
+    }
+  
+    const month = Number(mSel?.value);
+    const year  = Number(ySel?.value);
+    const token = typeof getAuthToken === 'function' ? getAuthToken() : (sessionStorage.getItem('AUTH_TOKEN') || '');
+    const user  = window.usuarioActivo();
+  
+    netRun()
+      .withSuccessHandler((data) => {
+        try { 
+          if (data && (data.ok === false || data.error)) {
+            if (window.toast) toast("🔴 " + (data.error || "Error al actualizar"));
+          } else {
+            banco_renderStyled(data); 
+          }
+        } catch(e) {
+          console.error("Error al renderizar:", e);
+        } finally { 
+          restore(); 
+        }
+      })
+      .withFailureHandler((err) => {
+        console.error("Error en servidor:", err);
+        restore();
+        if (window.toast) toast("🔴 Error al conectar con el servidor");
+      })
+      .api_banco_getDashboardData({ year, month, userAuth: user });
+  }
+
+  // Rellenar combos e iniciar carga del mes en curso
+  function initBancoCombosFromSheet(){
+    const mSel = document.getElementById('banco-month');
+    const ySel = document.getElementById('banco-year');
+    if (!mSel || !ySel) return;
+
+    netRun()
+      .withSuccessHandler(({ months, years, current }) => {
+        // 1. Inyectamos las opciones dinámicas
+        mSel.innerHTML = months.map(m => `<option value="${m.n}">${m.name}</option>`).join('');
+        ySel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+
+        // 2. Seleccionamos el mes y año actual
+        mSel.value = current.month;
+        ySel.value = current.year;
+        reloadPage(); 
+      })
+      .withFailureHandler(err => console.error('api_banco_getOptions error:', err))
+      .api_banco_getOptions();
+  }
+
+     // RECARGA RECIBOS
+  function reloadRecibos(){
+    const btn  = document.getElementById('recibos-refresh');
+    if (!btn) return;
+    // --- pintar estado trabajando
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+    btn.disabled = true;
+    btn.style.background = '#FAD775';
+    btn.style.color= '#000';
+    btn.textContent = '⏳Actualizando...';
+    const restore = () => {
+      btn.disabled = false;
+      btn.textContent = btn.dataset._old || '🔄 Actualizar';
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.className = 'btn-blue';
+    };
+    let restored = false;
+    const safeRestore = () => {
+      if (restored) return;
+      restored = true;
+      restore();
+    };
+    // Observa cambios en la tabla para restaurar al terminar el render
+    const tbl = document.getElementById('tabla-recibos');
+    let obs;
+    try {
+      if (tbl) {
+        const target = tbl.tBodies && tbl.tBodies[0] ? tbl.tBodies[0] : tbl;
+        obs = new MutationObserver(() => {
+          // desconecta y restaura tras el próximo frame
+          obs.disconnect();
+          requestAnimationFrame(safeRestore);
+        });
+        obs.observe(target, { childList: true, subtree: true });
+      }
+      setupRecibos();
+      // Fallback: si nada cambió en 6s, restauramos igual
+      setTimeout(safeRestore, 6000);
+    } catch (e){
+      console.error('reloadRecibos error:', e);
+      if (obs) obs.disconnect();
+      safeRestore();
+      toast?.('Error al recargar Recibos');
+    }
+  }
+
+  function pedirCodigoCliente(mensaje, code, maxAttempts){
+    const intentosMax = Math.max(1, Number(maxAttempts) || 1);
+    const promptMsg = (mensaje ? mensaje + '\n\n' : '') +
+      '🔒 Código de validación: ' + String(code) + '\n' +
+      'Introduzca el Código Para Validar esta Operación:';
+    for (let i = 0; i < intentosMax; i++){
+      const ingreso = window.prompt(promptMsg, '');
+      if (ingreso === null){
+        if (window.toast) toast("⚠️ Operación cancelada (🛑)");
+        return false;
+      }
+      if (String(ingreso).trim() === String(code)){
+        return true;
+      }
+      const restantes = intentosMax - i - 1;
+      if (restantes > 0){
+        window.alert(`⛔ Código incorrecto. Intentos restantes: ${restantes}`);
+      } else {
+        if (window.toast) toast("⚠️ Maximo de intentos Permitidos. Operación cancelada (🛑)");
+      }
+    }
+    return false;
+  }
+
+  document.getElementById('btnRepGen')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnRepGen');
+    const linksDiv = document.getElementById('reportLinks');
+    if (!btn || !linksDiv) return;
+
+    // Guardamos el texto original del botón si no existe
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+
+    const setWorking = () => {
+      btn.disabled = true;
+      btn.textContent = '⏳ Generando Reporte…';
+    };
+    const restore = () => {
+      btn.disabled = false;
+      btn.textContent = btn.dataset._old;
+    };
+
+    linksDiv.innerHTML = '';
+    let token = null;
+    try { 
+      token = await ensureAuthTokenBanco(); 
+    } catch { 
+      token = null; 
+    }
+    if (!token) {
+      restore(); // 👈 Si no hay token, restaura el estado del botón
+      return; 
+    }
+    setWorking();
+
+    netRun()
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '✅ Reporte Generado';
+
+        if (res?.user) {
+          sessionStorage.setItem('AUTH_USER', res.user);
+        }
+
+        if (res?.ok && res?.urlPDF) {
+          linksDiv.innerHTML = getBtnPDF(res); 
+        } else {
+          linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
+        }
+      })
+      .withFailureHandler(err => {
+        restore();
+        linksDiv.textContent = 'Error: ' + (err?.message || String(err));
+      })
+      // ✅ Envia el token y el usuario en un objeto estructurado
+      .reporteGeneral_web({
+        authToken: token,
+        userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
+      }); 
   });
-  // Inicializar la vista activa por defecto al cargar la app
-  const current = side.querySelector('a.active')?.getAttribute('data-view');
-  if (current) ensureInit(current);
-}
+
+  // GENERA REPORTE DEUDAS desde Boton
+  document.getElementById('btnDeudas')?.addEventListener('click', () => {
+    const btn = document.getElementById('btnDeudas');
+    const linksDiv = document.getElementById('deudasLinks');
+    const $minInput = document.getElementById('deu-min'); 
+    const valorMin = $minInput ? Number($minInput.value) : 15;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Lista...';
+    linksDiv.innerHTML = "";
+    netRun()
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '✅ Lista Generada';
+        if (res?.urlDrive) {
+          linksDiv.innerHTML = getBtnPDF(res);
+        } else {
+          linksDiv.textContent = "❌ No se pudo generar el reporte";
+        }
+      })
+      .withFailureHandler(err => {
+        btn.disabled = false;
+        btn.textContent = '📊 Listar Deudas';
+        linksDiv.textContent = "Error: " + (err.message || err);
+      })
+      .generarReporteDeudas_web(window.usuarioActivo(), valorMin);
+  });
+
+  // REPORTE RECIBOS
+  document.getElementById('btnRecExel')?.addEventListener('click', () => {
+    const btn = document.getElementById('btnRecExel');
+    const linksDiv = document.getElementById('exportLinks');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Recibos...';
+    linksDiv.innerHTML = "";
+    netRun()
+    .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '✅ Recibos Prosesados';
+        if (res?.urlDrive) {
+          linksDiv.innerHTML = getBtnDrive(res) + getBtnExcel(res);
+        } else {
+          linksDiv.textContent = "❌ No se pudo generar el archivo";
+        }
+      })
+      .withFailureHandler(err => {
+        btn.disabled = false;
+        btn.textContent = '📤 Recibos en Excel';
+        linksDiv.textContent = "Error: " + (err.message || err);
+      })
+      .downloadSheetAsXlsx_web(window.usuarioActivo());
+  });
+
+      // REPORTE AGUAS
+  document.getElementById('btnRepAguas')?.addEventListener('click', () => {
+        const btn = document.getElementById('btnRepAguas');
+        const linksDiv = document.getElementById('aguasLinks');
+        const setWorking = () => {
+          btn.disabled = true;
+          btn.textContent = '⏳ Generando Reportes...';
+          linksDiv.innerHTML = '';
+        };
+        const setDone = () => {
+          btn.disabled = false;
+          btn.textContent = '✅ Reportes Generados';
+        };
+        const setError = (err) => {
+          btn.disabled = false;
+          btn.textContent = '📤 Generar Reportes';
+          linksDiv.textContent = 'Error: ' + (err?.message || err);
+        };
+        setWorking();
+        // 1) Genera Excel / Drive
+        netRun()
+          .withSuccessHandler((resXlsx) => {
+            // 2) Genera PDF (proyección/alerta + export)
+            netRun()
+              .withSuccessHandler((resPdf) => {
+                setDone();
+
+                const parts = [];
+                if (resXlsx?.urlDrive)    parts.push(getBtnDrive(resXlsx));
+                if (resXlsx?.urlDownload) parts.push(getBtnExcel(resXlsx));
+                if (resPdf?.urlPDF)       parts.push(getBtnPDF(resPdf));
+
+                linksDiv.innerHTML = parts.join('') || '❌ No se pudo generar el archivo';
+              })
+              .withFailureHandler(setError)
+              .reporteAguasPDF_Web();     // ← ahora devuelve { urlPDF }
+          })
+          .withFailureHandler(setError)
+          .downloadComtometsXlsx_web(window.usuarioActivo());
+  });
+    // ==========================
+    // Router con carga perezosa
+    // ==========================
+  function setupRouter(){
+    const side = $$('.sidebar');
+    if (!side) return;
+
+    // banderas de inicialización por vista (una vez) – compatible (sin ||=)
+    const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
+      banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
+    });
+
+    function ensureInit(view) {
+      try {
+        if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
+        if (view === 'consultas') { setupConsultas(); }
+        if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
+        if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
+        
+        // ✅ Cierre de llaves corregido
+        if (view === 'eventos') {
+          if (typeof cargarEventosLogger === 'function') {
+            cargarEventosLogger();
+          }
+        }
+      } catch (e) { 
+        console.error('[setupRouter] init error:', e); 
+      }
+    }
+    // Navegación principal del Sidebar
+    side.addEventListener('click', async e => {
+      const a = e.target.closest('a[data-view]');
+      if (!a) return;
+      const v = a.getAttribute('data-view');
+      // --- CAMBIO VISUAL DE VISTA ---
+      $$$('.sidebar a').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      $$$('.view').forEach(sec => sec.classList.remove('show'));
+      const sec = $$('#view-' + v);
+      if (sec) sec.classList.add('show');
+      ensureInit(v);
+    });
+    // Inicializar la vista activa por defecto al cargar la app
+    const current = side.querySelector('a.active')?.getAttribute('data-view');
+    if (current) ensureInit(current);
+  }
 
   function setupFullscreen(){
     const btn = $$('#btnFull');
@@ -1005,17 +1003,17 @@ function setupRouter(){
     busy(){ if (++inflight === 1) setState('BUSY'); },
     idle(){ if (inflight > 0 && --inflight === 0) setState('IDLE'); },
     getState(){ return prev; } 
-};
-window.__NetState = Net;
+  };
+  window.__NetState = Net;
 
-document.addEventListener('NET_STATE_CHANGED', (e) => {
-  const el = document.getElementById('srvStatus');
-  if (!el) return;
-  const s = e.detail?.state;
-  el.className = 'srv-badge ' + (s === 'BUSY' ? 'srv-busy' : 'srv-idle');
-  const t = el.querySelector('.txt');
-  if (t) t.textContent = statusLabel(s);
-}); 
+  document.addEventListener('NET_STATE_CHANGED', (e) => {
+    const el = document.getElementById('srvStatus');
+    if (!el) return;
+    const s = e.detail?.state;
+    el.className = 'srv-badge ' + (s === 'BUSY' ? 'srv-busy' : 'srv-idle');
+    const t = el.querySelector('.txt');
+    if (t) t.textContent = statusLabel(s);
+  }); 
 
   // DEMO lecturas (utilidades de tabla simple)
   function renderTable({headers, rows}){
@@ -1035,6 +1033,7 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
     if (k2) k2.textContent = new Date().toLocaleString();
     if (k3) k3.textContent = 'OK';
   }
+
   function cargarTabla(){
     netRun()
     .withSuccessHandler(renderTable)
@@ -1051,76 +1050,77 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
       });
     });
   }
-    // Abre el formulario Contómetros en el modal-iframe
+
+  // Abre el formulario Contómetros en el modal-iframe
   function setupContometros(){
-  // evita registrarlo dos veces si tu init corre más de una vez
-  if (window.__setupContometrosReady) return;
-  window.__setupContometrosReady = true;
+    // evita registrarlo dos veces si tu init corre más de una vez
+    if (window.__setupContometrosReady) return;
+    window.__setupContometrosReady = true;
 
-  const btnNuevo = $$('#btnNuevo');
-  const dlg      = $$('#dlgContometros');
-  const iframe   = $$('#frmContometros');
-  const btnClose = $$('#btnFormClose');
-  if (!btnNuevo || !dlg || !iframe) return;
+    const btnNuevo = $$('#btnNuevo');
+    const dlg      = $$('#dlgContometros');
+    const iframe   = $$('#frmContometros');
+    const btnClose = $$('#btnFormClose');
+    if (!btnNuevo || !dlg || !iframe) return;
 
-  // URL base desde GAS (via doGet) o constante
-  const base = (window.FORM_CONTOMETROS_URL)
-    || (window.WEBAPP_BASE ? (window.WEBAPP_BASE + '?page=contometros') : null);
+    // URL base desde GAS (via doGet) o constante
+    const base = (window.FORM_CONTOMETROS_URL)
+      || (window.WEBAPP_BASE ? (window.WEBAPP_BASE + '?page=contometros') : null);
 
-  // Helper para armar URL con cache-buster seguro
-  const buildFormUrl = () => {
-    if (!base) return null;
-    const u = new URL(base, window.location.href);
-    u.searchParams.set('ts', Date.now().toString()); // bust cache
-    return u.toString();
-  };
+    // Helper para armar URL con cache-buster seguro
+    const buildFormUrl = () => {
+      if (!base) return null;
+      const u = new URL(base, window.location.href);
+      u.searchParams.set('ts', Date.now().toString()); // bust cache
+      return u.toString();
+    };
 
-  // (opcional) spinner / estado
-  const showLoading = () => { iframe.style.opacity = '0'; };
-  const hideLoading = () => { iframe.style.opacity = '1'; };
+    // (opcional) spinner / estado
+    const showLoading = () => { iframe.style.opacity = '0'; };
+    const hideLoading = () => { iframe.style.opacity = '1'; };
 
-  iframe.addEventListener('load', hideLoading);
+    iframe.addEventListener('load', hideLoading);
 
-  // 💎 PROTEGIDO: Volvemos el listener asíncrono para evaluar las credenciales primero
-  btnNuevo.addEventListener('click', async () => {
-    
-    // 1. Forzar validación obligatoria del token de acceso
-    let token = null;
-    try { 
-      token = await ensureAuthTokenBanco(); 
-    } catch (e) { 
-      token = null; 
-    }
-    
-    // 2. FRENO DE SEGURIDAD: Si no hay token, congelamos el flujo de inmediato
-    if (!token) {
-      if (window.toast) window.toast('🔐 Autenticación Fallida (⛔)');
-      return; 
-    }
+    // 💎 PROTEGIDO: Volvemos el listener asíncrono para evaluar las credenciales primero
+    btnNuevo.addEventListener('click', async () => {
+      
+      // 1. Forzar validación obligatoria del token de acceso
+      let token = null;
+      try { 
+        token = await ensureAuthTokenBanco(); 
+      } catch (e) { 
+        token = null; 
+      }
+      
+      // 2. FRENO DE SEGURIDAD: Si no hay token, congelamos el flujo de inmediato
+      if (!token) {
+        if (window.toast) window.toast('🔐 Autenticación Fallida (⛔)');
+        return; 
+      }
 
-    // 3. FLUJO AUTORIZADO: Si pasó la firma, recién monta el formulario
-    const url = buildFormUrl();
-    if (!url){ toast('URL del formulario no disponible'); return; }
-    
-    // Pequeña pausa opcional de 400ms para que se lea el toast centrado antes del modal
-    setTimeout(() => {
-      showLoading();
-      iframe.src = 'about:blank'; 
-      dlg.showModal();
-      requestAnimationFrame(() => { iframe.src = url; });
-    }, 400);
-  });
+      // 3. FLUJO AUTORIZADO: Si pasó la firma, recién monta el formulario
+      const url = buildFormUrl();
+      if (!url){ toast('URL del formulario no disponible'); return; }
+      
+      // Pequeña pausa opcional de 400ms para que se lea el toast centrado antes del modal
+      setTimeout(() => {
+        showLoading();
+        iframe.src = 'about:blank'; 
+        dlg.showModal();
+        requestAnimationFrame(() => { iframe.src = url; });
+      }, 400);
+    });
 
-  btnClose?.addEventListener('click', () => dlg.close());
+    btnClose?.addEventListener('click', () => dlg.close());
 
-  // Mensajes desde el iframe (cerrar/toast)
-  window.addEventListener('message', (ev) => {
-    const d = ev?.data;
-    if (!d || typeof d !== 'object') return;
-    if (d.type === 'closeContometros') dlg.close();
-    if (d.type === 'toast') toast(String(d.message || ''));
-  });
-}
+    // Mensajes desde el iframe (cerrar/toast)
+    window.addEventListener('message', (ev) => {
+      const d = ev?.data;
+      if (!d || typeof d !== 'object') return;
+      if (d.type === 'closeContometros') dlg.close();
+      if (d.type === 'toast') toast(String(d.message || ''));
+    });
+  }
 
   function setupSync(){
     const btn = $$('#btnSync');
@@ -1138,13 +1138,14 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
   });
 
   // export helpers
-// window.$$ = $$; window.$$$ = $$$; window.escapeHTML = escapeHTML; window.toast = toast;
-// Por esto (asignación directa):
-window.$$ = s => document.querySelector(s);
-window.$$$ = s => Array.from(document.querySelectorAll(s));
-window.escapeHTML = function(x){
+  // window.$$ = $$; window.$$$ = $$$; window.escapeHTML = escapeHTML; window.toast = toast;
+  // Por esto (asignación directa):
+  window.$$ = s => document.querySelector(s);
+  window.$$$ = s => Array.from(document.querySelectorAll(s));
+  window.escapeHTML = function(x){
   return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 };
+
 window.toast = function(msg) {
   const t = document.getElementById('toast');
   if (!t) {  
@@ -1163,9 +1164,8 @@ window.toast = function(msg) {
 const BANCO_HIDDEN_COLS = [8, 9, 10];      // I, J, K ocultas
 const BANCO_RIGHT_START = 11;              // L
 const BANCO_RIGHT_HEAD_OMIT_ROWS = 2;      // omitir filas 1 y 2 SOLO en L:P
-const BANCO_BODY_MERGES = [
-  { from: 1, to: 4, headerText: 'DESCRIPCIÓN', join: ' ' } // B..E combinadas
-];
+const BANCO_BODY_MERGES = [{ from: 1, to: 4, headerText: 'DESCRIPCIÓN', join: ' ' }]; // B..E combinadas
+
 const BANCO_CENTER_COLS = new Set([7, 11, 12, 14]); // H, L, M, O centradas
 const GAP_COLOR = '#566998'; // color del carril separador
 const SEP_GAP = 55; // ancho de la “barra” separadora
@@ -1182,6 +1182,7 @@ const RIGHT_BORDER = 'rgba(255,255,255,.08)';
 function findMerge(col){
   return BANCO_BODY_MERGES.find(m => col >= m.from && col <= m.to);
 }
+
 function buildColGroup(widths){
   if (!widths || !widths.length) return '';
   const cols = [];
@@ -1195,6 +1196,7 @@ function buildColGroup(widths){
   }
   return '<colgroup>' + cols.join('') + '</colgroup>';
 }
+
 function applyMergesToMatrix(mat, merges){
   const H = mat.length; if (!H) return;
   (merges||[]).forEach(m=>{
@@ -1210,7 +1212,7 @@ function applyMergesToMatrix(mat, merges){
 const tbBanco = document.getElementById('tabla-banco');
 if (tbBanco) {
   tbBanco.setAttribute('aria-busy','true');
-tbBanco.innerHTML = `
+  tbBanco.innerHTML = `
   <tbody>
     <tr>
       <td colspan="100" class="loading-cell"
@@ -1425,12 +1427,14 @@ function banco_loadOptions(cb){
     .withFailureHandler(err => toast('Error Opciones Banco: ' + (err?.message || err)))
     .api_banco_getOptions();
 }
+
 function banco_loadStyled(params, cb){
   netRun()
     .withSuccessHandler(cb)
     .withFailureHandler(err => toast('Error Banco Estilos: ' + (err?.message || err)))
     .api_banco_getDashboardData(params||{});
 }
+
 function setupBanco(){
   const selM = document.getElementById('banco-month');
   const selY = document.getElementById('banco-year');
@@ -1551,6 +1555,7 @@ function setupBancoFormModal(){
     }
   });
 }
+
 window.addEventListener('DOMContentLoaded', setupBancoFormModal);
 
 /* =========================
@@ -1558,7 +1563,7 @@ window.addEventListener('DOMContentLoaded', setupBancoFormModal);
   ========================= */
 function deudas_loadData(params, cb){
   const tbl = document.getElementById('tabla-deudas');
-if (tbl) tbl.innerHTML = `
+  if (tbl) tbl.innerHTML = `
   <tbody>
     <tr>
       <td colspan="10" class="loading-cell">
@@ -1572,10 +1577,12 @@ if (tbl) tbl.innerHTML = `
     .withFailureHandler(err => toast('Seccion Deudas error: ' + (err?.message || err)))
     .api_deudas_refreshAndGet(params || {});
 }
+
 function deu_formatNumber(n){
   const num = (typeof n === 'number') ? n : Number(n);
   return isNaN(num) ? (n==null?'':String(n)) : num.toLocaleString('es-PE', { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
+
 function deu_formatDate(x) {
   if (!x) return '';
   const s = String(x).trim();
@@ -1740,7 +1747,7 @@ function setupDeudas() {
 // Inicialización segura según estado del DOM
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', setupDeudas);
-} else {
+  } else {
   setupDeudas();
 }
 
@@ -2921,7 +2928,7 @@ function validarYGuardarExon() {
     finalMoras = false;
     sinMoraActual = false;
     finalDescrip = "";
-  } else {
+    } else {
     const attrCol7 = depaInput.getAttribute('data-col7');
     const valorColumna7 = Number(attrCol7) || 0;
     // Tu validación estricta de pago:
@@ -2999,7 +3006,7 @@ function validarYGuardarExon() {
         restaurarBoton();
       })
       .procesarGuardadoExon(depa, finalMonto, finalConcepto, finalMoras, sinMoraActual, finalDescrip, user);
-};
+  };
   // Solo validamos si NO es eliminar, NO es congelar moras y el concepto es de deuda
   if (!eliminar && !definitivo && ["MORAS", "MULTAS", "MORAS&MULTAS"].includes(concepto)) {
       btnSave.disabled = true;
@@ -3087,7 +3094,7 @@ function validarYGuardarMulta() {
   btn.style.backgroundColor = "#0354f4"; // El azul de otros botones
   btn.style.color = "#ffffff";
 
-netRun()
+  netRun()
   .withSuccessHandler((res) => {
     // 1. Cerramos el modal
     cerrarModalMultas(); 
@@ -3536,6 +3543,7 @@ document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna
 
 // Lógica para el buscador de la tabla
 const searchInput = document.getElementById('comuna-search');
+
 searchInput?.addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase().trim();
     const table = document.getElementById('tbl-clientes');
@@ -4209,7 +4217,7 @@ function _visColsInSection(sectionEl){
     let total = 0;
     for (const td of firstRow.cells) total += (td.colSpan || 1);
     return total;
-    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const tz = 'America/Lima';
@@ -4223,7 +4231,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
  
   
-const updateClocks = () => {
+  const updateClocks = () => {
   // 🛡️ 1. Control de Expiración de Sesión en Tiempo Real
   const token = getAuthToken();
   if (token && typeof isSessionExpired === 'function' && isSessionExpired()) {
