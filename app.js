@@ -773,44 +773,65 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       }
     }
   }
-    document.getElementById('btnRepGen')?.addEventListener('click', async () => {
-      const btn = document.getElementById('btnRepGen');
-      const linksDiv = document.getElementById('reportLinks');
-      if (!btn || !linksDiv) return;
-      const setWorking = () => {
-        btn.disabled = true;
-        btn.textContent = '⏳ Generando Reporte…';
-      };
-      const restore = () => {
-        btn.disabled = false;
-        btn.textContent = btn.dataset._old || '📤 Reporte General';
-      };
-      linksDiv.innerHTML = '';
-      let token = null;
-      try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-      if (!token) {
-        return; 
+document.getElementById('btnRepGen')?.addEventListener('click', async () => {
+  const btn = document.getElementById('btnRepGen');
+  const linksDiv = document.getElementById('reportLinks');
+  if (!btn || !linksDiv) return;
+
+  // Guardamos el texto original del botón si no existe
+  if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+
+  const setWorking = () => {
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Reporte…';
+  };
+
+  const restore = () => {
+    btn.disabled = false;
+    btn.textContent = btn.dataset._old;
+  };
+
+  linksDiv.innerHTML = '';
+
+  let token = null;
+  try { 
+    token = await ensureAuthTokenBanco(); 
+  } catch { 
+    token = null; 
+  }
+
+  if (!token) {
+    restore(); // 👈 Si no hay token, restaura el estado del botón
+    return; 
+  }
+
+  setWorking();
+
+  netRun()
+    .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.textContent = '✅ Reporte Generado';
+
+      if (res?.user) {
+        sessionStorage.setItem('AUTH_USER', res.user);
       }
-      setWorking();
-      netRun()
-        .withSuccessHandler(res => {
-          btn.disabled = false;
-          btn.textContent = '✅ Reporte Generado';
-          if (res?.user) {
-            sessionStorage.setItem('AUTH_USER', res.user);
-          }
-          if (res?.ok && res?.urlPDF) {
-            linksDiv.innerHTML = getBtnPDF(res); 
-          } else {
-            linksDiv.textContent = '❌ No se pudo generar el reporte PDF';
-          }
-        })
-        .withFailureHandler(err => {
-          restore();
-          linksDiv.textContent = 'Error: ' + (err?.message || err);
-        })
-        .reporteGeneral_web(window.usuarioActivo()); 
-    });
+
+      if (res?.ok && res?.urlPDF) {
+        linksDiv.innerHTML = getBtnPDF(res); 
+      } else {
+        linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
+      }
+    })
+    .withFailureHandler(err => {
+      restore();
+      linksDiv.textContent = 'Error: ' + (err?.message || String(err));
+    })
+    // ✅ Envia el token y el usuario en un objeto estructurado
+    .reporteGeneral_web({
+      authToken: token,
+      userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
+    }); 
+});
     // GENERA REPORTE DEUDAS desde Boton
     document.getElementById('btnDeudas')?.addEventListener('click', () => {
       const btn = document.getElementById('btnDeudas');
