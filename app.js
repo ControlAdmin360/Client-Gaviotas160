@@ -33,12 +33,6 @@ window.usuarioActivo = window.usuarioActivo || (() => {
     return 'UNKNOWN_LOK';
   }
 });
-function clearAuth(){
-  sessionStorage.removeItem('AUTH_TOKEN');
-  sessionStorage.removeItem('AUTH_USER');
-  sessionStorage.removeItem('AUTH_EMAIL');
-  sessionStorage.removeItem('AUTH_EXPIRE');
-}
 
 // Comprobación directa usando la fecha guardada previamente por tu sistema
 function isSessionExpired() {
@@ -61,8 +55,10 @@ document.addEventListener("DOMContentLoaded", () => {
 function validarIngreso(event) {
   event.preventDefault();
 
-  const userInput = (document.getElementById("login-user").value || '').trim().toUpperCase();
-  const passInput = (document.getElementById("login-pass").value || '').trim();
+  const userEl = document.getElementById("login-user");
+  const passEl = document.getElementById("login-pass");
+  const userInput = (userEl.value || '').trim().toUpperCase();
+  const passInput = (passEl.value || '').trim();
   const errorMsg = document.getElementById("login-error");
   const btnSubmit = event.target.querySelector('button[type="submit"]');
 
@@ -73,7 +69,6 @@ function validarIngreso(event) {
   btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
   if (errorMsg) errorMsg.style.display = "none";
 
-  // Llamada al backend de Google Apps Script vía netRun
   netRun()
     .withSuccessHandler(res => {
       btnSubmit.disabled = false;
@@ -87,19 +82,25 @@ function validarIngreso(event) {
         const usuarioFinal = res.user || userInput;
         setAuthUser(usuarioFinal);
 
-        // 3. Establecer Expiración de 2 horas (7200 segundos)
+        // 3. Establecer Expiración de 2 horas
         const expireTime = Date.now() + (7200 * 1000);
         sessionStorage.setItem('AUTH_EXPIRE', expireTime.toString());
+
+        // 4. Limpiar campos al ingresar con éxito
+        userEl.value = '';
+        passEl.value = '';
 
         // 5. Ocultar Login y Mostrar App
         mostrarAplicacion();
       } else {
-        // Error de credenciales devuelto por el servidor
+        // Error de credenciales: Notifica y borra la contraseña
         if (errorMsg) {
           errorMsg.style.display = "flex";
           const txt = errorMsg.querySelector('span') || errorMsg;
           txt.textContent = res?.error || "Usuario o PIN incorrectos.";
         }
+        passEl.value = ''; // Limpia el PIN para reintentar
+        passEl.focus();
       }
     })
     .withFailureHandler(err => {
@@ -112,10 +113,11 @@ function validarIngreso(event) {
         const txt = errorMsg.querySelector('span') || errorMsg;
         txt.textContent = "Error de conexión con el servidor.";
       }
+      passEl.value = ''; // Limpia el PIN ante fallo de conexión
     })
-    .api_auth_check('', userInput, passInput); // Invoca la función remota en GAS
+    .api_auth_check('', userInput, passInput);
 }
-
+    
 // 3. Control de Vistas
 function mostrarAplicacion() {
   const loginScreen = document.getElementById("login-screen");
@@ -4318,19 +4320,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };*/
   
-  const updateClocks = () => {
-  // 1. Reloj de hora y fecha local
+const updateClocks = () => {
+  // 🛡️ 1. Control de Expiración de Sesión en Tiempo Real
+  const token = getAuthToken();
+  if (token && typeof isSessionExpired === 'function' && isSessionExpired()) {
+    if (typeof cerrarSesion === 'function') {
+      cerrarSesion();
+    } else {
+      clearAuth();
+      const loginScreen = document.getElementById("login-screen");
+      const appContainer = document.getElementById("app-container");
+      if (appContainer) appContainer.style.display = "none";
+      if (loginScreen) loginScreen.style.display = "flex";
+    }
+    return; // Detiene la ejecución del reloj si expiró
+  }
+
+  // 2. Reloj de hora y fecha local
   const now = new Date();
   const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
   document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
   
-  // 2. Leemos la variable 'prev' de tu motor NetState
+  // 3. Leemos la variable 'prev' de tu motor NetState
   const estadoActual = (typeof prev !== 'undefined') ? prev : 'IDLE';
 
   // 🛡️ Si el sistema está procesando (BUSY), NetState tiene el control y no sobreescribimos
   if (estadoActual === 'BUSY') return;
 
-  // 3. Si está en IDLE, actualizamos el texto dinámico y mantenemos la clase verde (.srv-idle)
+  // 4. Si está en IDLE, actualizamos el texto dinámico y mantenemos la clase verde (.srv-idle)
   if (typeof statusLabel === 'function') {
     const textoActualizado = statusLabel('IDLE');
 
@@ -4345,7 +4362,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Badge #srvStatus
     const srv = document.getElementById('srvStatus');
     if (srv) {
-      // Mantiene exactamente las clases de tu CSS (.srv-badge .srv-idle)
       srv.className = 'srv-badge srv-idle';
       const t = srv.querySelector('.txt');
       if (t) t.textContent = textoActualizado;
