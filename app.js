@@ -112,7 +112,7 @@ function validarIngreso(event) {
         if (errorMsg) {
           errorMsg.style.display = "flex";
           const txt = errorMsg.querySelector('span') || errorMsg;
-          txt.textContent = res?.error || "Usuario o PIN/Contraseña incorrectos.";
+          txt.textContent = res?.error || "Usuario | PIN  incorrectos.";
         }
         if (passEl) {
           passEl.value = '';
