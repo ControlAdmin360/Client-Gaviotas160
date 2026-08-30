@@ -525,9 +525,9 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
         }
       });
 
-      document.getElementById('nav-eventos')?.addEventListener('click', () => {
+      /*document.getElementById('nav-eventos')?.addEventListener('click', () => {
           cargarEventosLogger(); // Consulta y renderiza Firebase al presionar
-        });
+        });*/
 
       // CARGA PERIODO EN BANCO (Corregido para app.js)
         async function refreshBanco() {
@@ -918,12 +918,14 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
     if (!side) return;
     // banderas de inicialización por vista (una vez) – compatible (sin ||=)
     const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
-      banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false
+      banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
     });
     function ensureInit(view) {
       try {
         if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
         if (view === 'consultas') { setupConsultas(); }
+        if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
+        if (view === 'eventos') {if (typeof cargarEventosLogger === 'function') {cargarEventosLogger();}
         // Las demás vistas quedan delegadas a sus respectivas funciones ConAuth en el click
       } catch (e) { 
       console.error('[setupRouter] init error:', e); 
