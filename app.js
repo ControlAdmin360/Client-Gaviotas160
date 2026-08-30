@@ -397,99 +397,99 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
       
 // SETEA M3 EN BANCO
 document.getElementById('btn-m3')?.addEventListener('click', async () => {
-        const btn = document.getElementById('btn-m3');
-        if (!btn) return;
-      
-        const restore = () => {
-          btn.disabled = false;
-          btn.textContent = btn.dataset._old || 'M3';
-          btn.style.removeProperty('background');
-          btn.style.removeProperty('color');
-        };
-      
-        try {
-          btn.dataset._old = btn.textContent;
-          btn.disabled = true;
-          btn.style.background = '#FAD775';
-          btn.style.color = '#000';
-          btn.textContent = '⏳ Solicitando…';
-      
-          // 1. Autenticación: Capturar TOKEN REAL
-          let token = null;
-          try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-          if (!token) {
-            restore();
-            return;
-          }
-      
-          // 2. Captura y parseo del valor
-          const raw = prompt('Ingrese los m3 indicados en el Recibo:');
-          if (raw == null) {
-            restore();
-            return;
-          }
-      
-          const s = String(raw).trim().replace(/\s/g, '');
-          const num = Number(s.replace(/,/g, ''));
-          if (!isFinite(num)) {
-            alert('Valor inválido. Ingrese un número (ej.: 1234.56 o 1,234.56).');
-            restore();
-            return;
-          }
-      
-          const formatted = new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }).format(num);
-      
-          uiPaintCell({
-            row: 9 - 3, col: 16, text: formatted,
-            color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
-          });
-      
-          // 3. Guardar en backend (Pasando 'token' en el segundo argumento)
-          netRun()
-            .withSuccessHandler((res) => {
-              if (res && res.ok) {
-                if (window.toast) toast("✅ m3 REGISTRADO");
-              } else {
-                alert('Error: ' + (res?.error || 'No se pudo registrar m3'));
-              }
-              restore();
-            })
-            .withFailureHandler(err => {
-              alert('Error al guardar M3: ' + (err?.message || String(err)));
-              restore();
-            })
-            .api_banco_setM3({ value: num }, window.usuarioActivo());
-      
-        } catch (e) {
-          console.error('Error en M3:', e);
-          if (window.toast) toast("⚠️ Error al realizar esta acción (⛔)");
-          alert(e);
-          restore();
+  const btn = document.getElementById('btn-m3');
+  if (!btn) return;
+
+  const restore = () => {
+    btn.disabled = false;
+    btn.textContent = btn.dataset._old || 'M3';
+    btn.style.removeProperty('background');
+    btn.style.removeProperty('color');
+  };
+
+  try {
+    btn.dataset._old = btn.textContent;
+    btn.disabled = true;
+    btn.style.background = '#FAD775';
+    btn.style.color = '#000';
+    btn.textContent = '⏳ Solicitando…';
+
+    // 1. Autenticación: Capturar TOKEN REAL
+    let token = null;
+    try { token = await ensureAuthTokenBanco(); } catch { token = null; }
+    if (!token) {
+      restore();
+      return;
+    }
+
+    // 2. Captura y parseo del valor
+    const raw = prompt('Ingrese los m3 indicados en el Recibo:');
+    if (raw == null) {
+      restore();
+      return;
+    }
+
+    const s = String(raw).trim().replace(/\s/g, '');
+    const num = Number(s.replace(/,/g, ''));
+    if (!isFinite(num)) {
+      alert('Valor inválido. Ingrese un número (ej.: 1234.56 o 1,234.56).');
+      restore();
+      return;
+    }
+
+    const formatted = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(num);
+
+    uiPaintCell({
+      row: 9 - 3, col: 16, text: formatted,
+      color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
+    });
+
+    // 3. Guardar en backend (Pasando 'token' en el segundo argumento)
+    netRun()
+      .withSuccessHandler((res) => {
+        if (res && res.ok) {
+          if (window.toast) toast("✅ m3 REGISTRADO");
+        } else {
+          alert('Error: ' + (res?.error || 'No se pudo registrar m3'));
         }
+        restore();
+      })
+      .withFailureHandler(err => {
+        alert('Error al guardar M3: ' + (err?.message || String(err)));
+        restore();
+      })
+      .api_banco_setM3({ value: num }, window.usuarioActivo());
+
+  } catch (e) {
+    console.error('Error en M3:', e);
+    if (window.toast) toast("⚠️ Error al realizar esta acción (⛔)");
+    alert(e);
+    restore();
+  }
 });
       
 // ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
 async function abrirContometrosForm(){
-        try {
-          // 1. Validar/Obtener Token (redirige al login automáticamente si falla)
-          const token = await ensureAuthTokenBanco();
-          if (!token) return;
-          // 2. Construir la URL e invocar el modal
-          const user  = sessionStorage.getItem('AUTH_USER') || '';
-          const dlg = document.getElementById('dlgContometros');
-          const ifr = document.getElementById('frmContometros');
-          const url = window.FORM_CONTOMETROS_URL + (window.FORM_CONTOMETROS_URL.includes('?') ? '&' : '?')
-                        + 'token=' + encodeURIComponent(token)
-                        + '&user=' + encodeURIComponent(user);
-          ifr.src = url;
-          dlg.showModal();
-        } catch(e) { 
-          console.error('No se abrió Contómetros:', e); 
-          // Se captura silenciosamente el fallo/cancelación sin lanzar alertas molestas
-        }
+  try {
+    // 1. Validar/Obtener Token (redirige al login automáticamente si falla)
+    const token = await ensureAuthTokenBanco();
+    if (!token) return;
+    // 2. Construir la URL e invocar el modal
+    const user  = sessionStorage.getItem('AUTH_USER') || '';
+    const dlg = document.getElementById('dlgContometros');
+    const ifr = document.getElementById('frmContometros');
+    const url = window.FORM_CONTOMETROS_URL + (window.FORM_CONTOMETROS_URL.includes('?') ? '&' : '?')
+                  + 'token=' + encodeURIComponent(token)
+                  + '&user=' + encodeURIComponent(user);
+    ifr.src = url;
+    dlg.showModal();
+  } catch(e) { 
+    console.error('No se abrió Contómetros:', e); 
+    // Se captura silenciosamente el fallo/cancelación sin lanzar alertas molestas
+  }
 }
 
 // Botones Main iniciadores
