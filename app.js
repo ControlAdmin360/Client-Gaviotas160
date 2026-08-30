@@ -4059,7 +4059,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 1. Modales y Vistas Iniciales
-  loaded.comunal = true;
   setupDeudas?.();
   setupComuna?.();
   setupRouter();
