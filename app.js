@@ -933,80 +933,73 @@ document.getElementById('btnRepGen')?.addEventListener('click', async () => {
   // ==========================
   // Router con carga perezosa
   // ==========================
-  function setupRouter(){
-    const side = $$('.sidebar');
-    if (!side) return;
-    // banderas de inicialización por vista (una vez) – compatible (sin ||=)
-    const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
-      banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
-    });
-    function ensureInit(view) {
-      try {
-        if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
-        if (view === 'consultas') { setupConsultas(); }
-        if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
-        if (view === 'eventos') {if (typeof cargarEventosLogger === 'function') {cargarEventosLogger();}
-        // Las demás vistas quedan delegadas a sus respectivas funciones ConAuth en el click
-      } catch (e) { 
+function setupRouter(){
+  const side = $$('.sidebar');
+  if (!side) return;
+
+  // banderas de inicialización por vista (una vez) – compatible (sin ||=)
+  const loaded = (window.__viewsLoaded = window.__viewsLoaded || {
+    banco:false, deudas:false, lecturas:false, consultas:false, recibo:false, comunal: false, servicios: false, eventos: false
+  });
+
+  function ensureInit(view) {
+    try {
+      if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
+      if (view === 'consultas') { setupConsultas(); }
+      if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
+      
+      // ✅ Cierre de llaves corregido
+      if (view === 'eventos') {
+        if (typeof cargarEventosLogger === 'function') {
+          cargarEventosLogger();
+        }
+      }
+    } catch (e) { 
       console.error('[setupRouter] init error:', e); 
-      }
     }
-    // Navegación principal del Sidebar
-    side.addEventListener('click', async e => {
-      const a = e.target.closest('a[data-view]');
-      if (!a) return;
-
-      const v = a.getAttribute('data-view');
-
-      // 🔄 CONTROL DE EXPIRACIÓN: Verifica el token antes de cambiar de vista
-      /*
-      const tieneTokenLocal = !!(typeof getAuthToken === 'function' ? getAuthToken() : sessionStorage.getItem('AUTH_TOKEN'));
-      if (!tieneTokenLocal) {
-        // Reseteamos estados de carga
-        loaded.comunal = false;
-        loaded.recibo = false;
-        if (typeof window.__viewsLoaded === 'object') {
-          window.__viewsLoaded.comunal = false;
-          window.__viewsLoaded.recibo = false;
-        }
-
-        // Si la sesión expiró o no hay token, redirigimos al Login y detenemos la navegación
-        if (typeof cerrarSesion === 'function') {
-          cerrarSesion(false);
-        }
-        return; // Frenamos en seco el clic
-      }
-     
-
-      // 🛡️ BLOQUEO PREVENTIVO: Evalúa si debe pedir credenciales para accesos restringidos
-      if ((v === 'comunal' && !loaded.comunal) || (v === 'recibo' && !loaded.recibo)) {
-        if (v === 'comunal') await setupComunaConAuth();
-        if (v === 'recibo')  await setupRecibosConAuth(); 
-
-        // Sincronizamos el estado local del router con lo que determinó la autenticación
-        if (typeof window.__viewsLoaded === 'object') {
-          loaded.comunal = window.__viewsLoaded.comunal;
-          loaded.recibo = window.__viewsLoaded.recibo;
-        }
-
-        // Si no quedó autorizada la vista, se detiene
-        if (!loaded[v]) return; 
-      }
-       */
-
-      // --- CAMBIO VISUAL DE VISTA (Solo si se pasó la seguridad) ---
-      $$$('.sidebar a').forEach(x => x.classList.remove('active'));
-      a.classList.add('active');
-
-      $$$('.view').forEach(sec => sec.classList.remove('show'));
-      const sec = $$('#view-' + v);
-      if (sec) sec.classList.add('show');
-      ensureInit(v);
-    });
-    // Inicializar la vista activa por defecto al cargar la app
-    const current = side.querySelector('a.active')?.getAttribute('data-view');
-    if (current) ensureInit(current);
   }
+  // Navegación principal del Sidebar
+  side.addEventListener('click', async e => {
+    const a = e.target.closest('a[data-view]');
+    if (!a) return;
+    const v = a.getAttribute('data-view');
+
+    /* 🔄 CONTROL DE EXPIRACIÓN Y AUTENTICACIÓN COMENTADO
+    const tieneTokenLocal = !!(typeof getAuthToken === 'function' ? getAuthToken() : sessionStorage.getItem('AUTH_TOKEN'));
+    if (!tieneTokenLocal) {
+      loaded.comunal = false;
+      loaded.recibo = false;
+      if (typeof window.__viewsLoaded === 'object') {
+        window.__viewsLoaded.comunal = false;
+        window.__viewsLoaded.recibo = false;
+      }
+      if (typeof cerrarSesion === 'function') {
+        cerrarSesion(false);
+      }
+      return;
+    }
+    if ((v === 'comunal' && !loaded.comunal) || (v === 'recibo' && !loaded.recibo)) {
+      if (v === 'comunal') await setupComunaConAuth();
+      if (v === 'recibo')  await setupRecibosConAuth(); 
+      if (typeof window.__viewsLoaded === 'object') {
+        loaded.comunal = window.__viewsLoaded.comunal;
+        loaded.recibo = window.__viewsLoaded.recibo;
+      }
+      if (!loaded[v]) return; 
+    }
+    */
+    // --- CAMBIO VISUAL DE VISTA ---
+    $$$('.sidebar a').forEach(x => x.classList.remove('active'));
+    a.classList.add('active');
+    $$$('.view').forEach(sec => sec.classList.remove('show'));
+    const sec = $$('#view-' + v);
+    if (sec) sec.classList.add('show');
+    ensureInit(v);
+  });
+  // Inicializar la vista activa por defecto al cargar la app
+  const current = side.querySelector('a.active')?.getAttribute('data-view');
+  if (current) ensureInit(current);
+}
 
   function setupFullscreen(){
     const btn = $$('#btnFull');
