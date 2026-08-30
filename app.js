@@ -42,6 +42,7 @@ function isSessionExpired() {
 }
 
 // 1. Verificación al cargar la página
+/*
 document.addEventListener("DOMContentLoaded", () => {
   const token = getAuthToken();
   if (token && !isSessionExpired()) {
@@ -49,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     clearAuth();
   }
-});
+});*/
 
 // --- Validación desde el Formulario conectada a tu Backend ---
 function validarIngreso(event) {
@@ -491,34 +492,6 @@ async function abrirContometrosForm(){
   }
 }
 
-// Botones Main iniciadores
-document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
-document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
-// Clicks principales
-//document.getElementById('btnNuevo')?.addEventListener('click', abrirContometrosForm);
-//document.getElementById('banco-nuevo')?.addEventListener('click', abrirBancoForm);
-document.getElementById('banco-refresh')?.addEventListener('click', reloadPage);
-document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
-document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
-
-// Mensajes de sesión expirada
- /*window.addEventListener('message', ev => {
-        if (ev?.data?.type === 'contometros-auth-expired' || ev?.data?.type === 'banco-auth-expired') {
-          // Si existe la función global de cierre de sesión, la ejecutamos
-          if (typeof cerrarSesion === 'function') {
-            cerrarSesion();
-          } else {
-            // Limpieza manual y transición al Login si no existiera la función
-            sessionStorage.removeItem('AUTH_TOKEN');
-            sessionStorage.removeItem('AUTH_USER');
-            sessionStorage.removeItem('AUTH_EXPIRE');
-            const loginScreen = document.getElementById("login-screen");
-            const appContainer = document.getElementById("app-container");
-            if (appContainer) appContainer.style.display = "none";
-            if (loginScreen) loginScreen.style.display = "flex";
-          }
-        }});*/
-
 // CARGA PERIODO EN BANCO
 async function refreshBanco() {
   const btn  = document.getElementById('banco-buscar');
@@ -729,155 +702,6 @@ async function refreshBanco() {
     }
     return false;
   }
-
-  document.getElementById('btnRepGen')?.addEventListener('click', async () => {
-    const btn = document.getElementById('btnRepGen');
-    const linksDiv = document.getElementById('reportLinks');
-    if (!btn || !linksDiv) return;
-
-    // Guardamos el texto original del botón si no existe
-    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
-
-    const setWorking = () => {
-      btn.disabled = true;
-      btn.textContent = '⏳ Generando Reporte…';
-    };
-    const restore = () => {
-      btn.disabled = false;
-      btn.textContent = btn.dataset._old;
-    };
-
-    linksDiv.innerHTML = '';
-    let token = null;
-    try { 
-      token = await ensureAuthTokenBanco(); 
-    } catch { 
-      token = null; 
-    }
-    if (!token) {
-      restore(); // 👈 Si no hay token, restaura el estado del botón
-      return; 
-    }
-    setWorking();
-
-    netRun()
-      .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.textContent = '✅ Reporte Generado';
-
-        if (res?.user) {
-          sessionStorage.setItem('AUTH_USER', res.user);
-        }
-
-        if (res?.ok && res?.urlPDF) {
-          linksDiv.innerHTML = getBtnPDF(res); 
-        } else {
-          linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
-        }
-      })
-      .withFailureHandler(err => {
-        restore();
-        linksDiv.textContent = 'Error: ' + (err?.message || String(err));
-      })
-      // ✅ Envia el token y el usuario en un objeto estructurado
-      .reporteGeneral_web({
-        authToken: token,
-        userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
-      }); 
-  });
-
-  // GENERA REPORTE DEUDAS desde Boton
-  document.getElementById('btnDeudas')?.addEventListener('click', () => {
-    const btn = document.getElementById('btnDeudas');
-    const linksDiv = document.getElementById('deudasLinks');
-    const $minInput = document.getElementById('deu-min'); 
-    const valorMin = $minInput ? Number($minInput.value) : 15;
-    btn.disabled = true;
-    btn.textContent = '⏳ Generando Lista...';
-    linksDiv.innerHTML = "";
-    netRun()
-      .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.textContent = '✅ Lista Generada';
-        if (res?.urlDrive) {
-          linksDiv.innerHTML = getBtnPDF(res);
-        } else {
-          linksDiv.textContent = "❌ No se pudo generar el reporte";
-        }
-      })
-      .withFailureHandler(err => {
-        btn.disabled = false;
-        btn.textContent = '📊 Listar Deudas';
-        linksDiv.textContent = "Error: " + (err.message || err);
-      })
-      .generarReporteDeudas_web(window.usuarioActivo(), valorMin);
-  });
-
-  // REPORTE RECIBOS
-  document.getElementById('btnRecExel')?.addEventListener('click', () => {
-    const btn = document.getElementById('btnRecExel');
-    const linksDiv = document.getElementById('exportLinks');
-    btn.disabled = true;
-    btn.textContent = '⏳ Generando Recibos...';
-    linksDiv.innerHTML = "";
-    netRun()
-    .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.textContent = '✅ Recibos Prosesados';
-        if (res?.urlDrive) {
-          linksDiv.innerHTML = getBtnDrive(res) + getBtnExcel(res);
-        } else {
-          linksDiv.textContent = "❌ No se pudo generar el archivo";
-        }
-      })
-      .withFailureHandler(err => {
-        btn.disabled = false;
-        btn.textContent = '📤 Recibos en Excel';
-        linksDiv.textContent = "Error: " + (err.message || err);
-      })
-      .downloadSheetAsXlsx_web(window.usuarioActivo());
-  });
-
-      // REPORTE AGUAS
-  document.getElementById('btnRepAguas')?.addEventListener('click', () => {
-        const btn = document.getElementById('btnRepAguas');
-        const linksDiv = document.getElementById('aguasLinks');
-        const setWorking = () => {
-          btn.disabled = true;
-          btn.textContent = '⏳ Generando Reportes...';
-          linksDiv.innerHTML = '';
-        };
-        const setDone = () => {
-          btn.disabled = false;
-          btn.textContent = '✅ Reportes Generados';
-        };
-        const setError = (err) => {
-          btn.disabled = false;
-          btn.textContent = '📤 Generar Reportes';
-          linksDiv.textContent = 'Error: ' + (err?.message || err);
-        };
-        setWorking();
-        // 1) Genera Excel / Drive
-        netRun()
-          .withSuccessHandler((resXlsx) => {
-            // 2) Genera PDF (proyección/alerta + export)
-            netRun()
-              .withSuccessHandler((resPdf) => {
-                setDone();
-
-                const parts = [];
-                if (resXlsx?.urlDrive)    parts.push(getBtnDrive(resXlsx));
-                if (resXlsx?.urlDownload) parts.push(getBtnExcel(resXlsx));
-                if (resPdf?.urlPDF)       parts.push(getBtnPDF(resPdf));
-
-                linksDiv.innerHTML = parts.join('') || '❌ No se pudo generar el archivo';
-              })
-              .withFailureHandler(setError)
-              .reporteAguasPDF_Web();     // ← ahora devuelve { urlPDF }
-          })
-          .withFailureHandler(setError)
-          .downloadComtometsXlsx_web(window.usuarioActivo());
-  });
     // ==========================
     // Router con carga perezosa
     // ==========================
@@ -1107,14 +931,6 @@ async function refreshBanco() {
     });
 
     btnClose?.addEventListener('click', () => dlg.close());
-
-    // Mensajes desde el iframe (cerrar/toast)
-    /* window.addEventListener('message', (ev) => {
-      const d = ev?.data;
-      if (!d || typeof d !== 'object') return;
-      if (d.type === 'closeContometros') dlg.close();
-      if (d.type === 'toast') toast(String(d.message || ''));
-    });*/
   }
 
   function setupSync(){
@@ -1138,7 +954,6 @@ window.toast = function(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 4000);
 };
-
 
 /* =========================
   BANCO
@@ -1528,17 +1343,8 @@ function setupBancoFormModal(){
   });
   
   btnClose?.addEventListener('click', closeBancoForm);
-  // Escucha mensajes del iframe
-  /* window.addEventListener('message', (ev) => {
-    const d = ev?.data;
-    if (d === 'banco-form-close' || d?.type === 'banco-form-close' ||
-        d === 'closeBancoForm'   || d?.type === 'closeBancoForm') {
-      closeBancoForm();
-    }
-  });*/
 }
 
-window.addEventListener('DOMContentLoaded', setupBancoFormModal);
 
 /* =========================
   DEUDAS
@@ -1726,15 +1532,6 @@ function setupDeudas() {
   recargar();
 }
 
-window.addEventListener('DOMContentLoaded', setupDeudas);
-
-/*
-// Inicialización segura según estado del DOM
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', setupDeudas);
-  } else {
-  setupDeudas();
-}*/
 
 /* ====================================
    LECTURAS / CONTÓMETROS 
@@ -2640,8 +2437,6 @@ uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:13,   color:'
 uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:14,   color:'#9CF5CD',bg:'#3F5E44' }); // N
 uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:15,   color:'#9CF5CD',bg:'#3F5E44' }); // O
 
-// Carga al abrir la página (como haces con Deudas):
-window.addEventListener('DOMContentLoaded', setupRecibos);
 
 // 1. Funciónes para abrir el modal Exoneraciones & Reintegros Multas & Configuraciones  Globales
 function abrirModalExon() {
@@ -4255,8 +4050,17 @@ window.addEventListener('message', (ev) => {
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
 
-  // 1. Inicialización de la App y Router
+  // 1. Verificación de Sesión al cargar
+  const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
+  if (token && typeof isSessionExpired === 'function' && !isSessionExpired()) {
+    if (typeof mostrarAplicacion === 'function') mostrarAplicacion();
+  } else {
+    if (typeof clearAuth === 'function') clearAuth();
+  }
+
+  // 1. Modales y Vistas Iniciales
   loaded.comunal = true;
+  setupDeudas?.();
   setupComuna?.();
   setupRouter();
   setupFullscreen();
@@ -4264,6 +4068,8 @@ document.addEventListener('DOMContentLoaded', () => {
   contometros_loadStyled({}, contometros_renderStyled);
   setupContometros();
   setupSync();
+  setupBancoFormModal?.();
+  setupRecibos?.();
 
   // 2. Modales y Navegación
   document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
