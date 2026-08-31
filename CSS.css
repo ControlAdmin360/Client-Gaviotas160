@@ -210,19 +210,15 @@ body {
    2. APP / LAYOUT & SIDEBAR
    ========================================================================== */
 
-/*
+
 .app {
   display: grid;
   grid-template-columns: calc(var(--sidebar) * var(--sidebar-peek)) 1fr;
   grid-template-rows: 56px 1fr;
   min-height: 100vh;
   transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1);
-}*/
-.app {
-  display: block;
-  min-height: 100vh;
-  position: relative;
 }
+
 
 /* 🎯 Desplegar sidebar al posicionar el mouse (Hover / Focus) */
 /*
@@ -328,18 +324,13 @@ body {
   translate: 0 .06em;     /* microajuste vertical opcional */
 }
 
-/*
+
 .content {
   grid-row: 2 / 3;
   grid-column: 2 / 3;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 18px;
-  min-width: 0;
-}*/
-.content {
-  padding: 18px;
-  margin-top: 56px;
   min-width: 0;
 }
 
@@ -365,7 +356,7 @@ body {
 .srv-error .dot { background: #ff4d4f; }
 
 /* En pantallas pequeñas mantiene desplegado */
-/*
+
 @media (max-width: 900px) {
   .app,
   .app:has(.sidebar:hover),
@@ -373,7 +364,7 @@ body {
     grid-template-columns: var(--sidebar) 1fr !important;
   }
 }
-*/
+
 
 /* ==========================================================================
    3. CONTROLES / BOTONES / FORMULARIOS
@@ -429,12 +420,7 @@ body {
 .btn-m3 { background: #1F0F57; }
 .btn-m3:hover { background: #806C40; border-color: #1992F5; color: #000; }
 
-/*.btn-menu { display: none !important; }*/
-.btn-menu { 
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-}
+.btn-menu { display: none !important; }
 
 /* Botón de Cerrar Sesión Profesional */
 .btn-logout {
