@@ -1569,14 +1569,17 @@ function cont_alignClass(a) {
   return ha === 'right' ? 'align-right' : (ha === 'center' ? 'align-center' : 'align-left');
 }
 
+const WRAP_COLS = new Set([1, 12, 13, 14, 15, 16]);
+const CENTER_BODY_COLS = new Set([0, 10, 11, 12, 13, 14, 15, 16]);
+const FONDOS_ULTIMOS = ['#b2d997', '#e79191', '#3c78d8', '#27ae60'];
 function contometros_renderStyled(payload) {
   try {
     const tbl = document.getElementById('tabla');
     if (!tbl) return;
 
-    let colWidths = payload?.colWidths || [];
-    const header    = payload?.header || {};
-    const data      = payload?.data   || {};
+    const colWidths = payload?.colWidths || [];
+    const header = payload?.header || {};
+    const data = payload?.data || {};
 
     // ===== THEAD =====
     const Hvals = (header.values || []).map(r => r.slice());
@@ -1584,75 +1587,56 @@ function contometros_renderStyled(payload) {
     cont_applyMergesToMatrix(Hvals, Hmerg);
     const H = Hvals.length;
     const W = H ? (Hvals[0]?.length || 0) : ((data.values?.[0]?.length) || 0);
-    const WRAP_COLS = new Set([1, 12, 13, 14, 15, 16]); 
-    const CENTER_BODY_COLS = new Set([0, 10, 11, 12, 13, 14, 15, 16]); 
 
     let headHtml = '<thead class="sheet-head">';
     for (let r = 0; r < H; r++) {
-      const stickyClass = 'row' + (r + 1);
       const rh = header.rowHeights?.[r];
       const trStyle = Number.isFinite(rh) ? ` style="height:${rh}px"` : '';
-      headHtml += `<tr class="${stickyClass}"${trStyle}>`;
+      headHtml += `<tr class="row${r + 1}"${trStyle}>`;
 
       for (let c = 0; c < W; c++) {
         const val = Hvals[r][c];
         if (val === null) continue;
 
         const merge = cont_findTopLeftMerge(Hmerg, r, c);
-        const span  = merge ? ` rowspan="${merge.rowSpan}" colspan="${merge.colSpan}"` : '';
+        const span = merge ? ` rowspan="${merge.rowSpan}" colspan="${merge.colSpan}"` : '';
 
-        let bg = '#1a2230'; 
+        let bg = '#1a2230';
         let col = '#ffffff';
         let fw = 'bold';
 
         const textStr = String(val ?? '').trim();
 
-        // COLORES DE ENCABEZADO POR COORDENADAS EXACTAS
-        if (r === 1 && c === 0) { 
-          bg = '#F1C40F'; col = '#000000'; 
-        } else if (c === 3 && (r === 0 || r === 2)) { 
-          bg = '#3367D6'; col = '#ffffff'; 
-        } else if (r === 0 && c === 5) { 
-          bg = '#000000'; col = '#ffffff'; 
-        } else if (r === 0 && c === 8) { 
-          bg = '#E67E22'; col = '#ffffff'; 
-        } else if (textStr === 'Fecha') { 
-          bg = '#b5b8a4'; col = '#000000'; 
-        } else if (r === 2 && c === 8) { 
-          bg = '#E67E22'; col = '#ffffff'; 
-        } else if (r === 2 && c === 0) { 
-          bg = '#27ae60'; col = '#ffffff'; 
-        } else if (r === 2 && c === 10) { 
-          bg = '#ffffff'; col = '#2563eb'; 
-        }
+        // Colores de Encabezado
+        if (r === 1 && c === 0) { bg = '#F1C40F'; col = '#000000'; }
+        else if (c === 3 && (r === 0 || r === 2)) { bg = '#3367D6'; col = '#ffffff'; }
+        else if (r === 0 && c === 5) { bg = '#000000'; col = '#ffffff'; }
+        else if (r === 0 && c === 8) { bg = '#E67E22'; col = '#ffffff'; }
+        else if (textStr === 'Fecha') { bg = '#b5b8a4'; col = '#000000'; }
+        else if (r === 2 && c === 8) { bg = '#E67E22'; col = '#ffffff'; }
+        else if (r === 2 && c === 0) { bg = '#27ae60'; col = '#ffffff'; }
+        else if (r === 2 && c === 10) { bg = '#ffffff'; col = '#2563eb'; }
 
-        // ENCABEZADOS DE LAS ÚLTIMAS 4 COLUMNAS (M, N, O, P)
         if (c >= 12 && c <= 15) {
-          const fondosUltimos = ['#b2d997', '#e79191', '#3c78d8', '#27ae60'];
-          bg = fondosUltimos[c - 12];
+          bg = FONDOS_ULTIMOS[c - 12];
           col = (c === 14) ? '#ffffff' : '#000000';
         }
 
         const needsWrap = WRAP_COLS.has(c);
         const cls = 'align-center' + (needsWrap ? ' wrap' : '');
-        const styles = [`background:${bg}`, `color:${col}`, `font-weight:${fw}`];
-        
+        let styles = `background:${bg};color:${col};font-weight:${fw};`;
+
         if (needsWrap) {
           const w = colWidths?.[c];
-          if (Number.isFinite(w)) styles.push(`max-width:${w}px`);
+          if (Number.isFinite(w)) styles += `max-width:${w}px;`;
         }
 
-        const textOut = String(val ?? '')
+        const textOut = textStr
           .replace(/[\u00A0\u202F]/g, ' ')
           .replace(/\r?\n/g, ' ')
-          .replace(/\s{2,}/g, ' ')
-          .trim();
+          .replace(/\s{2,}/g, ' ');
 
-        headHtml += `<th class="${cls}" style="${styles.join(';')}"${span}>
-          <div style="text-align:center;">
-            ${escapeHTML(textOut)}
-          </div>
-        </th>`;
+        headHtml += `<th class="${cls}" style="${styles}"${span}><div style="text-align:center;">${escapeHTML(textOut)}</div></th>`;
       }
       headHtml += '</tr>';
     }
@@ -1660,7 +1644,7 @@ function contometros_renderStyled(payload) {
 
     // ===== TBODY =====
     const Bvals0 = (data.values || data.rows || []).map(r => r.slice());
-    const Bmerg  = data.merges || [];
+    const Bmerg = data.merges || [];
     const Bvals = Bvals0.map(row => {
       const arr = Array.isArray(row) ? row.slice() : [];
       if (W && arr.length < W) arr.length = W;
@@ -1672,79 +1656,61 @@ function contometros_renderStyled(payload) {
     for (let r = 0; r < Bvals.length; r++) {
       const baseRh = data.rowHeights?.[r];
       const rhBody = Number.isFinite(baseRh) ? Math.max(16, Math.round(baseRh * 0.40)) : null;
-      const trStyle = ' style="height: 60px;"';
-      bodyHtml += `<tr${trStyle}>`;
+      bodyHtml += '<tr style="height: 60px;">';
 
       for (let c = 0; c < W; c++) {
         const val = Bvals[r][c];
         if (val === null) continue;
         const merge = cont_findTopLeftMerge(Bmerg, r, c);
-        const span  = merge ? ` rowspan="${merge.rowSpan}" colspan="${merge.colSpan}"` : '';
-        
-        let bg = r % 2 === 0 ? '#111827' : '#1f2937'; 
-        let col = '#e2e8f0'; 
+        const span = merge ? ` rowspan="${merge.rowSpan}" colspan="${merge.colSpan}"` : '';
+
+        let bg = (r % 2 === 0) ? '#111827' : '#1f2937';
+        let col = '#e2e8f0';
         let fw = 'normal';
 
-        if (c === 10) { 
-          bg = '#9e9c75'; col = '#000000'; fw = 'bold';
-        } else if (c === 11) { 
-          bg = '#000000'; col = '#000000'; // Separador negro
-        } else if (c === 0) { 
-          bg = '#141d26'; col = '#ffffff'; fw = 'bold'; 
-        } else if (c === 3) { 
-          col = '#3498db'; fw = 'bold'; 
-        } else if (c === 8) {
-          col = '#E67E22'; fw = 'bold'; 
-        }
+        if (c === 10) { bg = '#9e9c75'; col = '#000000'; fw = 'bold'; }
+        else if (c === 11) { bg = '#000000'; col = '#000000'; }
+        else if (c === 0) { bg = '#141d26'; col = '#ffffff'; fw = 'bold'; }
+        else if (c === 3) { col = '#3498db'; fw = 'bold'; }
+        else if (c === 8) { col = '#E67E22'; fw = 'bold'; }
 
-        // 🎯 COLOR DE TEXTO EXCLUSIVO PARA LOS DATOS DE LAS ÚLTIMAS 4 COLUMNAS (M, N, O, P)
+        // Columnas M, N, O, P
         if (c === 12) {
-          col = '#2ecc71'; // Verde (Consumo Promedio 3 Meses)
-          fw = 'normal';
+          col = '#2ecc71';
         } else if (c === 13) {
           const valAlerta = String(val ?? '').trim();
-          col = (valAlerta !== '-' && valAlerta !== '' && valAlerta !== '—') 
-            ? '#e74c3c'   // Rojo vibrante si hay alerta (>10%)
-            : '#95a5a6';  // Gris si no hay alerta ("-")
+          col = (valAlerta !== '-' && valAlerta !== '' && valAlerta !== '—') ? '#e74c3c' : '#95a5a6';
           fw = 'bold';
         } else if (c === 14) {
-          col = '#ffffff'; // Azul (Lectura del Periodo)
-          fw = 'normal';
+          col = '#ffffff';
         } else if (c === 15) {
-          col = '#f39c12'; // Naranja / Ámbar (Consumo Reflejado Aprox. S/.)
+          col = '#f39c12';
           fw = 'bold';
         }
 
         let ha = data.hAligns?.[r]?.[c] || 'left';
-        if (c === 1) ha = 'left'; 
+        if (c === 1) ha = 'left';
         else if (CENTER_BODY_COLS.has(c)) ha = 'center';
 
         const needsWrap = WRAP_COLS.has(c);
         const cls = (needsWrap ? 'wrap ' : '') + cont_alignClass(ha);
-        const styles = [`background:${bg}`, `color:${col}`, `font-weight:${fw}`];
-        styles.push('height:60px');
-        styles.push('line-height:14px'); // Permite exactamente 4 renglones bien distribuidos
-        //styles.push('vertical-align:middle'); // Centra el contenido verticalmente si tiene menos de 4 líneas
+        let styles = `background:${bg};color:${col};font-weight:${fw};height:60px;line-height:14px;`;
 
         if (!needsWrap && Number.isFinite(rhBody)) {
-          styles.push(`line-height:${Math.max(10, rhBody - 6)}px`);
+          styles += `line-height:${Math.max(10, rhBody - 6)}px;`;
         }
         if (needsWrap) {
           const w = colWidths?.[c];
-          if (Number.isFinite(w)) styles.push(`max-width:${w}px`);
+          if (Number.isFinite(w)) styles += `max-width:${w}px;`;
         }
 
-        bodyHtml += `<td class="${cls}" style="${styles.join(';')}"${span}>
-          <div style="text-align:${ha};">
-            ${val == null ? '' : escapeHTML(String(val))}
-          </div>
-        </td>`;
+        bodyHtml += `<td class="${cls}" style="${styles}"${span}><div style="text-align:${ha};">${val == null ? '' : escapeHTML(String(val))}</div></td>`;
       }
       bodyHtml += '</tr>';
     }
     bodyHtml += '</tbody>';
 
-    // ===== CONTROL DE ANCHOS =====
+    // ===== CONTROL DE ANCHOS Y INYECCIÓN EN DOM =====
     const adjColWidths = Array.isArray(colWidths) ? colWidths.slice() : [];
     while (adjColWidths.length < W) adjColWidths.push(85);
 
