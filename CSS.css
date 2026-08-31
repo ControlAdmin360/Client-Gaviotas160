@@ -242,14 +242,13 @@ body {
 .brand { font-weight: 700; letter-spacing: .3px; }
 .actions { display: flex; gap: 8px; }
 
-/*
 .sidebar{
   background:rgba(2,6,23,.7);
   border-right:1px solid var(--bd);
   padding:12px;
   overflow:auto;
 }
-*/
+*
 .sidebar {
   position: fixed;
   top: 56px;
