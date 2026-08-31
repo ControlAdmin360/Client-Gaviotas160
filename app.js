@@ -1723,9 +1723,11 @@ function contometros_renderStyled(payload) {
 }
 
 /** Llama al servidor (GAS) para traer formato+datos de Contómetros */
-function contometros_loadStyled(params, cb) {
+function contometros_loadStyled(params = {}, cb) {
   const tbl = document.getElementById('tabla');
-  if (tbl) {
+  
+  // Solo inserta el spinner dentro si la tabla está totalmente vacía o es la primera carga
+  if (tbl && (!tbl.rows || tbl.rows.length === 0 || tbl.querySelector('.loading-cell'))) {
     tbl.classList.add('sheet-table');
     tbl.innerHTML = `
       <tbody>
@@ -1741,19 +1743,23 @@ function contometros_loadStyled(params, cb) {
   netRun()
     .withSuccessHandler(payload => {
       if (!payload || payload.error) {
-        if (tbl) tbl.innerHTML =
-          `<tbody><tr><td class="error-cell">Payload vacío (¿deployment viejo?).</td></tr></tbody>`;
+        if (tbl) {
+          tbl.innerHTML = `<tbody><tr><td class="error-cell">Payload vacío (¿deployment viejo?).</td></tr></tbody>`;
+        }
         return;
       }
-      cb(payload);
+      
+      // Ejecuta la función de pintado que optimizamos anteriormente
+      if (typeof cb === 'function') cb(payload);
     })
     .withFailureHandler(err => {
       console.error('[LECTURAS] GAS error:', err);
-      toast?.('Lecturas Server Error: ' + (err?.message || err));
-      if (tbl) tbl.innerHTML =
-        `<tbody><tr><td class="error-cell">Error: ${escapeHTML(err?.message || String(err))}</td></tr></tbody>`;
+      if (window.toast) toast('Lecturas Server Error: ' + (err?.message || err));
+      if (tbl) {
+        tbl.innerHTML = `<tbody><tr><td class="error-cell">Error: ${escapeHTML(err?.message || String(err))}</td></tr></tbody>`;
+      }
     })
-    .api_contometros_getStyled({});
+    .api_contometros_getStyled(params); // 👈 Pasa 'params' al servidor en lugar de {}
 }
 
 function closeContometrosForm() {
