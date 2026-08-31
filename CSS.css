@@ -248,21 +248,6 @@ body {
   padding:12px;
   overflow:auto;
 }
-*
-.sidebar {
-  position: fixed;
-  top: 56px;
-  left: 0;
-  bottom: 0;
-  width: var(--sidebar, 240px);
-  background: rgba(2, 6, 23, 0.95);
-  backdrop-filter: blur(8px);
-  border-right: 1px solid var(--bd);
-  padding: 12px;
-  overflow-y: auto;
-  z-index: 99;
-  transition: transform 0.3s ease;
-}
 
 /* Estado repllegado/oculto */
 .sidebar.collapsed,
