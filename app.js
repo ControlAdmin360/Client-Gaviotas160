@@ -715,8 +715,8 @@ function setupRouter(){
     try {
       if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
       if (view === 'consultas') { setupConsultas(); }
-      if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
-      if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
+      //if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
+      //if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
       
       // ✅ Cierre de llaves corregido
       if (view === 'eventos') { cargarEventosLogger(); }
@@ -4020,9 +4020,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 1. Modales y Vistas Iniciales
+  setupRouter();
   setupDeudas?.();
   setupComuna?.();
-  setupRouter();
   setupFullscreen();
   setupSearch();
   contometros_loadStyled({}, contometros_renderStyled);
@@ -4030,6 +4030,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSync();
   setupBancoFormModal?.();
   setupRecibos?.();
+
+  cargarModuloServicios?.();
 
   // 2. Modales y Navegación
   document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
