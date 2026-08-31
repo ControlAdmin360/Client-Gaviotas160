@@ -394,6 +394,32 @@ body {
 
 .btn-menu { display: none !important; }
 
+/* Botón de Cerrar Sesión Profesional */
+.btn-logout {
+  background-color: #fff1f0;
+  color: #e53935;
+  border: 1px solid #ffa39e;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-logout:hover {
+  background-color: #e53935;
+  color: #ffffff;
+  border-color: #d32f2f;
+  box-shadow: 0 2px 5px rgba(229, 57, 53, 0.25);
+}
+
+.btn-logout:active {
+  transform: scale(0.97);
+}
+
 .input {
   background: #0b1220;
   border: 1px solid #1f2937;
