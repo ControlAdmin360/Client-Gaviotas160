@@ -221,12 +221,10 @@ body {
 
 
 /* 🎯 Desplegar sidebar al posicionar el mouse (Hover / Focus) */
-/*
 .app:has(.sidebar:hover),
 .app:has(.sidebar:focus-within) {
   grid-template-columns: var(--sidebar) 1fr !important;
 }
-  */
 
 .topbar {
   grid-row: 1 / 2;
