@@ -219,7 +219,6 @@ body {
   transition: grid-template-columns 280ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
 /* 🎯 Desplegar sidebar al posicionar el mouse (Hover / Focus) */
 .app:has(.sidebar:hover),
 .app:has(.sidebar:focus-within) {
@@ -247,12 +246,6 @@ body {
   border-right:1px solid var(--bd);
   padding:12px;
   overflow:auto;
-}
-
-/* Estado repllegado/oculto */
-.sidebar.collapsed,
-.sidebar:not(.open) {
-  transform: translateX(-100%);
 }
 
 .sidebar::after{
@@ -306,7 +299,6 @@ body {
   translate: 0 .06em;     /* microajuste vertical opcional */
 }
 
-
 .content {
   grid-row: 2 / 3;
   grid-column: 2 / 3;
@@ -338,7 +330,6 @@ body {
 .srv-error .dot { background: #ff4d4f; }
 
 /* En pantallas pequeñas mantiene desplegado */
-
 @media (max-width: 900px) {
   .app,
   .app:has(.sidebar:hover),
@@ -346,7 +337,6 @@ body {
     grid-template-columns: var(--sidebar) 1fr !important;
   }
 }
-
 
 /* ==========================================================================
    3. CONTROLES / BOTONES / FORMULARIOS
