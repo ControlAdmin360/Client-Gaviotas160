@@ -712,7 +712,7 @@ function setupRouter(){
   });
 
   function ensureInit(view) {
-    try {
+    try {  /*carga de modulos al ingresar por primera vez*/
       if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
       if (view === 'consultas') { setupConsultas(); }
       //if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
