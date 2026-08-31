@@ -149,7 +149,7 @@ function cerrarSesion(forceReload = false) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // URL pública de tu Web App en Google Apps Script COEXION AL SERVIDOR GAS
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzG5Cql9kqmiwjy_FUAANj0tUparfQxlAAkfeV2z8uVEML17bUaJcT5r7NlqQZyDNS7NA/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwSt_x1VCzarmT11YVIfiNN4QxG6X0HYhZbVHSTsj8wwqcyX3wHPqvcmTPczIyuRWYM/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
@@ -394,7 +394,6 @@ document.getElementById('banco-eliminar')?.addEventListener('click', async () =>
     restore();
   }
 });
-
 
 // =========================================================================
 // 2. SETEAR METROS CÚBICOS (M3) EN BANCO
@@ -1342,7 +1341,6 @@ function setupBancoFormModal(){
   btnClose?.addEventListener('click', closeBancoForm);
 }
 
-
 /* =========================
   DEUDAS
   ========================= */
@@ -1773,7 +1771,6 @@ function closeContometrosForm() {
 /* =========================
    CONSULTAS - Lógica General
    ========================= */
-
 function setupConsultasSelect() {
   const sel = document.getElementById('consulta-depa');
   if (!sel) return;
