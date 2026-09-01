@@ -3967,10 +3967,9 @@ window.__clockInterval = setInterval(updateClocks, 1000);
 
 // Función para ejecutar calSaldosNew en el backend de GAS al abrir la App
 async function ejecutarCalculoSaldosInicial() {
-  const GAS_URL = "URL_DE_TU_WEB_APP_DESPLEGADA_EN_APPS_SCRIPT"; 
 
   try {
-    const response = await fetch(GAS_URL, {
+    const response = await fetch(GAS_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
