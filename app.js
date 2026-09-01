@@ -4056,6 +4056,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupRecibos?.();
   cargarModuloServicios?.();
   ejecutarCalculoSaldosInicial();
+  netRun().calSaldosNew();
 
   // 2. Modales y Navegación
   document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
