@@ -149,7 +149,7 @@ function cerrarSesion(forceReload = false) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // URL pública de tu Web App en Google Apps Script COEXION AL SERVIDOR GAS
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwSt_x1VCzarmT11YVIfiNN4QxG6X0HYhZbVHSTsj8wwqcyX3wHPqvcmTPczIyuRWYM/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwnuyIpmcEmz9f8bLyi7iLsl9ZqrMFM8tnONs71oXYH-EcG-ZA-tYwJr4S7TX3IpLQqHw/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
