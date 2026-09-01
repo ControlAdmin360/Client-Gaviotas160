@@ -3965,30 +3965,6 @@ updateClocks();
 window.__clockInterval = setInterval(updateClocks, 1000);
 });
 
-// Función para ejecutar calSaldosNew en el backend de GAS al abrir la App
-async function ejecutarCalculoSaldosInicial() {
-
-  try {
-    const response = await fetch(GAS_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({
-        functionName: 'calSaldosNew',
-        parameters: []
-      })
-    });
-    
-    const data = await response.json();
-    if (data.status === 'success') {
-      console.log('Saldos recalculados correctamente al iniciar.');
-    } else {
-      console.error('Error al recalcular saldos:', data.message);
-    }
-  } catch (err) {
-    console.error('Error en la comunicación con GAS:', err);
-  }
-}
-
 // =========================================================================
 // BLOQUE ÚNICO DE INICIALIZACIÓN DE LA APLICACIÓN
 // =========================================================================
@@ -4014,7 +3990,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupBancoFormModal?.();
   setupRecibos?.();
   cargarModuloServicios?.();
-  ejecutarCalculoSaldosInicial();
   netRun().calSaldosNew();
 
   // 2. Modales y Navegación
@@ -4213,6 +4188,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  
+
 });
 
