@@ -3990,47 +3990,6 @@ async function ejecutarCalculoSaldosInicial() {
 }
 
 // =========================================================================
-// --- Escuchador Global Único para Mensajes de IFrames ---
-// =========================================================================
-window.addEventListener('message', (ev) => {
-  const d = ev?.data;
-  if (!d) return;
-
-  // 1. Mensajes simples en formato texto (Strings)
-  if (d === 'contometros-close') closeContometrosForm?.();
-  if (d === 'banco-form-close' || d === 'closeBancoForm') closeBancoForm?.();
-
-  // 2. Mensajes en formato Objeto { type, message, ... }
-  if (typeof d === 'object') {
-    // Cierre de modales/diálogos
-    if (d.type === 'contometros-close') closeContometrosForm?.();
-    if (d.type === 'banco-form-close' || d.type === 'closeBancoForm') closeBancoForm?.();
-    if (d.type === 'closeContometros') closeContometrosForm?.();
-
-    // Notificaciones Toast
-    if (d.type === 'toast') toast?.(String(d.message || ''));
-
-    // Expiración de sesión
-    if (d.type === 'contometros-auth-expired' || d.type === 'banco-auth-expired') {
-      if (typeof cerrarSesion === 'function') {
-        cerrarSesion();
-      } else {
-        if (typeof clearAuth === 'function') clearAuth();
-        else {
-          sessionStorage.removeItem('AUTH_TOKEN');
-          sessionStorage.removeItem('AUTH_USER');
-          sessionStorage.removeItem('AUTH_EXPIRE');
-        }
-        const loginScreen = document.getElementById("login-screen");
-        const appContainer = document.getElementById("app-container");
-        if (appContainer) appContainer.style.display = "none";
-        if (loginScreen) loginScreen.style.display = "flex";
-      }
-    }
-  }
-});
-
-// =========================================================================
 // BLOQUE ÚNICO DE INICIALIZACIÓN DE LA APLICACIÓN
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -4217,27 +4176,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 6. Listener Unificado de Mensajes
   window.addEventListener('message', (ev) => {
-    const data = ev?.data;
-    if (!data) return;
+    const d = ev?.data;
+    if (!d) return;
 
-    if (data === 'contometros-close' || data.type === 'contometros-close') {
-      closeForm('contometros');
-    }
+    // 1. Mensajes simples en formato texto (Strings)
+    if (d === 'contometros-close') closeContometrosForm?.();
+    if (d === 'banco-form-close' || d === 'closeBancoForm') closeBancoForm?.();
 
-    if (data.type === 'contometros-auth-expired' || data.type === 'banco-auth-expired') {
-      if (typeof cerrarSesion === 'function') {
-        cerrarSesion();
-      } else {
-        sessionStorage.removeItem('AUTH_TOKEN');
-        sessionStorage.removeItem('AUTH_USER');
-        sessionStorage.removeItem('AUTH_EXPIRE');
-        const loginScreen = document.getElementById("login-screen");
-        const appContainer = document.getElementById("app-container");
-        if (appContainer) appContainer.style.display = "none";
-        if (loginScreen) loginScreen.style.display = "flex";
+    // 2. Mensajes en formato Objeto { type, message, ... }
+    if (typeof d === 'object') {
+      // Cierre de modales/diálogos
+      if (d.type === 'contometros-close') closeContometrosForm?.();
+      if (d.type === 'banco-form-close' || d.type === 'closeBancoForm') closeBancoForm?.();
+      if (d.type === 'closeContometros') closeContometrosForm?.();
+
+      // Notificaciones Toast
+      if (d.type === 'toast') toast?.(String(d.message || ''));
+
+      // Expiración de sesión
+      if (d.type === 'contometros-auth-expired' || d.type === 'banco-auth-expired') {
+        if (typeof cerrarSesion === 'function') {
+          cerrarSesion();
+        } else {
+          if (typeof clearAuth === 'function') clearAuth();
+          else {
+            sessionStorage.removeItem('AUTH_TOKEN');
+            sessionStorage.removeItem('AUTH_USER');
+            sessionStorage.removeItem('AUTH_EXPIRE');
+          }
+          const loginScreen = document.getElementById("login-screen");
+          const appContainer = document.getElementById("app-container");
+          if (appContainer) appContainer.style.display = "none";
+          if (loginScreen) loginScreen.style.display = "flex";
+        }
       }
     }
   });
 
+  
 });
 
