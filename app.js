@@ -3965,6 +3965,31 @@ updateClocks();
 window.__clockInterval = setInterval(updateClocks, 1000);
 });
 
+// Función para ejecutar calSaldosNew en el backend de GAS al abrir la App
+async function ejecutarCalculoSaldosInicial() {
+  const GAS_URL = "URL_DE_TU_WEB_APP_DESPLEGADA_EN_APPS_SCRIPT"; 
+
+  try {
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        functionName: 'calSaldosNew',
+        parameters: []
+      })
+    });
+    
+    const data = await response.json();
+    if (data.status === 'success') {
+      console.log('Saldos recalculados correctamente al iniciar.');
+    } else {
+      console.error('Error al recalcular saldos:', data.message);
+    }
+  } catch (err) {
+    console.error('Error en la comunicación con GAS:', err);
+  }
+}
+
 // =========================================================================
 // --- Escuchador Global Único para Mensajes de IFrames ---
 // =========================================================================
@@ -4030,8 +4055,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSync();
   setupBancoFormModal?.();
   setupRecibos?.();
-
   cargarModuloServicios?.();
+  ejecutarCalculoSaldosInicial();
 
   // 2. Modales y Navegación
   document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
