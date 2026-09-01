@@ -148,8 +148,9 @@ function cerrarSesion(forceReload = false) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// URL pública de tu Web App en Google Apps Script COEXION AL SERVIDOR GAS
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyuffX3FUYZ6rsnvtWJVcMiiQ_GwDNQZAkNsHBLtjvlmHGC9wo8ZRmgwMmcmZ5wdsxVvw/exec";
+//  SWICHT URL PARA CONEXION pública de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
+const GAS_API_URL = "https://backend-zeta-coral-88.vercel.app/api/rpc";
+//const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyuffX3FUYZ6rsnvtWJVcMiiQ_GwDNQZAkNsHBLtjvlmHGC9wo8ZRmgwMmcmZ5wdsxVvw/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
