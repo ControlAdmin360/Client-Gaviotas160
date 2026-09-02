@@ -467,6 +467,7 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
 });
       
 // ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
+/*
 async function abrirContometrosForm(){
   try {
     // 1. Validar/Obtener Token (redirige al login automáticamente si falla)
@@ -484,6 +485,23 @@ async function abrirContometrosForm(){
   } catch(e) { 
     console.error('No se abrió Contómetros:', e); 
     // Se captura silenciosamente el fallo/cancelación sin lanzar alertas molestas
+  }
+}*/
+function abrirContometrosForm() {
+  try {
+    // 1. Obtener usuario de la sesión
+    const user = sessionStorage.getItem('AUTH_USER') || '';
+    // 2. Obtener elementos del DOM
+    const dlg = document.getElementById('dlgContometros');
+    const ifr = document.getElementById('frmContometros');
+    // 3. Construir la URL sin el parámetro token
+    const baseUrl = window.FORM_CONTOMETROS_URL;
+    const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'user=' + encodeURIComponent(user);
+    // 4. Asignar URL al iframe y abrir el modal
+    ifr.src = url;
+    dlg.showModal();
+  } catch(e) { 
+    console.error('No se abrió Contómetros:', e); 
   }
 }
 
@@ -900,21 +918,6 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
 
     // 💎 PROTEGIDO: Volvemos el listener asíncrono para evaluar las credenciales primero
     btnNuevo.addEventListener('click', async () => {
-      
-      // 1. Forzar validación obligatoria del token de acceso
-      let token = null;
-      try { 
-        token = await ensureAuthTokenBanco(); 
-      } catch (e) { 
-        token = null; 
-      }
-      
-      // 2. FRENO DE SEGURIDAD: Si no hay token, congelamos el flujo de inmediato
-      if (!token) {
-        if (window.toast) window.toast('🔐 Autenticación Fallida (⛔)');
-        return; 
-      }
-
       // 3. FLUJO AUTORIZADO: Si pasó la firma, recién monta el formulario
       const url = buildFormUrl();
       if (!url){ toast('URL del formulario no disponible'); return; }
@@ -973,6 +976,7 @@ const ZEBRA_RIGHT_B = '#0f1b31';
 
 // borde sutil en bloque derecho
 const RIGHT_BORDER = 'rgba(255,255,255,.08)';
+window.uiPaintCell = uiPaintCell;
 
 function findMerge(col){
   return BANCO_BODY_MERGES.find(m => col >= m.from && col <= m.to);
@@ -1286,7 +1290,6 @@ function uiPaintCell(opt){
   if (rowSpan && rowSpan > 1) cell.rowSpan = rowSpan;
   if (colSpan && colSpan > 1) cell.colSpan = colSpan;
 }
-window.uiPaintCell = uiPaintCell;
 
 /// seccion Registro
 function setupBancoFormModal(){
@@ -1320,17 +1323,6 @@ function setupBancoFormModal(){
   
   // 💎 PROTEGIDO: Volvemos el listener asíncrono para evaluar el token primero
   btn.addEventListener('click', async () => {
-    
-    let token = null;
-    try { 
-      token = await ensureAuthTokenBanco(); 
-    } catch (e) { 
-      token = null; 
-    }
-    // 2. Freno si no se autoriza
-    if (!token) {
-      return; 
-    }
     // 3. Apertura inmediata del formulario
     const url = buildUrl();
     if (!url) return;
@@ -2116,28 +2108,6 @@ async function cons_consultar() {
 
   if (typeof cons_resetTotales === 'function') cons_resetTotales();
   const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
-
-  // 2. Intento de autenticación seguro
-  /*
-  let token = null;
-  try { 
-    if (typeof ensureAuthTokenBanco === 'function') {
-      token = await ensureAuthTokenBanco(); 
-    }
-  } catch (e) { 
-    console.warn("Fallo en auth:", e);
-    token = null; 
-  }
-
-  
-
-  if (!token) {
-    if (tbl) { tbl.removeAttribute('aria-busy'); tbl.innerHTML = ''; }
-    resetBtn();
-    if (typeof window.toast === 'function') toast("🔐 Autenticación Fallida (⛔)");
-    return;
-  }*/
-
   const userActivo = (typeof window.usuarioActivo === 'function') 
     ? window.usuarioActivo() 
     : (sessionStorage.getItem('AUTH_USER') || 'UNKNOWN');
@@ -2226,13 +2196,6 @@ async function cons_abrirReciboPDF() {
     if (window.toast) toast("⚠️ Selecciona el Departamento a Consultar (❓)"); 
     return; 
   }
-  /*
-  let token = null;
-  try { token = await ensureAuthTokenBanco(); } catch (e) { token = null; }
-  if (!token) { 
-    if (window.toast) toast("🔐 Autenticación Fallida (⛔)"); 
-    return; 
-  }*/
 
   btn.disabled = true;
   btn.textContent = '⏳ Espere...';
@@ -2294,7 +2257,7 @@ async function cons_ReciboActualPDF() {
   }
   /*
   let token = null;
-  try { token = await ensureAuthTokenBanco(); } catch (e) { token = null; }
+  try { token = await (); } catch (e) { token = null; }
   if (!token) { 
     if (window.toast) toast("🔐 Autenticación Fallida (⛔)"); 
     return; 
@@ -4028,45 +3991,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 5. Botones de Reportes (Mantienen tu código actual intacto)
-  document.getElementById('btnRepGen')?.addEventListener('click', async () => {
-    const btn = document.getElementById('btnRepGen');
-    const linksDiv = document.getElementById('reportLinks');
-    if (!btn || !linksDiv) return;
-
-    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = '⏳ Generando Reporte…';
-    linksDiv.innerHTML = '';
-
-    let token = null;
-    try { token = await ensureAuthTokenBanco(); } catch { token = null; }
-    if (!token) {
+document.getElementById('btnRepGen')?.addEventListener('click', () => {
+  const btn = document.getElementById('btnRepGen');
+  const linksDiv = document.getElementById('reportLinks');
+  if (!btn || !linksDiv) return;
+  if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Generando Reporte…';
+  linksDiv.innerHTML = '';
+  const user = sessionStorage.getItem('AUTH_USER') || 
+               (typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '');
+  // Llamada directa a GAS eliminando el token de autenticación
+  netRun()
+    .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.textContent = '✅ Reporte Generado';
+      if (res?.user) sessionStorage.setItem('AUTH_USER', res.user);
+      if (res?.ok && res?.urlPDF) {
+        linksDiv.innerHTML = getBtnPDF(res);
+      } else {
+        linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
+      }
+    })
+    .withFailureHandler(err => {
       btn.disabled = false;
       btn.textContent = btn.dataset._old;
-      return;
-    }
-
-    netRun()
-      .withSuccessHandler(res => {
-        btn.disabled = false;
-        btn.textContent = '✅ Reporte Generado';
-        if (res?.user) sessionStorage.setItem('AUTH_USER', res.user);
-        if (res?.ok && res?.urlPDF) {
-          linksDiv.innerHTML = getBtnPDF(res);
-        } else {
-          linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
-        }
-      })
-      .withFailureHandler(err => {
-        btn.disabled = false;
-        btn.textContent = btn.dataset._old;
-        linksDiv.textContent = 'Error: ' + (err?.message || String(err));
-      })
-      .reporteGeneral_web({
-        authToken: token,
-        userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
-      });
-  });
+      linksDiv.textContent = 'Error: ' + (err?.message || String(err));
+    })
+    .reporteGeneral_web({
+      userAuth: user
+    });
+});
 
   document.getElementById('btnDeudas')?.addEventListener('click', () => {
     const btn = document.getElementById('btnDeudas');
