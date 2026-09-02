@@ -150,7 +150,7 @@ function cerrarSesion(forceReload = false) {
 
 //  SWICHT URL PARA CONEXION pública de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
 //const GAS_API_URL = "https://backend-zeta-coral-88.vercel.app/api/rpc";
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwQBWLOd6FhwuQqGc9nCxd1oU9sVEX4EdnDkhFdph_cYX17nvL4WK0JmHTUEKuNKV9f0A/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxJ1eDAwXCGZxUkRAwaJ29cwKS8WmO0H02fTF3rD6QuE0z4ULlSF17hUMyMixHB-CrIow/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
