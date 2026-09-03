@@ -160,7 +160,7 @@
     const fbMsg = document.getElementById('fbMsg');
     const loader = document.getElementById('loader');
 
-    let correoUsuario = '-';
+    let correoUsuario = sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL') || '—';
     let listaDepas = [];
     let listaServs = [];
 
@@ -179,16 +179,26 @@
     }
     p.netRun()
       .withSuccessHandler(res => {
-        correoUsuario = res.email || '-';
-        renderMetaUsuario();
+        if (res && res.email) {
+          renderMetaUsuario(res.email); // 👈 Pasa el correo recibido como parámetro
+        }
       })
       .getCuentaUsuario();
 
-    function renderMetaUsuario(){
+    function renderMetaUsuario(nuevoCorreo) {
       const mu = document.getElementById('metaUsuario');
       if (!mu) return;
+      // Si le pasan un correo nuevo válido (no vacío ni guión), lo actualiza y lo guarda
+      if (nuevoCorreo && nuevoCorreo !== '—' && nuevoCorreo !== '-') {
+        correoUsuario = nuevoCorreo;
+        sessionStorage.setItem('ADMIN_ACCOUNT_EMAIL', nuevoCorreo);
+      }
+      // Si correoUsuario sigue vacío pero en sessionStorage ya existe, lo recupera
+      if ((!correoUsuario || correoUsuario === '—' || correoUsuario === '-') && sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL')) {
+        correoUsuario = sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL');
+      }
       mu.innerHTML = `<strong>Admin Account:</strong> ${correoUsuario || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${AUTH_USER || '—'}`;
-     }
+    }
 
     function setMensajeAuth(texto, color, esError = false) {
       if (!fbMsg) return;
