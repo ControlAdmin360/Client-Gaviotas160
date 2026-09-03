@@ -160,7 +160,7 @@
     const fbMsg = document.getElementById('fbMsg');
     const loader = document.getElementById('loader');
 
-    let correoUsuario = '';
+    let correoUsuario = '-';
     let listaDepas = [];
     let listaServs = [];
 
@@ -177,6 +177,12 @@
         if (el.id !== 'btnSalir') el.disabled = true;
       });
     }
+    p.netRun()
+      .withSuccessHandler(res => {
+        correoUsuario = res.email || '-';
+        renderMetaUsuario();
+      })
+      .getCuentaUsuario();
 
     function renderMetaUsuario(){
       const mu = document.getElementById('metaUsuario');
