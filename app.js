@@ -148,7 +148,7 @@ function cerrarSesion(forceReload = false) {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//  SWICHT URL PARA CONEXION pública de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
+//  SWICHT URL PARA CONEXION publica de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
 const GAS_API_URL = "https://backend-zeta-coral-88.vercel.app/api/rpc";
 //const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxCBfOF-4mRrcdBzwgmh4DEgXtU99nRMmGZHCkhKWAymW6jBO2l-FoLPtxqp5RyNASeBg/exec";
 
