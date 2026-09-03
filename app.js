@@ -2211,6 +2211,7 @@ function setupConsultas() {
   if (btnReciboAct) btnReciboAct.onclick = cons_ReciboActualPDF;
 }
 
+// funcion modificada al migrar desde el GAS
 async function cons_ReciboActualPDF() {
   const btn = document.getElementById('btn-recibo-curso');
   if (!btn) return;
@@ -3957,38 +3958,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 5. Botones de Reportes (Mantienen tu código actual intacto)
-document.getElementById('btnRepGen')?.addEventListener('click', () => {
-  const btn = document.getElementById('btnRepGen');
-  const linksDiv = document.getElementById('reportLinks');
-  if (!btn || !linksDiv) return;
-  if (!btn.dataset._old) btn.dataset._old = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = '⏳ Generando Reporte…';
-  linksDiv.innerHTML = '';
-  const user = sessionStorage.getItem('AUTH_USER') || 
-               (typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : '');
-  // Llamada directa a GAS eliminando el token de autenticación
-  netRun()
-    .withSuccessHandler(res => {
-      btn.disabled = false;
-      btn.textContent = '✅ Reporte Generado';
-      if (res?.user) sessionStorage.setItem('AUTH_USER', res.user);
-      if (res?.ok && res?.urlPDF) {
-        linksDiv.innerHTML = getBtnPDF(res);
-      } else {
-        linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte PDF');
-      }
-    })
-    .withFailureHandler(err => {
+  // 5. Botones de Reportes (Codigo Modificado al migrar de GAS)
+document.getElementById('btnRepGen')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btnRepGen');
+    const linksDiv = document.getElementById('reportLinks');
+    if (!btn || !linksDiv) return;
+
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Generando Reporte…';
+    linksDiv.innerHTML = '';
+
+    let token = null;
+    try { token = await ensureAuthTokenBanco(); } catch { token = null; }
+    if (!token) {
       btn.disabled = false;
       btn.textContent = btn.dataset._old;
-      linksDiv.textContent = 'Error: ' + (err?.message || String(err));
-    })
-    .reporteGeneral_web({
-      userAuth: user
-    });
-});
+      return;
+    }
+
+    netRun()
+      .withSuccessHandler(res => {
+        btn.disabled = false;
+        btn.textContent = '📤 Reporte General';
+
+        if (res?.ok && res?.html) {
+          // 1. Abre el reporte en una nueva pestaña al instante con formato A4
+          const ventana = window.open('', '_blank');
+          if (ventana) {
+            ventana.document.open();
+            ventana.document.write(res.html);
+            ventana.document.close();
+          }
+
+          // 2. Si se generó el PDF en Drive, muestra el botón de descarga
+          if (res?.urlPDF) {
+            linksDiv.innerHTML = getBtnPDF(res);
+          }
+          if (window.toast) toast("Reporte General generado con éxito 📊");
+        } else {
+          linksDiv.textContent = '❌ ' + (res?.error || 'No se pudo generar el reporte');
+        }
+      })
+      .withFailureHandler(err => {
+        btn.disabled = false;
+        btn.textContent = btn.dataset._old;
+        linksDiv.textContent = 'Error: ' + (err?.message || String(err));
+      })
+      .reporteGeneral_web({
+        authToken: token,
+        userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
+      });
+  });
 
   document.getElementById('btnDeudas')?.addEventListener('click', () => {
     const btn = document.getElementById('btnDeudas');
