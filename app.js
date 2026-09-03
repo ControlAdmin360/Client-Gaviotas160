@@ -150,7 +150,7 @@ function cerrarSesion(forceReload = false) {
 
 //  SWICHT URL PARA CONEXION pública de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
 const GAS_API_URL = "https://backend-zeta-coral-88.vercel.app/api/rpc";
-//const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwZAm5AkreReskqg-IT1xA1PAb05fFfMclDbXZap10ejjIGpqn6KzaMA8GISJt7vBN2tQ/exec";
+//const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxCBfOF-4mRrcdBzwgmh4DEgXtU99nRMmGZHCkhKWAymW6jBO2l-FoLPtxqp5RyNASeBg/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
@@ -2178,7 +2178,7 @@ async function cons_abrirReciboPDF() {
   }
 
   btn.disabled = true;
-  btn.textContent = '⏳ Buscando el Recibo...';
+  btn.textContent = '⏳ Buscando Recibo...';
 
   // 3. Consulta al backend
   netRun()
@@ -4064,33 +4064,49 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
     const btn = document.getElementById('btnRepAguas');
     const linksDiv = document.getElementById('aguasLinks');
+    
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳ Generando Reportes...';
     linksDiv.innerHTML = '';
 
     const setError = (err) => {
       btn.disabled = false;
-      btn.textContent = '📤 Generar Reportes';
+      btn.textContent = btn.dataset._old;
       linksDiv.textContent = 'Error: ' + (err?.message || err);
     };
 
+    // 1. Primero genera el Excel de lecturas
     netRun()
       .withSuccessHandler((resXlsx) => {
+        // 2. Luego genera el reporte visual de aguas
         netRun()
           .withSuccessHandler((resPdf) => {
             btn.disabled = false;
             btn.textContent = '✅ Reportes Generados';
+
+            // Abre el visor del reporte de aguas inmediatamente
+            if (resPdf?.ok && resPdf?.html) {
+              const ventana = window.open('', '_blank');
+              if (ventana) {
+                ventana.document.open();
+                ventana.document.write(resPdf.html);
+                ventana.document.close();
+              }
+            }
+
+            // Muestra los botones de descarga de Excel y PDF de Drive
             const parts = [];
             if (resXlsx?.urlDrive) parts.push(getBtnDrive(resXlsx));
             if (resXlsx?.urlDownload) parts.push(getBtnExcel(resXlsx));
             if (resPdf?.urlPDF) parts.push(getBtnPDF(resPdf));
-            linksDiv.innerHTML = parts.join('') || '❌ No se pudo generar el archivo';
+            linksDiv.innerHTML = parts.join('');
           })
           .withFailureHandler(setError)
-          .reporteAguasPDF_Web();
+          .reporteAguasPDF(window.usuarioActivo());
       })
       .withFailureHandler(setError)
-      .downloadComtometsXlsx_web(window.usuarioActivo());
+      .obtenerContometrosXlsx(window.usuarioActivo());
   });
 
   // 6. Listener Unificado de Mensajes
