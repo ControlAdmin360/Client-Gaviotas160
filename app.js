@@ -4034,7 +4034,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = '📊 Listar Deudas';
         linksDiv.textContent = "Error: " + (err.message || err);
       })
-      .generarReporteDeudas_web(window.usuarioActivo(), valorMin);
+      .reporteDeudas(window.usuarioActivo(), valorMin);
   });
 
   document.getElementById('btnRecExel')?.addEventListener('click', () => {
