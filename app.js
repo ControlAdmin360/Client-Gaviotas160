@@ -2178,7 +2178,7 @@ async function cons_abrirReciboPDF() {
   }
 
   btn.disabled = true;
-  btn.textContent = '⏳ Buscando Recibo...';
+  btn.textContent = '⏳ Buscando...';
 
   // 3. Consulta al backend
   netRun()
@@ -3663,6 +3663,60 @@ function filtrarYMostrarServicios(termino) {
   renderizarTablaServicios([cabecera, ...filasFiltradas]);
 }
 
+// ============================================================================
+// 📍 CONTROLADOR DEL BOTÓN CONSOLIDAR (VALIDACIONES + AUTH + CONSOLA)
+// ============================================================================
+async function iniciarFlujoConsolidacion() {
+  if (window.toast) toast("⏳ Validando condiciones del período...");
+
+  // 1. Verificación inicial de fecha, duplicidad y servicios
+  netRun()
+    .withSuccessHandler(async (resPre) => {
+      if (!resPre) return;
+
+      // A) Bloqueo por fecha o duplicidad
+      if (!resPre.ok && resPre.mensaje) {
+        alert(resPre.mensaje);
+        return;
+      }
+
+      // B) Advertencia de Servicios Faltantes (Continúa solo si el usuario acepta)
+      if (resPre.serviciosFaltantes && resPre.serviciosFaltantes.length > 0) {
+        const listaTxt = resPre.serviciosFaltantes.map(s => `  • Falta registrar: ${s}`).join('\n');
+        const advertencia = `⚠️ ATENCIÓN: Se detectaron los siguientes servicios sin registrar (en S/ 0.00) para el período ${resPre.periodo}:\n\n${listaTxt}\n\nSi consolida ahora, estos rubros quedarán en S/ 0.00 en los recibos.\n\n¿Desea continuar de todas maneras?`;
+        
+        if (!confirm(advertencia)) {
+          if (window.toast) toast("Operación cancelada por el usuario.");
+          return;
+        }
+      }
+
+      // C) Solicitud de Credenciales de SuperAdmin
+      const userAdmin = prompt(`🛡️ SEGURIDAD DE CIERRE MENSUAL 🛡️\n\nPeríodo: ${resPre.periodo}\n\nIngrese Usuario Administrador:`);
+      if (!userAdmin) return;
+
+      const passAdmin = prompt(`🔑 Ingrese Contraseña de Administrador:`);
+      if (!passAdmin) return;
+
+      // D) Validación final de autenticación
+      netRun()
+        .withSuccessHandler((resAuth) => {
+          if (!resAuth.ok || resAuth.tipoError === "AUTH_FAILED") {
+            alert(resAuth.mensaje || "🔒 Acceso denegado.");
+            return;
+          }
+
+          // Si pasó todas las pruebas, abrimos la consola y arrancamos
+          abrirModalCierreMes();
+        })
+        .withFailureHandler(err => alert("Error validando autenticación: " + err))
+        .validarPreConsolidacion(userAdmin, passAdmin);
+    })
+    .withFailureHandler(err => alert("Error en validación previa: " + err))
+    .validarPreConsolidacion("", "");
+}
+
+
 /* ===========================
    EVENTOS LOGGER. – INFORMATIVO
    =========================== */
@@ -3928,6 +3982,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('cons-buscar')?.addEventListener('click', cons_consultar);
   document.getElementById('btn-ver-recibo')?.addEventListener('click', cons_abrirReciboPDF);
   document.getElementById('btn-recibo-curso')?.addEventListener('click', cons_ReciboActualPDF);
+  document.getElementById('btn-consolidar-periodo')?.addEventListener('click', iniciarFlujoConsolidacion);
 
   // 3. Buscador en tiempo real de servicios
   document.getElementById('servicios-search')?.addEventListener('input', (e) => {
