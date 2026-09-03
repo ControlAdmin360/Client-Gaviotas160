@@ -3663,7 +3663,7 @@ function filtrarYMostrarServicios(termino) {
   renderizarTablaServicios([cabecera, ...filasFiltradas]);
 }
 
-// ============================================================================
+// ================   INICIALIZACION BLOQUE CONSOLIDACION MENSUAL   ===========
 // 📍 CONTROLADOR DEL BOTÓN CONSOLIDAR (VALIDACIONES + AUTH + CONSOLA)
 // ============================================================================
 async function iniciarFlujoConsolidacion() {
@@ -3714,6 +3714,184 @@ async function iniciarFlujoConsolidacion() {
     })
     .withFailureHandler(err => alert("Error en validación previa: " + err))
     .validarPreConsolidacion("", "");
+}
+
+// ============================================================================
+// 📍 CONSOLA DE CIERRE MENSUAL (FUNCIONES DEL MODAL Y EJECUCIÓN)
+// ============================================================================
+
+function abrirModalCierreMes() {
+  const modal = document.getElementById('modal-cierre-mes');
+  if (!modal) {
+    alert("No se encontró el elemento modal-cierre-mes en el HTML.");
+    return;
+  }
+
+  const hoy = new Date();
+  const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  const periodoTxt = document.getElementById('cierre-periodo-tag');
+  if (periodoTxt) {
+    periodoTxt.textContent = `Período a Consolidar: ${meses[hoy.getMonth()].toUpperCase()} - ${hoy.getFullYear()}`;
+  }
+  
+  // Reset de la barra, porcentaje y terminal
+  const bar = document.getElementById('cierre-bar');
+  const pct = document.getElementById('cierre-progreso-pct');
+  const term = document.getElementById('cierre-terminal');
+  
+  if (bar) bar.style.width = '0%';
+  if (pct) pct.textContent = '0%';
+  if (term) term.innerHTML = '> Sistema listo para iniciar el proceso de consolidación contable.';
+  
+  for (let i = 1; i <= 6; i++) {
+    const el = document.getElementById(`chk-etapa-${i}`);
+    if (el) { 
+      el.style.color = '#94a3b8'; 
+      const icono = el.querySelector('i');
+      if (icono) icono.className = 'fa-regular fa-circle'; 
+    }
+  }
+
+  const btnEjecutar = document.getElementById('btn-ejecutar-cierre');
+  if (btnEjecutar) {
+    btnEjecutar.disabled = false;
+    btnEjecutar.textContent = '⚡ Iniciar Cierre de Mes';
+  }
+
+  modal.style.display = 'flex';
+}
+
+function logTerminal(msg) {
+  const term = document.getElementById('cierre-terminal');
+  if (!term) return;
+  const time = new Date().toTimeString().split(' ')[0];
+  term.innerHTML += `<br>> [${time}] ${msg}`;
+  term.scrollTop = term.scrollHeight;
+}
+
+function marcarEtapa(num, estado) {
+  const el = document.getElementById(`chk-etapa-${num}`);
+  if (!el) return;
+  const icono = el.querySelector('i');
+  if (estado === 'ok') {
+    el.style.color = '#10b981';
+    if (icono) icono.className = 'fa-solid fa-circle-check';
+  } else if (estado === 'loading') {
+    el.style.color = '#38bdf8';
+    if (icono) icono.className = 'fa-solid fa-spinner fa-spin';
+  }
+}
+
+async function ejecutarProcesoCierreCompleto() {
+  const btn = document.getElementById('btn-ejecutar-cierre');
+  const btnCancel = document.getElementById('btn-cancelar-cierre');
+  const bar = document.getElementById('cierre-bar');
+  const pct = document.getElementById('cierre-progreso-pct');
+
+  if (!confirm("⚠️ ATENCIÓN: Esta acción ejecutará el Cierre Contable del Período Actual y traspasará los saldos al nuevo mes.\n\n¿Está seguro de continuar?")) return;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Procesando Cierre...';
+  }
+  if (btnCancel) btnCancel.disabled = true;
+
+  const user = (typeof window.usuarioActivo === 'function') ? window.usuarioActivo() : 'ADMIN';
+
+  try {
+    // -------------------------------------------------------------
+    // FASE 1: INICIAR (Sheets + Drive + Obtener Departamentos)
+    // -------------------------------------------------------------
+    logTerminal("Iniciando Fase 1: Creación de hoja histórica y carpeta Drive...");
+    marcarEtapa(1, 'loading');
+    marcarEtapa(2, 'loading');
+    marcarEtapa(3, 'loading');
+
+    const resInicio = await new Promise((resolve, reject) => {
+      netRun()
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .consolidar_iniciar(user);
+    });
+
+    if (!resInicio || !resInicio.ok) throw new Error(resInicio?.error || "Fallo en Fase 1");
+
+    marcarEtapa(1, 'ok');
+    marcarEtapa(2, 'ok');
+    marcarEtapa(3, 'ok');
+    if (bar) bar.style.width = '20%';
+    if (pct) pct.textContent = '20%';
+    logTerminal(`Hoja histórica y carpeta Drive "${resInicio.folderName}" preparadas con éxito.`);
+
+    // -------------------------------------------------------------
+    // FASE 2: ARCHIVAR RECIBOS POR LOTES (Chunks de 10)
+    // -------------------------------------------------------------
+    marcarEtapa(4, 'loading');
+    const depas = resInicio.depas || [];
+    const chunkSize = 10;
+    const totalChunks = Math.ceil(depas.length / chunkSize);
+
+    for (let i = 0; i < totalChunks; i++) {
+      const lote = depas.slice(i * chunkSize, (i + 1) * chunkSize);
+      logTerminal(`Procesando Lote ${i + 1}/${totalChunks} (Dptos: ${lote.join(', ')})...`);
+
+      const resLote = await new Promise((resolve, reject) => {
+        netRun()
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .consolidar_procesarLote(lote, resInicio.folderId);
+      });
+
+      if (!resLote || !resLote.ok) throw new Error(`Fallo en Lote ${i + 1}: ` + resLote?.error);
+
+      const avanceLotes = 20 + Math.round(((i + 1) / totalChunks) * 60);
+      if (bar) bar.style.width = `${avanceLotes}%`;
+      if (pct) pct.textContent = `${avanceLotes}%`;
+      logTerminal(`Lote ${i + 1}/${totalChunks} guardado en Drive exitosamente.`);
+    }
+
+    marcarEtapa(4, 'ok');
+
+    // -------------------------------------------------------------
+    // FASE 3: CONSOLIDAR EN FIREBASE (Corte de Saldos + Banco + Servicios)
+    // -------------------------------------------------------------
+    marcarEtapa(5, 'loading');
+    marcarEtapa(6, 'loading');
+    logTerminal("Iniciando Fase Final: Traspaso de saldos en Firebase y apertura de nuevo mes...");
+
+    const resFinal = await new Promise((resolve, reject) => {
+      netRun()
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .consolidar_finalizar(user);
+    });
+
+    if (!resFinal || !resFinal.ok) throw new Error(resFinal?.error || "Fallo en Fase Final");
+
+    marcarEtapa(5, 'ok');
+    marcarEtapa(6, 'ok');
+    if (bar) bar.style.width = '100%';
+    if (pct) pct.textContent = '100%';
+    logTerminal("🎉 ¡CIERRE DE MES COMPLETADO AL 100%! Todos los saldos y recibos han sido consolidados.");
+
+    if (btn) btn.textContent = '✅ Cierre Completado';
+    if (btnCancel) {
+      btnCancel.disabled = false;
+      btnCancel.textContent = 'Cerrar Panel';
+    }
+
+    if (window.toast) toast("🎉 Cierre Mensual Completado con Éxito");
+
+  } catch (err) {
+    console.error("Error en cierre:", err);
+    logTerminal(`❌ ERROR CRÍTICO: ${err.message || err}`);
+    if (btn) {
+      btn.textContent = '⚠️ Reintentar Cierre';
+      btn.disabled = false;
+    }
+    if (btnCancel) btnCancel.disabled = false;
+    alert("❌ Ocurrió un problema durante el cierre: " + (err.message || err));
+  }
 }
 
 
@@ -3983,8 +4161,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-ver-recibo')?.addEventListener('click', cons_abrirReciboPDF);
   document.getElementById('btn-recibo-curso')?.addEventListener('click', cons_ReciboActualPDF);
   document.getElementById('btn-consolidar-periodo')?.addEventListener('click', iniciarFlujoConsolidacion);
-
-  // 3. Buscador en tiempo real de servicios
+  document.getElementById('btn-ejecutar-cierre')?.addEventListener('click', ejecutarProcesoCierreCompleto);
+  document.getElementById('btn-cancelar-cierre')?.addEventListener('click', () => {
+  document.getElementById('btn-cerrar-modal-cierre')?.addEventListener('click', () => {
+  document.getElementById('modal-cierre-mes').style.display = 'none';
+  });
   document.getElementById('servicios-search')?.addEventListener('input', (e) => {
     const termino = e.target.value.toLowerCase().trim();
     filtrarYMostrarServicios(termino);
