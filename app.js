@@ -2215,56 +2215,43 @@ async function cons_ReciboActualPDF() {
   const btn = document.getElementById('btn-recibo-curso');
   if (!btn) return;
 
-  // 1. SI YA ESTÁ EN MODO LINK
-  if (btn.getAttribute('data-estado') === 'link') {
-    setTimeout(() => {
-      btn.innerHTML = '📝 Recibo en Curso';
-      btn.classList.remove('btn-pdf-success');
-      btn.removeAttribute('data-estado');
-      btn.disabled = false;
-    }, 500);
-    return;
-  }
-
-  // 2. MODO BÚSQUEDA
   const selDepa = document.getElementById('consulta-depa');
-
   const dpto = (selDepa?.value || '').trim();
 
   if (!dpto) {
     if (window.toast) toast("⚠️ Selecciona el Departamento a Consultar (❓)"); 
     return; 
   }
-  /*
-  let token = null;
-  try { token = await (); } catch (e) { token = null; }
-  if (!token) { 
-    if (window.toast) toast("🔐 Autenticación Fallida (⛔)"); 
-    return; 
-  }*/
 
   btn.disabled = true;
-  btn.textContent = '⏳ Espere...';
+  btn.textContent = '⏳ Generando...';
 
   netRun()
     .withSuccessHandler((res) => {
       btn.disabled = false;
-      if (res?.status === "OK") {
-        btn.setAttribute('data-estado', 'link'); 
-        btn.classList.add('btn-pdf-success');
-        btn.innerHTML = `<a href="${res.url}" target="_blank">📥 Abrir Recibo</a>`;
-        if (window.toast) toast("Recibo Creado 📝");
+      btn.textContent = '📝 Recibo en Curso';
+
+      if (res?.status === "OK" && res?.html) {
+        // Abrir ventana emergente inmediata con el recibo listo para guardar como PDF o imprimir
+        const ventana = window.open('', '_blank');
+        if (ventana) {
+          ventana.document.open();
+          ventana.document.write(res.html);
+          ventana.document.close();
+        } else {
+          alert("Por favor permita las ventanas emergentes para visualizar el recibo.");
+        }
+        if (window.toast) toast("Recibo generado al instante ⚡");
       } else {
-        btn.innerHTML = '📝 Recibo en Cursol';
-        alert(res?.msg || 'No se encontró el recibo.');
+        alert(res?.error || 'No se pudo generar el recibo.');
       }
     })
     .withFailureHandler((err) => {
       btn.disabled = false;
-      btn.innerHTML = '📝 Recibo en Curso';
+      btn.textContent = '📝 Recibo en Curso';
       alert('Error: ' + (err?.message || err));
     })
-    .generarPDFParaDepartamento(dpto);
+    .generadorPDFreciboDepa(dpto);
 }
 
 /* ====================================
