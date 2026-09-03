@@ -3959,7 +3959,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 5. Botones de Reportes (Codigo Modificado al migrar de GAS)
-document.getElementById('btnRepGen')?.addEventListener('click', async () => {
+  document.getElementById('btnRepGen')?.addEventListener('click', async () => {
     const btn = document.getElementById('btnRepGen');
     const linksDiv = document.getElementById('reportLinks');
     if (!btn || !linksDiv) return;
