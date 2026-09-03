@@ -4005,7 +4005,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = 'Error: ' + (err?.message || String(err));
       })
-      .reporteGeneral_web({
+      .reporteGeneral({
         authToken: token,
         userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
       });
