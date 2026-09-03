@@ -150,7 +150,7 @@ function cerrarSesion(forceReload = false) {
 
 //  SWICHT URL PARA CONEXION pública de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
 const GAS_API_URL = "https://backend-zeta-coral-88.vercel.app/api/rpc";
-//const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx3XsMRF045Ty2flf2BQtZ2eKFaD0Q8T7OeakuqCKredruNo-wQH58wlYcBa2rVfDQF/exec";
+//const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwZAm5AkreReskqg-IT1xA1PAb05fFfMclDbXZap10ejjIGpqn6KzaMA8GISJt7vBN2tQ/exec";
 
 // --- Motor Principal netRun (Conexión Directa e Híbrida a Apps Script) ---
 window.netRun = function () {
@@ -713,7 +713,7 @@ function setupRouter(){
   function ensureInit(view) {
     try {  /*carga de modulos al ingresar por primera vez*/
       if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
-      if (view === 'consultas') { setupConsultas(); }
+      if (view === 'consultas') { setupConsultasSelect(); }
       //if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
       //if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
       
@@ -2043,6 +2043,31 @@ function cons_resetTotales(placeholder = '—') {
   }
 }
 
+function cons_renderSaldos(data) {
+  if (!data) return;
+
+  const cleanNum = (val) => {
+    if (typeof val === 'number') return val;
+    const n = parseFloat(String(val || 0).replace(/[^\d.-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  };
+
+  try {
+    document.getElementById("s-depa").textContent = data.depa || '';
+    document.getElementById("s-rec").textContent  = cons_formatoPEN(cleanNum(data.rec));
+    document.getElementById("s-mor").textContent  = cons_formatoPEN(cleanNum(data.mor));
+    document.getElementById("s-mul").textContent  = cons_formatoPEN(cleanNum(data.mul));
+    document.getElementById("s-acum").textContent = data.acum  || '0';
+    document.getElementById("s-act").textContent  = cons_formatoPEN(cleanNum(data.act));
+  } catch (e) {
+    console.error("Error renderizando saldos:", e);
+  }
+  document.getElementById("s-loader")?.classList.add("hidden");
+}
+
+/* ==========================================================
+VISUALIZACIÓN DE RECIBOS PDF
+========================================================== */
 async function cons_consultar() {
   const sel = document.getElementById('consulta-depa');
   const val = (sel && sel.value || '').trim();
@@ -2123,36 +2148,11 @@ async function cons_consultar() {
     .api_Saldos_Para_Modal(val);
 }
 
-function cons_renderSaldos(data) {
-  if (!data) return;
-
-  const cleanNum = (val) => {
-    if (typeof val === 'number') return val;
-    const n = parseFloat(String(val || 0).replace(/[^\d.-]/g, ''));
-    return isNaN(n) ? 0 : n;
-  };
-
-  try {
-    document.getElementById("s-depa").textContent = data.depa || '';
-    document.getElementById("s-rec").textContent  = cons_formatoPEN(cleanNum(data.rec));
-    document.getElementById("s-mor").textContent  = cons_formatoPEN(cleanNum(data.mor));
-    document.getElementById("s-mul").textContent  = cons_formatoPEN(cleanNum(data.mul));
-    document.getElementById("s-acum").textContent = data.acum  || '0';
-    document.getElementById("s-act").textContent  = cons_formatoPEN(cleanNum(data.act));
-  } catch (e) {
-    console.error("Error renderizando saldos:", e);
-  }
-  document.getElementById("s-loader")?.classList.add("hidden");
-}
-
-/* ==========================================================
-VISUALIZACIÓN DE RECIBOS PDF
-========================================================== */
 async function cons_abrirReciboPDF() {
   const btn = document.getElementById('btn-ver-recibo');
   if (!btn) return;
 
-  // 1. SI YA ESTÁ EN MODO LINK
+  // 1. Si el botón ya tiene el enlace generado y el usuario hace clic para abrirlo
   if (btn.getAttribute('data-estado') === 'link') {
     setTimeout(() => {
       btn.innerHTML = '📂 Buscar';
@@ -2163,7 +2163,7 @@ async function cons_abrirReciboPDF() {
     return;
   }
 
-  // 2. MODO BÚSQUEDA
+  // 2. Extraer los valores de búsqueda
   const selDepa = document.getElementById('consulta-depa');
   const selMes  = document.getElementById('recibo-mes');
   const selAnio = document.getElementById('recibo-anio');
@@ -2178,37 +2178,29 @@ async function cons_abrirReciboPDF() {
   }
 
   btn.disabled = true;
-  btn.textContent = '⏳ Espere...';
+  btn.textContent = '⏳ Buscando el Recibo...';
 
+  // 3. Consulta al backend
   netRun()
     .withSuccessHandler((res) => {
       btn.disabled = false;
-      if (res?.status === "OK") {
+      if (res?.status === "OK" && res?.url) {
         btn.setAttribute('data-estado', 'link'); 
         btn.classList.add('btn-pdf-success');
-        btn.innerHTML = `<a href="${res.url}" target="_blank">📥 Ver Recibo</a>`;
-        if (window.toast) toast("Recibo Cargado 📝");
+        // Transforma el botón en un enlace directo al PDF en Drive
+        btn.innerHTML = `<a href="${res.url}" target="_blank" style="color:#fff; text-decoration:none;">📥 Ver Recibo</a>`;
+        if (window.toast) toast("Recibo Encontrado 📝");
       } else {
         btn.innerHTML = '📂 Buscar';
-        alert(res?.msg || 'No se encontró el recibo.');
+        alert(res?.msg || 'No se encontró el recibo para ese periodo.');
       }
     })
     .withFailureHandler((err) => {
       btn.disabled = false;
       btn.innerHTML = '📂 Buscar';
-      alert('Error: ' + (err?.message || err));
+      alert('Error de conexión: ' + (err?.message || err));
     })
-    .buscarRecibosPDF(dpto, mes, anio, window.usuarioActivo());
-}
-
-function setupConsultas() {
-  setupConsultasSelect();
-  const btnBusca     = document.getElementById('cons-buscar');
-  const btnRecibo    = document.getElementById('btn-ver-recibo');
-  const btnReciboAct = document.getElementById('btn-recibo-curso');
-  if (btnBusca)     btnBusca.onclick     = cons_consultar;
-  if (btnRecibo)    btnRecibo.onclick    = cons_abrirReciboPDF;
-  if (btnReciboAct) btnReciboAct.onclick = cons_ReciboActualPDF;
+    .consultaRecibosPDF(dpto, mes, anio, window.usuarioActivo()); // 👈 Llama a consultaRecibosPDF
 }
 
 // funcion modificada al migrar desde el GAS
@@ -2254,6 +2246,7 @@ async function cons_ReciboActualPDF() {
     })
     .generadorPDFreciboDepa(dpto);
 }
+
 
 /* ====================================
 Control&Op. // (A1:Q77)
@@ -3932,6 +3925,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
   document.getElementById('servicios-refresh')?.addEventListener('click', cargarModuloServicios);
   document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna);
+  document.getElementById('cons-buscar')?.addEventListener('click', cons_consultar);
+  document.getElementById('btn-ver-recibo')?.addEventListener('click', cons_abrirReciboPDF);
+  document.getElementById('btn-recibo-curso')?.addEventListener('click', cons_ReciboActualPDF);
 
   // 3. Buscador en tiempo real de servicios
   document.getElementById('servicios-search')?.addEventListener('input', (e) => {
@@ -4016,22 +4012,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const linksDiv = document.getElementById('deudasLinks');
     const $minInput = document.getElementById('deu-min');
     const valorMin = $minInput ? Number($minInput.value) : 15;
+    
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳ Generando Lista...';
     linksDiv.innerHTML = "";
+    
     netRun()
       .withSuccessHandler(res => {
         btn.disabled = false;
         btn.textContent = '✅ Lista Generada';
-        if (res?.urlDrive) {
-          linksDiv.innerHTML = getBtnPDF(res);
+        if (res?.urlPDF) {
+          linksDiv.innerHTML = getBtnPDF(res); // 👈 Solo botón PDF
         } else {
           linksDiv.textContent = "❌ No se pudo generar el reporte";
         }
       })
       .withFailureHandler(err => {
         btn.disabled = false;
-        btn.textContent = '📊 Listar Deudas';
+        btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
       })
       .reporteDeudas(window.usuarioActivo(), valorMin);
@@ -4040,6 +4039,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRecExel')?.addEventListener('click', () => {
     const btn = document.getElementById('btnRecExel');
     const linksDiv = document.getElementById('exportLinks');
+    if (!btn.dataset._old) btn.dataset._old = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳ Generando Recibos...';
     linksDiv.innerHTML = "";
@@ -4050,15 +4050,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res?.urlDrive) {
           linksDiv.innerHTML = getBtnDrive(res) + getBtnExcel(res);
         } else {
-          linksDiv.textContent = "❌ No se pudo generar el archivo";
+          linksDiv.textContent = "❌ " + (res?.error || "No se pudo generar el archivo");
         }
       })
       .withFailureHandler(err => {
         btn.disabled = false;
-        btn.textContent = '📤 Recibos en Excel';
+        btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
       })
-      .downloadSheetAsXlsx_web(window.usuarioActivo());
+      .obtenerRecibosXlsx(window.usuarioActivo());
   });
 
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
