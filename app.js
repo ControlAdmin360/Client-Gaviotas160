@@ -467,26 +467,6 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
 });
       
 // ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
-/*
-async function abrirContometrosForm(){
-  try {
-    // 1. Validar/Obtener Token (redirige al login automáticamente si falla)
-    const token = await ensureAuthTokenBanco();
-    if (!token) return;
-    // 2. Construir la URL e invocar el modal
-    const user  = sessionStorage.getItem('AUTH_USER') || '';
-    const dlg = document.getElementById('dlgContometros');
-    const ifr = document.getElementById('frmContometros');
-    const url = window.FORM_CONTOMETROS_URL + (window.FORM_CONTOMETROS_URL.includes('?') ? '&' : '?')
-                  + 'token=' + encodeURIComponent(token)
-                  + '&user=' + encodeURIComponent(user);
-    ifr.src = url;
-    dlg.showModal();
-  } catch(e) { 
-    console.error('No se abrió Contómetros:', e); 
-    // Se captura silenciosamente el fallo/cancelación sin lanzar alertas molestas
-  }
-}*/
 function abrirContometrosForm() {
   try {
     // 1. Obtener usuario de la sesión
