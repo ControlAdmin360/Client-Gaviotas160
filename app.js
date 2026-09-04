@@ -3723,7 +3723,7 @@ async function iniciarFlujoConsolidacion() {
 function abrirModalCierreMes() {
   const modal = document.getElementById('modal-cierre-mes');
   if (!modal) {
-    alert("No se encontró el elemento modal-cierre-mes en el HTML.");
+    alert("❌ No se encontró el elemento modal-cierre-mes en el HTML.");
     return;
   }
 
@@ -3731,7 +3731,7 @@ function abrirModalCierreMes() {
   const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
   const periodoTxt = document.getElementById('cierre-periodo-tag');
   if (periodoTxt) {
-    periodoTxt.textContent = `Período a Consolidar: ${meses[hoy.getMonth()].toUpperCase()} - ${hoy.getFullYear()}`;
+    periodoTxt.textContent = `ℹ️ Período a Consolidar: ${meses[hoy.getMonth()].toUpperCase()} - ${hoy.getFullYear()}`;
   }
   
   // Reset de la barra, porcentaje y terminal
@@ -3741,7 +3741,7 @@ function abrirModalCierreMes() {
   
   if (bar) bar.style.width = '0%';
   if (pct) pct.textContent = '0%';
-  if (term) term.innerHTML = '> Sistema listo para iniciar el proceso de consolidación contable.';
+  if (term) term.innerHTML = '>ℹ️ Sistema listo y esperando orden para iniciar...';
   
   for (let i = 1; i <= 6; i++) {
     const el = document.getElementById(`chk-etapa-${i}`);
@@ -3755,7 +3755,7 @@ function abrirModalCierreMes() {
   const btnEjecutar = document.getElementById('btn-ejecutar-cierre');
   if (btnEjecutar) {
     btnEjecutar.disabled = false;
-    btnEjecutar.textContent = '⚡ Iniciar Cierre de Mes';
+    btnEjecutar.textContent = '⚡ Iniciar Proceso';
   }
 
   modal.style.display = 'flex';
@@ -3798,7 +3798,7 @@ async function ejecutarProcesoCierreCompleto() {
   const pct = document.getElementById('cierre-progreso-pct');
 
   // Tu mensaje de confirmación original
-  if (!confirm("⚠️ ATENCIÓN: Se Procesará el Consolidado del Período Actual y se Emitiran el Total de Recibos de Cobro.\n\nEsta Acción no Podrá Deshaserce ¿Desea continuar?")) return;
+  if (!confirm("⚠️ ATENCIÓN: Se Procesará el Consolidado del Período Actual y se Emitiran el Total de Recibos de Cobro.\n\nEsta Acción no Podrá Deshaserce,  Desea continuar❓")) return;
 
   // 1. Activar protecciones y mostrar banner de advertencia en vivo
   if (btn) {
