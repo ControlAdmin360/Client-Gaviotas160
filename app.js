@@ -3895,6 +3895,7 @@ async function ejecutarProcesoCierreCompleto() {
 }
 
 
+
 /* ===========================
    EVENTOS LOGGER. – INFORMATIVO
    =========================== */
@@ -4163,12 +4164,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-consolidar-periodo')?.addEventListener('click', iniciarFlujoConsolidacion);
   document.getElementById('btn-ejecutar-cierre')?.addEventListener('click', ejecutarProcesoCierreCompleto);
   document.getElementById('btn-cancelar-cierre')?.addEventListener('click', () => {
+  document.getElementById('modal-cierre-mes').style.display = 'none';});
   document.getElementById('btn-cerrar-modal-cierre')?.addEventListener('click', () => {
-  document.getElementById('modal-cierre-mes').style.display = 'none';
-  });
+  document.getElementById('modal-cierre-mes').style.display = 'none';});
   document.getElementById('servicios-search')?.addEventListener('input', (e) => {
-    const termino = e.target.value.toLowerCase().trim();
-    filtrarYMostrarServicios(termino);
+    const termino = e.target.value.toLowerCase().trim(); filtrarYMostrarServicios(termino);
   });
 
   // 4. Recarga de Contómetros
@@ -4384,6 +4384,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-
 });
-
