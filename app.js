@@ -146,7 +146,7 @@ function cerrarSesion(forceReload = false) {
   if (forceReload) {window.location.reload();}
 }
 
-// 🎯 Función que actualiza el título dinámicamente al arrancar la app
+// 🎯 Función de carga inicial de listas Depas/Servicios
 function iniServicesDepas() {
   netRun()
     .withSuccessHandler((res) => {
@@ -4326,14 +4326,14 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.disabled = true;
     btn.textContent = '⏳ Generando Reporte…';
     linksDiv.innerHTML = '';
-
+    /*
     let token = null;
     try { token = await ensureAuthTokenBanco(); } catch { token = null; }
     if (!token) {
       btn.disabled = false;
       btn.textContent = btn.dataset._old;
       return;
-    }
+    }*/
 
     netRun()
       .withSuccessHandler(res => {
@@ -4364,7 +4364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         linksDiv.textContent = 'Error: ' + (err?.message || String(err));
       })
       .reporteGeneral({
-        authToken: token,
+        //authToken: token,
         userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
       });
   });
