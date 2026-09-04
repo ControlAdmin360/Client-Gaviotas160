@@ -1789,6 +1789,8 @@ function setupConsultasSelect() {
     .withSuccessHandler((res) => {
       const depas = res?.depaIds || (Array.isArray(res) ? res : []);
       const servs = res?.servIds || [];
+       // 🎯 Actualiza el título de la pestaña del navegador con el total real
+      document.title = `Gaviotas 160 (${depas.length || "-"})`;
 
       window.LISTAS = window.LISTAS || {};
       window.LISTAS.depaIds = depas; // Guardar en caché global
