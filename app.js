@@ -3667,7 +3667,7 @@ function filtrarYMostrarServicios(termino) {
 // 📍 CONTROLADOR DEL BOTÓN CONSOLIDAR (VALIDACIONES + AUTH + CONSOLA)
 // ============================================================================
 async function iniciarFlujoConsolidacion() {
-  if (window.toast) toast("⏳ Validando condiciones del período...");
+  if (window.toast) toast("⏳ Validando Solicitud...");
 
   // 1. Verificación inicial de fecha, duplicidad y servicios
   netRun()
@@ -3683,7 +3683,7 @@ async function iniciarFlujoConsolidacion() {
       // B) Advertencia de Servicios Faltantes (Continúa solo si el usuario acepta)
       if (resPre.serviciosFaltantes && resPre.serviciosFaltantes.length > 0) {
         const listaTxt = resPre.serviciosFaltantes.map(s => `  • Falta registrar: ${s}`).join('\n');
-        const advertencia = `⚠️ ATENCIÓN: Se detectaron los siguientes servicios sin registrar (en S/ 0.00) para el período ${resPre.periodo}:\n\n${listaTxt}\n\nSi consolida ahora, estos rubros quedarán en S/ 0.00 en los recibos.\n\n¿Desea continuar de todas maneras?`;
+        const advertencia = `⚠️ ATENCIÓN: Se Detectaron Servicios sin registrar para el Período ${resPre.periodo}:\n\n${listaTxt}\n\nSi Continua ahora, estos rubros quedarán en S/ 0.00 en los recibos.\n\n¿Desea continuar de todas maneras?`;
         
         if (!confirm(advertencia)) {
           if (window.toast) toast("Operación cancelada por el usuario.");
@@ -3692,7 +3692,7 @@ async function iniciarFlujoConsolidacion() {
       }
 
       // C) Solicitud de Credenciales de SuperAdmin
-      const userAdmin = prompt(`🛡️ SEGURIDAD DE CIERRE MENSUAL 🛡️\n\nPeríodo: ${resPre.periodo}\n\nIngrese Usuario Administrador:`);
+      const userAdmin = prompt(`🛡️ VALIDACION DE SEGURIDAD 🛡️\n\nPeríodo: ${resPre.periodo}\n\nIngrese Usuario Administrador:`);
       if (!userAdmin) return;
 
       const passAdmin = prompt(`🔑 Ingrese Contraseña de Administrador:`);
@@ -3782,36 +3782,46 @@ function marcarEtapa(num, estado) {
   }
 }
 
+// Función auxiliar para impedir que cierren la pestaña del navegador por error
+function impedirSalidaNavegador(e) {
+  e.preventDefault();
+  e.returnValue = '⚠️ Espere Mientras Termina el Proceso de Consolidación de Datos.';
+  return e.returnValue;
+}
+
 async function ejecutarProcesoCierreCompleto() {
   const btn = document.getElementById('btn-ejecutar-cierre');
   const btnCancel = document.getElementById('btn-cancelar-cierre');
+  const btnCloseX = document.getElementById('btn-cerrar-modal-cierre');
+  const bannerAlerta = document.getElementById('cierre-alerta-banner');
   const bar = document.getElementById('cierre-bar');
   const pct = document.getElementById('cierre-progreso-pct');
 
-  if (!confirm("⚠️ ATENCIÓN: Esta acción ejecutará el Cierre Contable del Período Actual y traspasará los saldos al nuevo mes.\n\nEsta Acción no Podrá Deshaserce ¿Está seguro de continuar?")) return;
+  if (!confirm("⚠️ ATENCIÓN: Esta acción ejecutará el Cierre Contable del Período Actual y traspasará los saldos al nuevo mes.\n\n¿Está seguro de continuar?")) return;
 
+  // 1. Activar protecciones y mostrar banner de alerta
   if (btn) {
     btn.disabled = true;
     btn.textContent = '⏳ Procesando Cierre...';
   }
-  if (btnCancel) btnCancel.disabled = true;
+  if (btnCancel) btnCancel.style.display = 'none'; // Oculta cancelar
+  if (btnCloseX) btnCloseX.style.display = 'none';  // Oculta la X
+  if (bannerAlerta) bannerAlerta.style.display = 'flex'; // 👈 Muestra la advertencia
+
+  // Bloqueo del navegador contra F5 o cerrar pestaña
+  window.addEventListener('beforeunload', impedirSalidaNavegador);
 
   const user = (typeof window.usuarioActivo === 'function') ? window.usuarioActivo() : 'ADMIN';
 
   try {
-    // -------------------------------------------------------------
-    // FASE 1: INICIAR (Sheets + Drive + Obtener Departamentos)
-    // -------------------------------------------------------------
-    logTerminal("Iniciando Fase 1: Creación File Datos Históricos y Contenedor Drive...");
+    // --- FASE 1: INICIAR (Sheets + Drive) ---
+    logTerminal("Iniciando Fase 1: Creación de hoja histórica y carpeta Drive...");
     marcarEtapa(1, 'loading');
     marcarEtapa(2, 'loading');
     marcarEtapa(3, 'loading');
 
     const resInicio = await new Promise((resolve, reject) => {
-      netRun()
-        .withSuccessHandler(resolve)
-        .withFailureHandler(reject)
-        .consolidar_iniciar(user);
+      netRun().withSuccessHandler(resolve).withFailureHandler(reject).consolidar_iniciar(user);
     });
 
     if (!resInicio || !resInicio.ok) throw new Error(resInicio?.error || "Fallo en Fase 1");
@@ -3821,11 +3831,9 @@ async function ejecutarProcesoCierreCompleto() {
     marcarEtapa(3, 'ok');
     if (bar) bar.style.width = '20%';
     if (pct) pct.textContent = '20%';
-    logTerminal(`BackUp Sheet histórico y Contenedor Drive "${resInicio.folderName}" Creados con éxito.`);
+    logTerminal(`Hoja histórica y carpeta Drive "${resInicio.folderName}" preparadas con éxito.`);
 
-    // -------------------------------------------------------------
-    // FASE 2: ARCHIVAR RECIBOS POR LOTES (Chunks de 10)
-    // -------------------------------------------------------------
+    // --- FASE 2: ARCHIVAR 74 RECIBOS POR LOTES ---
     marcarEtapa(4, 'loading');
     const depas = resInicio.depas || [];
     const chunkSize = 10;
@@ -3836,10 +3844,7 @@ async function ejecutarProcesoCierreCompleto() {
       logTerminal(`Procesando Lote ${i + 1}/${totalChunks} (Dptos: ${lote.join(', ')})...`);
 
       const resLote = await new Promise((resolve, reject) => {
-        netRun()
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)
-          .consolidar_procesarLote(lote, resInicio.folderId);
+        netRun().withSuccessHandler(resolve).withFailureHandler(reject).consolidar_procesarLote(lote, resInicio.folderId);
       });
 
       if (!resLote || !resLote.ok) throw new Error(`Fallo en Lote ${i + 1}: ` + resLote?.error);
@@ -3847,23 +3852,18 @@ async function ejecutarProcesoCierreCompleto() {
       const avanceLotes = 20 + Math.round(((i + 1) / totalChunks) * 60);
       if (bar) bar.style.width = `${avanceLotes}%`;
       if (pct) pct.textContent = `${avanceLotes}%`;
-      logTerminal(`Lote ${i + 1}/${totalChunks} Cargado en Drive Correctamente.`);
+      logTerminal(`Lote ${i + 1}/${totalChunks} guardado en Drive exitosamente.`);
     }
 
     marcarEtapa(4, 'ok');
 
-    // -------------------------------------------------------------
-    // FASE 3: CONSOLIDAR EN FIREBASE (Corte de Saldos + Banco + Servicios)
-    // -------------------------------------------------------------
+    // --- FASE 3: CORTE EN FIREBASE ---
     marcarEtapa(5, 'loading');
     marcarEtapa(6, 'loading');
-    logTerminal("Iniciando Fase Serializacion, Restauración Temporales, Consolidar Saldos & Mov. Banco...");
+    logTerminal("Iniciando Fase Final: Traspaso de saldos en Firebase y apertura de nuevo mes...");
 
     const resFinal = await new Promise((resolve, reject) => {
-      netRun()
-        .withSuccessHandler(resolve)
-        .withFailureHandler(reject)
-        .consolidar_finalizar(user);
+      netRun().withSuccessHandler(resolve).withFailureHandler(reject).consolidar_finalizar(user);
     });
 
     if (!resFinal || !resFinal.ok) throw new Error(resFinal?.error || "Fallo en Fase Final");
@@ -3872,15 +3872,32 @@ async function ejecutarProcesoCierreCompleto() {
     marcarEtapa(6, 'ok');
     if (bar) bar.style.width = '100%';
     if (pct) pct.textContent = '100%';
-    logTerminal("🎉 ¡CONSOLIDADO EXITOSO! Valores & Cuotas consolidadas AL 100% .");
+    logTerminal("🎉 ¡CIERRE DE MES COMPLETADO AL 100%! Todos los saldos y recibos han sido consolidados.");
 
-    if (btn) btn.textContent = '✅ Estado: FINALIZADO';
-    if (btnCancel) {
-      btnCancel.disabled = false;
-      btnCancel.textContent = 'Cerrar Panel';
+    // 2. Proceso exitoso: Transformar el banner en mensaje verde de éxito
+    if (bannerAlerta) {
+      bannerAlerta.style.background = 'rgba(16, 185, 129, 0.15)';
+      bannerAlerta.style.borderColor = '#10b981';
+      bannerAlerta.style.borderLeftColor = '#10b981';
+      bannerAlerta.style.color = '#a7f3d0';
+      bannerAlerta.innerHTML = `
+        <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #10b981;"></i>
+        <div>
+          <strong style="color: #34d399; font-size: 0.85rem; display: block;">✅ CIERRE CONSOLIDADO CON ÉXITO</strong>
+          <span>Todos los registros y saldos han sido procesados. Ya puede cerrar este panel con seguridad.</span>
+        </div>`;
     }
 
-    if (window.toast) toast("🎉 Cierre Mensual Completado");
+    if (btn) btn.style.display = 'none'; // Oculta el botón de iniciar
+    if (btnCancel) {
+      btnCancel.style.display = 'inline-block';
+      btnCancel.textContent = 'Cerrar Panel';
+      btnCancel.className = 'btn-blue';
+      btnCancel.disabled = false;
+    }
+    if (btnCloseX) btnCloseX.style.display = 'block';
+
+    if (window.toast) toast("🎉 Cierre Mensual Completado con Éxito");
 
   } catch (err) {
     console.error("Error en cierre:", err);
@@ -3889,8 +3906,15 @@ async function ejecutarProcesoCierreCompleto() {
       btn.textContent = '⚠️ Reintentar Cierre';
       btn.disabled = false;
     }
-    if (btnCancel) btnCancel.disabled = false;
+    if (btnCancel) {
+      btnCancel.style.display = 'inline-block';
+      btnCancel.disabled = false;
+    }
+    if (btnCloseX) btnCloseX.style.display = 'block';
     alert("❌ Ocurrió un problema durante el cierre: " + (err.message || err));
+  } finally {
+    // Liberar la protección contra salida al terminar (o fallar)
+    window.removeEventListener('beforeunload', impedirSalidaNavegador);
   }
 }
 
