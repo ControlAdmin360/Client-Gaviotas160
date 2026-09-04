@@ -3789,8 +3789,6 @@ function impedirSalidaNavegador(e) {
   return e.returnValue;
 }
 
-logTerminal("Iniciando Fase 1: Creación File Datos Históricos y Contenedor Drive...");
-
 async function ejecutarProcesoCierreCompleto() {
   const btn = document.getElementById('btn-ejecutar-cierre');
   const btnCancel = document.getElementById('btn-cancelar-cierre');
