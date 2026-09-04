@@ -541,7 +541,7 @@ async function refreshBanco() {
     btn.disabled = true;
     btn.style.background = '#FAD775';
     btn.style.color = '#000';
-    btn.textContent = '⏳Actualizando…';
+    btn.textContent = '⏳Actualizando...';
   };
 
   try {
@@ -656,53 +656,26 @@ function initBancoCombosFromSheet(){
 }
 
 // RECARGA RECIBOS  
-function reloadRecibos(){
-  const btn  = document.getElementById('recibos-refresh');
+function reloadRecibos() {
+  const btn = document.getElementById('recibos-refresh');
   if (!btn) return;
-  // --- pintar estado trabajando
+
   if (!btn.dataset._old) btn.dataset._old = btn.textContent;
   btn.disabled = true;
   btn.style.background = '#FAD775';
-  btn.style.color= '#000';
+  btn.style.color = '#000';
   btn.textContent = '⏳Actualizando...';
 
   const restore = () => {
     btn.disabled = false;
     btn.textContent = btn.dataset._old || '🔄 Actualizar';
-    btn.style.background = '';
-    btn.style.color = '';
+    btn.removeAttribute('style');
     btn.className = 'btn-blue';
   };
 
-  let restored = false;
-  const safeRestore = () => {
-    if (restored) return;
-    restored = true;
-    restore();
-  };
-  // Observa cambios en la tabla para restaurar al terminar el render
-  const tbl = document.getElementById('tabla-recibos');
-  let obs;
-
-  try {
-    if (tbl) {
-      const target = tbl.tBodies && tbl.tBodies[0] ? tbl.tBodies[0] : tbl;
-      obs = new MutationObserver(() => {
-        // desconecta y restaura tras el próximo frame
-        obs.disconnect();
-        requestAnimationFrame(safeRestore);
-      });
-      obs.observe(target, { childList: true, subtree: true });
-    }
-    setupRecibos();
-    // Fallback: si nada cambió en 6s, restauramos igual
-    setTimeout(safeRestore, 6000);
-  } catch (e){
-    console.error('reloadRecibos error:', e);
-    if (obs) obs.disconnect();
-    safeRestore();
-    toast?.('Error al recargar Recibos');
-  }
+  setupRecibos(() => {
+    restore(); // 👈 Se ejecuta inmediatamente al terminar el render
+  });
 }
 
 function pedirCodigoCliente(mensaje, code, maxAttempts){
@@ -2336,21 +2309,25 @@ function recibos_renderBody(payload){
   tbl.innerHTML  = colgroup + thead + tbody;
 }
 
-function setupRecibos(){
+function setupRecibos(callbackFinal) {
   const tbl = document.getElementById('tabla-recibos');
   if (!tbl) return;
-  // 1) Mes/Año actual: "Agosto-2025"
   const now = new Date();
   const mes = now.toLocaleString('es-PE', { month: 'long' });
   const anio = now.getFullYear();
   const etiqueta = mes.charAt(0).toUpperCase() + mes.slice(1) + '-' + anio;
   const mesCell = document.getElementById('recibos-mes');
   if (mesCell) mesCell.textContent = etiqueta;
-  // 2) Traer datos reales desde GAS (usa REG.RecibosEnExel por defecto)
   netRun()
-    .withSuccessHandler(recibos_renderBody)
-    .withFailureHandler(err => toast('Error Seccion Recibos: ' + (err?.message || err)))
-    .api_recibos_getData({}); // ← sin params: lee sheet/range desde REG.RecibosEnExel
+    .withSuccessHandler(payload => {
+      recibos_renderBody(payload);
+      if (typeof callbackFinal === 'function') callbackFinal(); // 👈 Restaura en 0 ms
+    })
+    .withFailureHandler(err => {
+      toast?.('Error Sección Recibos: ' + (err?.message || err));
+      if (typeof callbackFinal === 'function') callbackFinal();
+    })
+    .api_recibos_getData({});
 }
 
 uiPaintCell({tableId: 'tabla-recibos',section: 'thead', row: 1,col: 1,bg:'#228447',align: 'center', radius:8});
@@ -4302,7 +4279,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const b = document.getElementById('btnRecargarConto');
     const old = b.textContent;
     b.disabled = true;
-    b.textContent = 'Actualizando…';
+    b.textContent = 'Actualizando...';
     try {
       contometros_loadStyled({}, data => {
         contometros_renderStyled(data);
