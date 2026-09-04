@@ -3788,7 +3788,7 @@ async function ejecutarProcesoCierreCompleto() {
   const bar = document.getElementById('cierre-bar');
   const pct = document.getElementById('cierre-progreso-pct');
 
-  if (!confirm("⚠️ ATENCIÓN: Esta acción ejecutará el Cierre Contable del Período Actual y traspasará los saldos al nuevo mes.\n\n¿Está seguro de continuar?")) return;
+  if (!confirm("⚠️ ATENCIÓN: Esta acción ejecutará el Cierre Contable del Período Actual y traspasará los saldos al nuevo mes.\n\nEsta Acción no Podrá Deshaserce ¿Está seguro de continuar?")) return;
 
   if (btn) {
     btn.disabled = true;
@@ -3802,7 +3802,7 @@ async function ejecutarProcesoCierreCompleto() {
     // -------------------------------------------------------------
     // FASE 1: INICIAR (Sheets + Drive + Obtener Departamentos)
     // -------------------------------------------------------------
-    logTerminal("Iniciando Fase 1: Creación de hoja histórica y carpeta Drive...");
+    logTerminal("Iniciando Fase 1: Creación File Datos Históricos y Contenedor Drive...");
     marcarEtapa(1, 'loading');
     marcarEtapa(2, 'loading');
     marcarEtapa(3, 'loading');
@@ -3821,7 +3821,7 @@ async function ejecutarProcesoCierreCompleto() {
     marcarEtapa(3, 'ok');
     if (bar) bar.style.width = '20%';
     if (pct) pct.textContent = '20%';
-    logTerminal(`Hoja histórica y carpeta Drive "${resInicio.folderName}" preparadas con éxito.`);
+    logTerminal(`BackUp Sheet histórico y Contenedor Drive "${resInicio.folderName}" Creados con éxito.`);
 
     // -------------------------------------------------------------
     // FASE 2: ARCHIVAR RECIBOS POR LOTES (Chunks de 10)
@@ -3847,7 +3847,7 @@ async function ejecutarProcesoCierreCompleto() {
       const avanceLotes = 20 + Math.round(((i + 1) / totalChunks) * 60);
       if (bar) bar.style.width = `${avanceLotes}%`;
       if (pct) pct.textContent = `${avanceLotes}%`;
-      logTerminal(`Lote ${i + 1}/${totalChunks} guardado en Drive exitosamente.`);
+      logTerminal(`Lote ${i + 1}/${totalChunks} Cargado en Drive Correctamente.`);
     }
 
     marcarEtapa(4, 'ok');
@@ -3857,7 +3857,7 @@ async function ejecutarProcesoCierreCompleto() {
     // -------------------------------------------------------------
     marcarEtapa(5, 'loading');
     marcarEtapa(6, 'loading');
-    logTerminal("Iniciando Fase Final: Traspaso de saldos en Firebase y apertura de nuevo mes...");
+    logTerminal("Iniciando Fase Serializacion, Restauración Temporales, Consolidar Saldos & Mov. Banco...");
 
     const resFinal = await new Promise((resolve, reject) => {
       netRun()
@@ -3872,15 +3872,15 @@ async function ejecutarProcesoCierreCompleto() {
     marcarEtapa(6, 'ok');
     if (bar) bar.style.width = '100%';
     if (pct) pct.textContent = '100%';
-    logTerminal("🎉 ¡CIERRE DE MES COMPLETADO AL 100%! Todos los saldos y recibos han sido consolidados.");
+    logTerminal("🎉 ¡CONSOLIDADO EXITOSO! Valores & Cuotas consolidadas AL 100% .");
 
-    if (btn) btn.textContent = '✅ Cierre Completado';
+    if (btn) btn.textContent = '✅ Estado: FINALIZADO';
     if (btnCancel) {
       btnCancel.disabled = false;
       btnCancel.textContent = 'Cerrar Panel';
     }
 
-    if (window.toast) toast("🎉 Cierre Mensual Completado con Éxito");
+    if (window.toast) toast("🎉 Cierre Mensual Completado");
 
   } catch (err) {
     console.error("Error en cierre:", err);

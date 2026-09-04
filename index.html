@@ -624,7 +624,7 @@
           <div style="padding: 16px 20px; background: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
             <div>
               <h2 style="margin: 0; font-size: 1.15rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-server"></i> Consola de Cierre Mensual & Consolidación
+                <i class="fa-solid fa-server"></i> Emisión de Recibos, Reportes & Consolidación de Datos
               </h2>
               <small id="cierre-periodo-tag" style="color: #94a3b8; font-size: 0.75rem;">Período a Consolidar: —</small>
             </div>
@@ -647,19 +647,19 @@
 
             <!-- Checklist de Etapas -->
             <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem;">
-              <div id="chk-etapa-1" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 1. Sincronizar Propietarios</div>
-              <div id="chk-etapa-2" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 2. Crear Hoja en Sheets</div>
-              <div id="chk-etapa-3" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 3. Crear Carpeta Drive</div>
-              <div id="chk-etapa-4" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 4. Archivar 74 Recibos</div>
-              <div id="chk-etapa-5" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 5. Corte de Saldos Firebase</div>
-              <div id="chk-etapa-6" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 6. Saldo Inicial de Banco</div>
+              <div id="chk-etapa-1" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 1. Compilando Datos</div>
+              <div id="chk-etapa-2" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 2. Creando BackUp Sheets</div>
+              <div id="chk-etapa-3" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 3. Creando Contenedor Drive</div>
+              <div id="chk-etapa-4" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 4. Generando Recibos</div>
+              <div id="chk-etapa-5" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 5. Consolidado Data en DB</div>
+              <div id="chk-etapa-6" style="display: flex; align-items: center; gap: 6px; color: #94a3b8;"><i class="fa-regular fa-circle"></i> 6. Restableciendo Saldos & Cuotas</div>
             </div>
 
             <!-- Terminal Log en Vivo -->
             <div>
               <label style="font-size: 0.75rem; color: #94a3b8; font-weight: bold; margin-bottom: 4px; display: block;">Consola de Operaciones en Vivo:</label>
               <div id="cierre-terminal" style="background: #020617; border: 1px solid #1e293b; border-radius: 6px; height: 110px; padding: 8px 12px; font-family: monospace; font-size: 0.75rem; color: #38bdf8; overflow-y: auto; line-height: 1.35;">
-                > Sistema listo para iniciar el proceso de consolidación contable.
+                > Esperando Orden para Iniciar Proceso de Emisión & Consolidación Contable.
               </div>
             </div>
 
@@ -668,7 +668,7 @@
           <!-- Footer -->
           <div style="padding: 12px 20px; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: flex-end; gap: 10px;">
             <button id="btn-cancelar-cierre" class="btn btn-redd" style="padding: 8px 16px;">Cancelar</button>
-            <button id="btn-ejecutar-cierre" class="btn-orange" style="padding: 8px 20px; font-weight: bold;">⚡ Iniciar Cierre de Mes</button>
+            <button id="btn-ejecutar-cierre" class="btn-orange" style="padding: 8px 20px; font-weight: bold;">⚡ Iniciar Proceso</button>
           </div>
 
         </div>
