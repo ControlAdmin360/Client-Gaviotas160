@@ -146,6 +146,36 @@ function cerrarSesion(forceReload = false) {
   if (forceReload) {window.location.reload();}
 }
 
+// 🎯 Función que actualiza el título dinámicamente al arrancar la app
+function iniServicesDepas() {
+  netRun()
+    .withSuccessHandler((res) => {
+      const depas = res?.depaIds || (Array.isArray(res) ? res : []);
+      const servs = res?.servIds || [];
+
+      // 1. Guarda en memoria RAM global
+      window.LISTAS = window.LISTAS || {};
+      window.LISTAS.depaIds = depas;
+      window.LISTAS.servIds = servs;
+
+      // 2. Actualiza el título de la pestaña del navegador inmediatamente
+      if (depas.length > 0) {
+        document.title = `Gaviotas 160 (${depas.length})`;
+      }
+
+      // 3. Hidrata los Sets para que DataBank pinte colores al instante
+      hidratarSetsGlobales(depas, servs);
+
+      // 4. Si el selector ya está en el DOM, lo puebla
+      popularCombo(depas);
+    })
+    .withFailureHandler((err) => {
+      console.error('Error al inicializar listas y departamentos:', err);
+    })
+    .getListasIdBanco();
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //  SWICHT URL PARA CONEXION publica de tu Web App en: GAS / VERCEL 'COEXION AL BACKEND'
@@ -1744,65 +1774,70 @@ function closeContometrosForm() {
 /* =========================
    CONSULTAS - Lógica General
    ========================= */
-function setupConsultasSelect() {
+
+function hidratarSetsGlobales(depas, servs) {
+  const norm = window.norm || (s => String(s || '').trim().toUpperCase());
+  if (Array.isArray(depas) && depas.length) {
+    window.DEPA_SET = new Set(depas.map(norm));
+  }
+  if (Array.isArray(servs) && servs.length) {
+    window.SERV_SET = new Set(servs.map(norm));
+  }
+}
+
+function popularCombo(depaIds) {
   const sel = document.getElementById('consulta-depa');
   if (!sel) return;
 
   const norm = window.norm || (s => String(s || '').trim().toUpperCase());
+  const items = Array.isArray(depaIds) ? depaIds.slice() : [];
+  const seen = new Set();
+  const uniques = [];
 
-  // Helper para actualizar los Sets globales de la app
-  const hidratarSetsGlobales = (depas, servs) => {
-    if (Array.isArray(depas) && depas.length) {
-      window.DEPA_SET = new Set(depas.map(norm));
+  for (const v of items) {
+    const k = norm(v);
+    if (k && !seen.has(k)) { 
+      seen.add(k); 
+      uniques.push(v); 
     }
-    if (Array.isArray(servs) && servs.length) {
-      window.SERV_SET = new Set(servs.map(norm));
-    }
-  };
+  }
 
-  const popularCombo = (depaIds) => {
-    const items = Array.isArray(depaIds) ? depaIds.slice() : [];
-    const seen = new Set();
-    const uniques = [];
-    for (const v of items) {
-      const k = norm(v);
-      if (k && !seen.has(k)) { 
-        seen.add(k); 
-        uniques.push(v); 
-      }
-    }
-    uniques.sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' }));
-    sel.innerHTML =
-      `<option value="">Select Depa...</option>` +
-      uniques.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
-  };
+  uniques.sort((a, b) => String(a).localeCompare(String(b), 'es', { numeric: true, sensitivity: 'base' }));
+  sel.innerHTML =
+    `<option value="">Select Depa...</option>` +
+    uniques.map(v => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+}
 
-  // 1. Si ya existe en memoria global, lo pinta e hidrata los Sets de inmediato
+function setupConsultasSelect() {
+  const sel = document.getElementById('consulta-depa');
+  if (!sel) return;
+
+  // CASO A: Si ya cargó en memoria RAM al inicio, lo puebla en 0 ms
   if (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds?.length) {
     hidratarSetsGlobales(window.LISTAS.depaIds, window.LISTAS.servIds);
     popularCombo(window.LISTAS.depaIds);
     return;
   }
 
-  // 2. Si no existe (en GitHub Pages), pide al backend y guarda en memoria global + Sets
+  // CASO B: Red de seguridad por si hubo microcorte al arrancar
   netRun()
     .withSuccessHandler((res) => {
       const depas = res?.depaIds || (Array.isArray(res) ? res : []);
       const servs = res?.servIds || [];
-       // 🎯 Actualiza el título de la pestaña del navegador con el total real
-      document.title = `Gaviotas 160 (${depas.length || "-"})`;
+
+      if (depas.length > 0) {
+        document.title = `Gaviotas 160 (${depas.length})`;
+      }
 
       window.LISTAS = window.LISTAS || {};
-      window.LISTAS.depaIds = depas; // Guardar en caché global
+      window.LISTAS.depaIds = depas;
       window.LISTAS.servIds = servs;
 
-      // 👈 AQUÍ POBLAMOS LOS SETS PARA QUE BANCO_RENDERSTYLED TENGA ACCESO
       hidratarSetsGlobales(depas, servs);
-
       popularCombo(depas);
     })
     .withFailureHandler((err) => {
-      console.error('Error al cargar lista de departamentos:', err);
+      console.error('Error al cargar lista de departamentos en Consultas:', err);
     })
     .getListasIdBanco();
 }
@@ -4227,6 +4262,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 1. Modales y Vistas Iniciales
+  iniServicesDepas();
   setupRouter();
   setupDeudas?.();
   setupComuna?.();
