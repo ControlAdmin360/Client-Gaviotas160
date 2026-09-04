@@ -3873,7 +3873,7 @@ async function ejecutarProcesoCierreCompleto() {
     // -------------------------------------------------------------
     marcarEtapa(5, 'loading');
     marcarEtapa(6, 'loading');
-    logTerminal("Iniciando Fase Serializacion, Restauración Temporales, Consolidar Saldos & Mov. Banco...");
+    logTerminal("Fase de Serializacion, Restauración de Temporales, Inicializacion de Periodo,  Consolidado de Saldos & Mov. Bancarios se Realizaron Correctamente...");
 
     const resFinal = await new Promise((resolve, reject) => {
       netRun()
@@ -3888,7 +3888,7 @@ async function ejecutarProcesoCierreCompleto() {
     marcarEtapa(6, 'ok');
     if (bar) bar.style.width = '100%';
     if (pct) pct.textContent = '100%';
-    logTerminal("🎉 ¡CONSOLIDADO EXITOSO! Valores & Cuotas consolidadas AL 100% .");
+    logTerminal("🎉 ¡CONSOLIDADO EXITOSO! Valores & Cuotas Restablecidos AL 100% .");
 
     // 2. Banner cambia a verde de éxito
     if (bannerAlerta) {
@@ -3899,7 +3899,7 @@ async function ejecutarProcesoCierreCompleto() {
       bannerAlerta.innerHTML = `
         <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #10b981;"></i>
         <div>
-          <strong style="color: #34d399; font-size: 0.85rem; display: block;">✅ CIERRE CONSOLIDADO CON ÉXITO</strong>
+          <strong style="color: #34d399; font-size: 0.85rem; display: block;">✅ PROCESO CULMINADO CON ÉXITO</strong>
           <span>Todos los registros y saldos han sido procesados. Ya puede cerrar este panel con seguridad.</span>
         </div>`;
     }
