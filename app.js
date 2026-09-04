@@ -2951,7 +2951,7 @@ function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCach
         restaurarBoton();
         const user = prompt("🛡️ 👤 Ingrese User_Admin 🛡️");
         if (!user) return;
-        const pass = prompt(" 🔑 Ingrese Password 🔏");
+        const pass = prompt("🔑 Ingrese Password 🔏");
         if (!pass) return;
 
         // Re-ejecuta enviando credenciales y esConfirmacion = true para evitar el confirm() inicial
@@ -3692,10 +3692,10 @@ async function iniciarFlujoConsolidacion() {
       }
 
       // C) Solicitud de Credenciales de SuperAdmin
-      const userAdmin = prompt(`🛡️ VALIDACION DE SEGURIDAD 🛡️\n\nPeríodo: ${resPre.periodo}\n\nIngrese Usuario Administrador:`);
+      const userAdmin = prompt(`🛡️ VALIDACION DE SEGURIDAD 🛡️\n\nPeríodo: ${resPre.periodo}\n\n 👤 Ingrese User_Admin:`);
       if (!userAdmin) return;
 
-      const passAdmin = prompt(`🔑 Ingrese Contraseña de Administrador:`);
+      const passAdmin = prompt(`🔑 Ingrese Password 🔏:`);
       if (!passAdmin) return;
 
       // D) Validación final de autenticación
