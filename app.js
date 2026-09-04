@@ -3789,6 +3789,8 @@ function impedirSalidaNavegador(e) {
   return e.returnValue;
 }
 
+logTerminal("Iniciando Fase 1: Creación File Datos Históricos y Contenedor Drive...");
+
 async function ejecutarProcesoCierreCompleto() {
   const btn = document.getElementById('btn-ejecutar-cierre');
   const btnCancel = document.getElementById('btn-cancelar-cierre');
@@ -3805,23 +3807,36 @@ async function ejecutarProcesoCierreCompleto() {
     btn.disabled = true;
     btn.textContent = '⏳ Procesando...';
   }
-  if (btnCancel) btnCancel.style.display = 'none'; // Oculta cancelar mientras procesa
-  if (btnCloseX) btnCloseX.style.display = 'none';  // Oculta la X
-  if (bannerAlerta) bannerAlerta.style.display = 'flex'; // Enciende la advertencia visible
+  if (btnCancel) btnCancel.style.display = 'none';
+  if (btnCloseX) btnCloseX.style.display = 'none';
+  if (bannerAlerta) bannerAlerta.style.display = 'flex';
 
-  // Bloqueo del navegador contra F5 o cerrar pestaña accidentalmente
   window.addEventListener('beforeunload', impedirSalidaNavegador);
-
   const user = (typeof window.usuarioActivo === 'function') ? window.usuarioActivo() : 'ADMIN';
 
   try {
     // -------------------------------------------------------------
-    // FASE 1: INICIAR (Sheets + Drive + Obtener Departamentos)
+    // ETAPA 1: COMPILAR DATOS
     // -------------------------------------------------------------
-    logTerminal("Iniciando Fase 1: Creación File Datos Históricos y Contenedor Drive...");
     marcarEtapa(1, 'loading');
+    logTerminal("1: Compilando Depas_ID en DB...");
+
+    const depas = await new Promise((resolve, reject) => {
+      netRun().withSuccessHandler(resolve).withFailureHandler(reject).getGlobalRangeDepa();
+    });
+
+    if (!depas || depas.length === 0) throw new Error("No se pudo obtener la lista de departamentos.");
+    marcarEtapa(1, 'ok');
+    if (bar) bar.style.width = '10%';
+    if (pct) pct.textContent = '10%';
+    logTerminal(`Validados ${depas.length} Depas_ID.`);
+
+    // -------------------------------------------------------------
+    // ETAPAS 2 y 3: CREAR HOJA SHEETS Y CONTENEDOR DRIVE
+    // -------------------------------------------------------------
     marcarEtapa(2, 'loading');
     marcarEtapa(3, 'loading');
+    logTerminal("Creación File Datos Históricos y Contenedor Drive...");
 
     const resInicio = await new Promise((resolve, reject) => {
       netRun()
@@ -3832,18 +3847,54 @@ async function ejecutarProcesoCierreCompleto() {
 
     if (!resInicio || !resInicio.ok) throw new Error(resInicio?.error || "Fallo en Fase 1");
 
-    marcarEtapa(1, 'ok');
     marcarEtapa(2, 'ok');
     marcarEtapa(3, 'ok');
-    if (bar) bar.style.width = '20%';
-    if (pct) pct.textContent = '20%';
-    logTerminal(`BackUp Sheet histórico y Contenedor Drive "${resInicio.folderName}" Creados con éxito.`);
+    if (bar) bar.style.width = '25%';
+    if (pct) pct.textContent = '25%';
+    logTerminal(`BackUp Sheet Histórico y Contenedor Drive "${resInicio.folderName}" Creados con éxito.`);
 
     // -------------------------------------------------------------
-    // FASE 2: ARCHIVAR RECIBOS POR LOTES (Chunks de 10)
+    // ETAPA 4: GENERAR REPORTE GENERAL (PDF EN DRIVE)
     // -------------------------------------------------------------
     marcarEtapa(4, 'loading');
-    const depas = resInicio.depas || [];
+    logTerminal("Generando Reporte General...");
+
+    const resRepGen = await new Promise((resolve, reject) => {
+      netRun()
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .consolidar_generarReporteGeneral(resInicio.folderId, user);
+    });
+
+    if (!resRepGen || !resRepGen.ok) throw new Error(resRepGen?.error || "Fallo al generar Reporte General");
+    marcarEtapa(4, 'ok');
+    if (bar) bar.style.width = '35%';
+    if (pct) pct.textContent = '35%';
+    logTerminal("Reporte General Creado y Archivado en Drive.");
+
+    // -------------------------------------------------------------
+    // ETAPA 5: GENERAR LISTA DE DEUDORES (PDF EN DRIVE)
+    // -------------------------------------------------------------
+    marcarEtapa(5, 'loading');
+    logTerminal("Generando Lista de Deudores...");
+
+    const resDeudas = await new Promise((resolve, reject) => {
+      netRun()
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject)
+        .consolidar_generarReporteDeudas(resInicio.folderId, user, 15);
+    });
+
+    if (!resDeudas || !resDeudas.ok) throw new Error(resDeudas?.error || "Fallo al generar Lista Deudores");
+    marcarEtapa(5, 'ok');
+    if (bar) bar.style.width = '45%';
+    if (pct) pct.textContent = '45%';
+    logTerminal("Lista de Deudores Creada y Archivada en Drive.");
+
+    // -------------------------------------------------------------
+    // ETAPA 6: ARCHIVAR RECIBOS POR LOTES (Chunks de 10)
+    // -------------------------------------------------------------
+    marcarEtapa(6, 'loading');
     const chunkSize = 10;
     const totalChunks = Math.ceil(depas.length / chunkSize);
 
@@ -3860,19 +3911,21 @@ async function ejecutarProcesoCierreCompleto() {
 
       if (!resLote || !resLote.ok) throw new Error(`Fallo en Lote ${i + 1}: ` + resLote?.error);
 
-      const avanceLotes = 20 + Math.round(((i + 1) / totalChunks) * 60);
+      const avanceLotes = 45 + Math.round(((i + 1) / totalChunks) * 35);
       if (bar) bar.style.width = `${avanceLotes}%`;
       if (pct) pct.textContent = `${avanceLotes}%`;
-      logTerminal(`Lote ${i + 1}/${totalChunks} Cargado en Drive Correctamente.`);
+      logTerminal(`Lote ${i + 1}/${totalChunks} Cargados en Drive.`);
     }
 
-    marcarEtapa(4, 'ok');
+    marcarEtapa(6, 'ok');
+    if (bar) bar.style.width = '80%';
+    if (pct) pct.textContent = '80%';
 
     // -------------------------------------------------------------
-    // FASE 3: CONSOLIDAR EN FIREBASE (Corte de Saldos + Banco + Servicios)
+    // ETAPAS 7 y 8: RESTABLECER SALDOS, CUOTAS Y CONSOLIDAR DB
     // -------------------------------------------------------------
-    marcarEtapa(5, 'loading');
-    marcarEtapa(6, 'loading');
+    marcarEtapa(7, 'loading');
+    marcarEtapa(8, 'loading');
     logTerminal("Fase de Serializacion, Restauración de Temporales, Inicializacion de Periodo,  Consolidado de Saldos & Mov. Bancarios se Realizaron Correctamente...");
 
     const resFinal = await new Promise((resolve, reject) => {
@@ -3884,8 +3937,8 @@ async function ejecutarProcesoCierreCompleto() {
 
     if (!resFinal || !resFinal.ok) throw new Error(resFinal?.error || "Fallo en Fase Final");
 
-    marcarEtapa(5, 'ok');
-    marcarEtapa(6, 'ok');
+    marcarEtapa(7, 'ok');
+    marcarEtapa(8, 'ok');
     if (bar) bar.style.width = '100%';
     if (pct) pct.textContent = '100%';
     logTerminal("🎉 ¡CONSOLIDADO EXITOSO! Valores & Cuotas Restablecidos AL 100% .");
@@ -3900,7 +3953,7 @@ async function ejecutarProcesoCierreCompleto() {
         <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #10b981;"></i>
         <div>
           <strong style="color: #34d399; font-size: 0.85rem; display: block;">✅ PROCESO CULMINADO CON ÉXITO</strong>
-          <span>Todos los registros y saldos han sido procesados. Ya puede cerrar este panel con seguridad.</span>
+          <span>Todos los registros y saldos han sido procesados. Puede cerrar este panel con seguridad.</span>
         </div>`;
     }
 
@@ -3928,7 +3981,6 @@ async function ejecutarProcesoCierreCompleto() {
     if (btnCloseX) btnCloseX.style.display = 'block';
     alert("❌ Ocurrió un problema durante el cierre: " + (err.message || err));
   } finally {
-    // Liberar la protección contra salida del navegador al terminar o fallar
     window.removeEventListener('beforeunload', impedirSalidaNavegador);
   }
 }
