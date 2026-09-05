@@ -26,6 +26,7 @@ function clearAuth() {
     sessionStorage.removeItem('AUTH_EXPIRE');
   } catch (e) {console.warn('Error al limpiar sesión:', e);}
 }
+const totalDepas = window.LISTAS?.depaIds?.length || 0;
 
 // --- Identificación de Usuario Activo ---
 window.usuarioActivo = window.usuarioActivo || (() => {
@@ -674,7 +675,7 @@ function reloadRecibos() {
   };
 
   setupRecibos(() => {
-    restore(); // 👈 Se ejecuta inmediatamente al terminar el render
+    restore();
   });
 }
 
@@ -1156,7 +1157,7 @@ function banco_renderStyled(payload) {
         const borders = (j >= BANCO_RIGHT_START && !isTail) ? `border:1px solid ${RIGHT_BORDER};` : 'border:0;';
 
         // Estilos condicionales panel derecho mediante clases CSS
-        if (i <= 74) {
+        if (i <= totalDepas) {
           const n = parseFloat(s.replace(/[^\d.-]/g, ''));
           if (j === BANCO_RIGHT_START && !isNaN(n)) {
             cls += (n === 0) ? ' kpi-orange' : (n === 1) ? ' kpi-green' : (n > 1) ? ' kpi-blue' : '';
