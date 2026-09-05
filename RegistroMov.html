@@ -5,19 +5,6 @@
 <title>Registro Movimientos Bancarios</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<!-- 1. Cargar Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script>
-  // Configuración corregida (sin protocolo duplicado)
-  const firebaseConfig = {
-    databaseURL: "https://gaviotas160-default-rtdb.firebaseio.com/"
-  };
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  
-</script>
-
 <style>
   :root {
     --color-bg:#f5f7fa; --color-card:#ffffff; --color-border:#d0d5dd; --color-border-strong:#b5bcc6;

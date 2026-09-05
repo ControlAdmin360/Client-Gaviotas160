@@ -476,7 +476,7 @@
 
   $('btnGuardar')?.addEventListener('click', () => {
       const msg = $('msg');
-      if (!EST || EST.doneAll) return;
+      if (!EST || (EST.doneAll && !EST.viewOnly)) return; // permite editar si viewOnly está activo
       if (!seleccionado){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Elija un Dpto.'); return; }
 
       const valStr = String($('inpValor').value || '').trim();
