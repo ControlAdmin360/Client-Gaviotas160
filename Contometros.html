@@ -259,15 +259,22 @@
   }
 
   function pintarFechas(arr){
-    const sel = $('cboFechas'); if (!sel) return;
+    const sel = $('cboFechas'); 
+    if (!sel) return;
+    const valorActual = sel.value || EST?.fechaSel || EST?.fechaForm || '';
+    const norm = s => String(s || '').trim().replace(/\//g, '-');
     sel.innerHTML = '';
     (arr || []).filter(Boolean).forEach(f => {
-      const o = document.createElement('option'); o.value = String(f); o.textContent = String(f);
+      const o = document.createElement('option'); 
+      o.value = String(f); 
+      o.textContent = String(f);
       sel.appendChild(o);
     });
-    if (EST?.fechaForm){
-      const i = [...sel.options].findIndex(o => o.value === EST.fechaForm);
-      if (i >= 0) sel.selectedIndex = i;
+    if (valorActual) {
+      const idx = [...sel.options].findIndex(o => norm(o.value) === norm(valorActual));
+      if (idx >= 0) {
+        sel.selectedIndex = idx; // 👈 Mantiene la fecha elegida
+      }
     }
   }
 
