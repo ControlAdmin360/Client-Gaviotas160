@@ -142,7 +142,7 @@
 
 <script>
 
-(() => {
+  (() => {
   // ===== Helpers DOM
   const $ = id => document.getElementById(id);
   const text = (el, t='') => { if (el) el.textContent = t; };
@@ -184,7 +184,6 @@
 
   function pintar(res){
     EST = res;
-
     // Top info
     text($('estado'), res.mensaje ?? '');
     text($('total'),  res.total ?? 0);
@@ -273,299 +272,299 @@
   }
 
   function renderGrid(res){
-    const grid   = $('gridIds'); 
-    if (!grid) return;
-    grid.innerHTML = '';
-    const ids    = res.ids || [];
-    const done   = res.doneFlags || [];
-    const curr   = res.currVals || [];
-    const prev   = res.prevVals || [];
-    const rlist  = rowsList();
+      const grid   = $('gridIds'); 
+      if (!grid) return;
+      grid.innerHTML = '';
+      const ids    = res.ids || [];
+      const done   = res.doneFlags || [];
+      const curr   = res.currVals || [];
+      const prev   = res.prevVals || [];
+      const rlist  = rowsList();
 
-    ids.forEach((id, idx) => {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'idbtn';
+      ids.forEach((id, idx) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'idbtn';
 
-      const title = document.createElement('div');
-      title.textContent = id || '(sin ID)';
-      const lectura = document.createElement('div');
-      lectura.className = 'chip-reading';
-      lectura.textContent = (curr[idx] !== '' && curr[idx] != null) ? String(curr[idx]) : '—';
-      b.appendChild(title);
-      b.appendChild(lectura);
+        const title = document.createElement('div');
+        title.textContent = id || '(sin ID)';
+        const lectura = document.createElement('div');
+        lectura.className = 'chip-reading';
+        lectura.textContent = (curr[idx] !== '' && curr[idx] != null) ? String(curr[idx]) : '—';
+        b.appendChild(title);
+        b.appendChild(lectura);
 
-      const ok = !!done[idx];
-      b.style.backgroundColor = ok ? 'var(--donebg)'    : 'var(--missbg)';
-      b.style.borderColor     = ok ? 'var(--doneborder)': 'var(--missborder)';
-      b.style.color           = ok ? 'var(--donecolor)' : 'var(--misscolor)';
+        const ok = !!done[idx];
+        b.style.backgroundColor = ok ? 'var(--donebg)'    : 'var(--missbg)';
+        b.style.borderColor     = ok ? 'var(--doneborder)': 'var(--missborder)';
+        b.style.color           = ok ? 'var(--donecolor)' : 'var(--misscolor)';
 
-      b.onclick = () => {
-        document.querySelectorAll('.idbtn.sel').forEach(n => n.classList.remove('sel'));
-        b.classList.add('sel');
+        b.onclick = () => {
+          document.querySelectorAll('.idbtn.sel').forEach(n => n.classList.remove('sel'));
+          b.classList.add('sel');
 
-        seleccionado = { idx, row: rlist[idx], id: id || '' };
-        prevDeSeleccionado = prev[idx];
+          seleccionado = { idx, row: rlist[idx], id: id || '' };
+          prevDeSeleccionado = prev[idx];
 
-        text($('idSel'),   seleccionado.id || '(sin ID)');
-        text($('prevVal'), (prev[idx] !== '' && prev[idx] != null) ? String(prev[idx]) : '—');
+          text($('idSel'),   seleccionado.id || '(sin ID)');
+          text($('prevVal'), (prev[idx] !== '' && prev[idx] != null) ? String(prev[idx]) : '—');
 
-        const inp = $('inpValor');
-        inp.value = (curr[idx] !== '' && curr[idx] != null) ? curr[idx] : '';
-        inp.focus(); inp.select();
-        text($('msg'), '');
-      };
+          const inp = $('inpValor');
+          inp.value = (curr[idx] !== '' && curr[idx] != null) ? curr[idx] : '';
+          inp.focus(); inp.select();
+          text($('msg'), '');
+        };
 
-      grid.appendChild(b);
-    });
+        grid.appendChild(b);
+      });
 
-    if (res.viewOnly){
-      enable($('inpValor'), true);
-      enable($('btnGuardar'), true);
-    }
-  }
-
-function cargarEstado(){
-  const msg = $('msg');
-  text(msg, 'Cargando estado...');
-  
-  const p = window.parent;
-  if (!p || typeof p.netRun !== 'function') {
-    text(msg, 'Error: Sin conexión con el servidor principal.');
-    return;
-  }
-  
-  // 1. Llamada al padre para obtener el estado
-  p.netRun()
-    .withSuccessHandler(res => {
-      if (!res || typeof res !== 'object') { text(msg,'Error: Respuesta inválida.'); return; }
-      if (res.ok === false)                { text(msg,'Error: ' + (res.error || 'sin detalle')); return; }
-      
-      if (res.listoParaConsolidar) {
-        const confirmar = confirm(
-          res.mensaje + "\n\n¿Desea Ejecutar el Consolidado de Lecturas Ahora Mismo?⤴️"
-        );
-
-        if (confirmar) {
-          text(msg, '⏳ Espere...');
-          
-          // 2. Llamada al padre para consolidar
-          p.netRun()
-            .withSuccessHandler(resConsolidado => {
-              if (resConsolidado && resConsolidado.ok) {
-                alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
-                res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';
-                if ($('gridIds')) $('gridIds').innerHTML = '';
-                pintar(res);
-                text(msg, '');
-                cerrarModal();
-              } else {
-                alert("❌ Error al consolidar: " + (resConsolidado ? resConsolidado.error : 'Sin detalle'));
-                pintar(res);
-                text(msg, '');
-              }
-            })
-            .withFailureHandler(err => {
-              alert("❌ Error de comunicación: " + (err?.message || err));
-              pintar(res);
-              text(msg, '');
-            })
-            .correrContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
-          return;
-        } else {
-          pintar(res);
-          if ($('idSel')) $('idSel').textContent = '—';
-          if ($('prevVal')) $('prevVal').textContent = '—';
-          if ($('inpValor')) {
-            $('inpValor').value = '';
-            $('inpValor').placeholder = 'Lectura a Registrar...';
-            $('inpValor').disabled = true;
-          }
-          if ($('btnGuardar')) $('btnGuardar').disabled = true;
-          text(msg, '⚠️ El Periodo Actual Debe Consolidarse Antes de Realizar Nuevos Registros.');
-          return;
-        }
-      }
-
-      pintar(res); 
-      text(msg, '');
-    })
-    .withFailureHandler(err => text(msg, 'Error: ' + (err?.message || err)))
-    .getEstadoContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
-}
-
-// ===== Listeners
-  $('btnVerLecturas')?.addEventListener('click', () => {
-    const msg = $('msg');
-    const sel = $('cboFechas');
-    const fechaSel = sel && sel.value ? String(sel.value) : '';
-    const divNuevaFecha = $('contenedorNuevaFecha');
-    if (divNuevaFecha) divNuevaFecha.style.display = 'none';
-
-    msg.classList.remove('warn'); msg.classList.add('flat');
-    text(msg, 'Cargando lecturas de ' + fechaSel + '…');
-
-    const p = window.parent;
-    if (!p || typeof p.netRun !== 'function') {
-      msg.classList.remove('flat'); msg.classList.add('warn');
-      text(msg, 'Error: Sin conexión con el servidor principal.');
-      return;
-    }
-
-    p.netRun()
-      .withSuccessHandler(r => {
-        const merged = Object.assign({}, EST || {}, r || {}, { viewOnly: true, fechas: r?.fechas || [] });
-        EST = merged; 
-        pintar(merged); 
-        text(msg, 'Listo ✔️');
-      })
-      .withFailureHandler(err => {
-        msg.classList.remove('flat'); msg.classList.add('warn');
-        text(msg, 'Error al cargar lecturas: ' + (err?.message || String(err)));
-      })
-      .verLecturasPorFecha(fechaSel);
-  });
-
-  $('btnToggleLecturas')?.addEventListener('click', () => {
-    mostrarLecturas = !mostrarLecturas;
-    $('gridIds')?.classList.toggle('show-readings', mostrarLecturas);
-    const b = $('btnToggleLecturas'); if (b) b.textContent = mostrarLecturas ? 'Ocultar lecturas' : 'Mostrar lecturas';
-  });
-
-  let guardandoFecha = false;
-$('btnGuardarFecha')?.addEventListener('click', () => {
-    if (guardandoFecha) return;
-    const btn = $('btnGuardarFecha'), msg = $('msg');
-    const s = String($('inpFechaNueva')?.value || '').trim();
-    if (!s){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Seleccione una fecha valida.'); return; }
-
-    const p = window.parent;
-    if (!p || typeof p.netRun !== 'function') {
-      msg.classList.remove('flat'); msg.classList.add('warn');
-      text(msg, 'Error: Sin conexión con el servidor principal.');
-      return;
-    }
-
-    guardandoFecha = true; btn.disabled = true;
-    const old = btn.textContent; btn.textContent = 'Registrando...';
-    msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Iniciando Periodo...');
-
-    p.netRun()
-      .withSuccessHandler(r => {
-        msg.classList.remove('flat'); msg.classList.add('warn');
-        if (!r || typeof r !== 'object')       text(msg, 'Error: respuesta inválida al guardar fecha.');
-        else if (!r.ok)                        text(msg, 'Error: ' + (r.error || 'No se pudo guardar la fecha.'));
-        else { 
-          msg.classList.remove('warn'); msg.classList.add('flat'); 
-          text(msg, r.alreadySet ? 'La fecha ya está registrada. ✔️' : 'Espere un momento... ⏳'); 
-          cargarEstado(); 
-        }
-        guardandoFecha = false; btn.disabled = false; btn.textContent = old;
-      })
-      .withFailureHandler(err => {
-        guardandoFecha = false; btn.disabled = false;
-        text(msg, 'Error: ' + (err?.message || String(err))); btn.textContent = old;
-      })
-      .guardarFechaNueva(s, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '', typeof AUTH_USER !== 'undefined' ? AUTH_USER : '');
-  });
-
-$('btnGuardar')?.addEventListener('click', () => {
-    const msg = $('msg');
-    if (!EST || EST.doneAll) return;
-    if (!seleccionado){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Elija un Dpto.'); return; }
-
-    const valStr = String($('inpValor').value || '').trim();
-    if (!/^-?\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
-    const valNum = parseInt(valStr, 10);
-
-    const idx = seleccionado.idx, grid = $('gridIds');
-    const btnId = (grid && Number.isInteger(idx)) ? grid.children[idx] : null;
-    const yaEstabaVacio = EST?.currVals && (EST.currVals[idx] === '' || EST.currVals[idx] == null);
-
-    let prevStyle = null;
-    if (btnId){
-      prevStyle = { bg:btnId.style.backgroundColor, border:btnId.style.borderColor, color:btnId.style.color, disabled:btnId.disabled, sel:btnId.classList.contains('sel') };
-      btnId.style.backgroundColor='var(--donebg)';
-      btnId.style.borderColor='var(--doneborder)';
-      btnId.style.color='var(--donecolor)';
-      btnId.classList.remove('sel'); btnId.disabled = true;
-    }
-    if (EST){ if (EST.currVals) EST.currVals[idx] = valNum; if (EST.doneFlags) EST.doneFlags[idx] = true; }
-    if (yaEstabaVacio){ const h=$('hechos'); if (h) h.textContent = String((parseInt(h.textContent||'0',10)+1)); }
-
-    msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Enviando…');
-    $('btnGuardar').disabled = true;
-
-    function revertUI(){
-      if (!btnId || !prevStyle) return;
-      btnId.style.backgroundColor = prevStyle.bg;
-      btnId.style.borderColor     = prevStyle.border;
-      btnId.style.color           = prevStyle.color;
-      btnId.disabled              = prevStyle.disabled;
-      if (prevStyle.sel) btnId.classList.add('sel');
-
-      if (EST && yaEstabaVacio){
-        if (EST.currVals) EST.currVals[idx] = '';
-        if (EST.doneFlags) EST.doneFlags[idx] = false;
-        const h=$('hechos'); if (h) h.textContent = String(Math.max(0, parseInt(h.textContent||'0',10)-1));
+      if (res.viewOnly){
+        enable($('inpValor'), true);
+        enable($('btnGuardar'), true);
       }
     }
 
+  function cargarEstado(){
+    const msg = $('msg');
+    text(msg, 'Cargando estado...');
+    
     const p = window.parent;
     if (!p || typeof p.netRun !== 'function') {
-      $('btnGuardar').disabled = false;
-      revertUI();
-      msg.classList.remove('flat'); msg.classList.add('warn');
       text(msg, 'Error: Sin conexión con el servidor principal.');
       return;
     }
-
-    const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
-    const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
-    const payload = { row: seleccionado.row, value: valNum, col: EST.lastCol, authToken: token, seleccionado: seleccionado };
-
+    
+    // 1. Llamada al padre para obtener el estado
     p.netRun()
       .withSuccessHandler(res => {
-        $('btnGuardar').disabled = false;
-        if (res && !res.ok && res.requiereConfirmacion) {
-          const acepta = confirm(res.mensajeConfirmacion);
-          if (acepta) {
-            $('btnGuardar').disabled = true;
-            payload.confirmado = true;
+        if (!res || typeof res !== 'object') { text(msg,'Error: Respuesta inválida.'); return; }
+        if (res.ok === false)                { text(msg,'Error: ' + (res.error || 'sin detalle')); return; }
+        
+        if (res.listoParaConsolidar) {
+          const confirmar = confirm(
+            res.mensaje + "\n\n¿Desea Ejecutar el Consolidado de Lecturas Ahora Mismo?⤴️"
+          );
 
+          if (confirmar) {
+            text(msg, '⏳ Espere...');
+            
+            // 2. Llamada al padre para consolidar
             p.netRun()
-              .withSuccessHandler(res2 => {
-                $('btnGuardar').disabled = false;
-                if (!res2 || typeof res2 !== 'object' || !res2.ok) {
-                  revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
-                  text(msg, 'Error: ' + (res2 && res2.error ? res2.error : 'respuesta inválida.'));
-                  return;
+              .withSuccessHandler(resConsolidado => {
+                if (resConsolidado && resConsolidado.ok) {
+                  alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
+                  res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';
+                  if ($('gridIds')) $('gridIds').innerHTML = '';
+                  pintar(res);
+                  text(msg, '');
+                  cerrarModal();
+                } else {
+                  alert("❌ Error al consolidar: " + (resConsolidado ? resConsolidado.error : 'Sin detalle'));
+                  pintar(res);
+                  text(msg, '');
                 }
-                msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Guardado ✔️'); setTimeout(()=>cargarEstado(),0);
               })
-              .withFailureHandler(err2 => {
-                $('btnGuardar').disabled = false;
-                revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err2?.message || String(err2)));
+              .withFailureHandler(err => {
+                alert("❌ Error de comunicación: " + (err?.message || err));
+                pintar(res);
+                text(msg, '');
               })
-              .guardarLecturaContometros(payload, user);
+              .correrContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
             return;
           } else {
-            revertUI();
-            text(msg, 'Operación cancelada.');
+            pintar(res);
+            if ($('idSel')) $('idSel').textContent = '—';
+            if ($('prevVal')) $('prevVal').textContent = '—';
+            if ($('inpValor')) {
+              $('inpValor').value = '';
+              $('inpValor').placeholder = 'Lectura a Registrar...';
+              $('inpValor').disabled = true;
+            }
+            if ($('btnGuardar')) $('btnGuardar').disabled = true;
+            text(msg, '⚠️ El Periodo Actual Debe Consolidarse Antes de Realizar Nuevos Registros.');
             return;
           }
         }
-        if (!res || typeof res !== 'object' || !res.ok){
-          revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
-          text(msg, 'Error: ' + (res && res.error ? res.error : 'respuesta inválida.')); return;
+
+        pintar(res); 
+        text(msg, '');
+      })
+      .withFailureHandler(err => text(msg, 'Error: ' + (err?.message || err)))
+      .getEstadoContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
+  }
+
+  // ===== Listeners
+  $('btnVerLecturas')?.addEventListener('click', () => {
+      const msg = $('msg');
+      const sel = $('cboFechas');
+      const fechaSel = sel && sel.value ? String(sel.value) : '';
+      const divNuevaFecha = $('contenedorNuevaFecha');
+      if (divNuevaFecha) divNuevaFecha.style.display = 'none';
+
+      msg.classList.remove('warn'); msg.classList.add('flat');
+      text(msg, 'Cargando lecturas de ' + fechaSel + '…');
+
+      const p = window.parent;
+      if (!p || typeof p.netRun !== 'function') {
+        msg.classList.remove('flat'); msg.classList.add('warn');
+        text(msg, 'Error: Sin conexión con el servidor principal.');
+        return;
+      }
+
+      p.netRun()
+        .withSuccessHandler(r => {
+          const merged = Object.assign({}, EST || {}, r || {}, { viewOnly: true, fechas: r?.fechas || [] });
+          EST = merged; 
+          pintar(merged); 
+          text(msg, 'Listo ✔️');
+        })
+        .withFailureHandler(err => {
+          msg.classList.remove('flat'); msg.classList.add('warn');
+          text(msg, 'Error al cargar lecturas: ' + (err?.message || String(err)));
+        })
+        .verLecturasPorFecha(fechaSel);
+    });
+
+  $('btnToggleLecturas')?.addEventListener('click', () => {
+      mostrarLecturas = !mostrarLecturas;
+      $('gridIds')?.classList.toggle('show-readings', mostrarLecturas);
+      const b = $('btnToggleLecturas'); if (b) b.textContent = mostrarLecturas ? 'Ocultar lecturas' : 'Mostrar lecturas';
+    });
+
+  let guardandoFecha = false;
+  $('btnGuardarFecha')?.addEventListener('click', () => {
+      if (guardandoFecha) return;
+      const btn = $('btnGuardarFecha'), msg = $('msg');
+      const s = String($('inpFechaNueva')?.value || '').trim();
+      if (!s){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Seleccione una fecha valida.'); return; }
+
+      const p = window.parent;
+      if (!p || typeof p.netRun !== 'function') {
+        msg.classList.remove('flat'); msg.classList.add('warn');
+        text(msg, 'Error: Sin conexión con el servidor principal.');
+        return;
+      }
+
+      guardandoFecha = true; btn.disabled = true;
+      const old = btn.textContent; btn.textContent = 'Registrando...';
+      msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Iniciando Periodo...');
+
+      p.netRun()
+        .withSuccessHandler(r => {
+          msg.classList.remove('flat'); msg.classList.add('warn');
+          if (!r || typeof r !== 'object')       text(msg, 'Error: respuesta inválida al guardar fecha.');
+          else if (!r.ok)                        text(msg, 'Error: ' + (r.error || 'No se pudo guardar la fecha.'));
+          else { 
+            msg.classList.remove('warn'); msg.classList.add('flat'); 
+            text(msg, r.alreadySet ? 'La fecha ya está registrada. ✔️' : 'Espere un momento... ⏳'); 
+            cargarEstado(); 
+          }
+          guardandoFecha = false; btn.disabled = false; btn.textContent = old;
+        })
+        .withFailureHandler(err => {
+          guardandoFecha = false; btn.disabled = false;
+          text(msg, 'Error: ' + (err?.message || String(err))); btn.textContent = old;
+        })
+        .guardarFechaNueva(s, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '', typeof AUTH_USER !== 'undefined' ? AUTH_USER : '');
+    });
+
+  $('btnGuardar')?.addEventListener('click', () => {
+      const msg = $('msg');
+      if (!EST || EST.doneAll) return;
+      if (!seleccionado){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Elija un Dpto.'); return; }
+
+      const valStr = String($('inpValor').value || '').trim();
+      if (!/^-?\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
+      const valNum = parseInt(valStr, 10);
+
+      const idx = seleccionado.idx, grid = $('gridIds');
+      const btnId = (grid && Number.isInteger(idx)) ? grid.children[idx] : null;
+      const yaEstabaVacio = EST?.currVals && (EST.currVals[idx] === '' || EST.currVals[idx] == null);
+
+      let prevStyle = null;
+      if (btnId){
+        prevStyle = { bg:btnId.style.backgroundColor, border:btnId.style.borderColor, color:btnId.style.color, disabled:btnId.disabled, sel:btnId.classList.contains('sel') };
+        btnId.style.backgroundColor='var(--donebg)';
+        btnId.style.borderColor='var(--doneborder)';
+        btnId.style.color='var(--donecolor)';
+        btnId.classList.remove('sel'); btnId.disabled = true;
+      }
+      if (EST){ if (EST.currVals) EST.currVals[idx] = valNum; if (EST.doneFlags) EST.doneFlags[idx] = true; }
+      if (yaEstabaVacio){ const h=$('hechos'); if (h) h.textContent = String((parseInt(h.textContent||'0',10)+1)); }
+
+      msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Enviando…');
+      $('btnGuardar').disabled = true;
+
+      function revertUI(){
+        if (!btnId || !prevStyle) return;
+        btnId.style.backgroundColor = prevStyle.bg;
+        btnId.style.borderColor     = prevStyle.border;
+        btnId.style.color           = prevStyle.color;
+        btnId.disabled              = prevStyle.disabled;
+        if (prevStyle.sel) btnId.classList.add('sel');
+
+        if (EST && yaEstabaVacio){
+          if (EST.currVals) EST.currVals[idx] = '';
+          if (EST.doneFlags) EST.doneFlags[idx] = false;
+          const h=$('hechos'); if (h) h.textContent = String(Math.max(0, parseInt(h.textContent||'0',10)-1));
         }
-        msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Guardado ✔️'); setTimeout(()=>cargarEstado(),0);
-      })
-      .withFailureHandler(err => {
+      }
+
+      const p = window.parent;
+      if (!p || typeof p.netRun !== 'function') {
         $('btnGuardar').disabled = false;
-        revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err?.message || String(err)));
-      })
-      .guardarLecturaContometros(payload, user);
-  });
+        revertUI();
+        msg.classList.remove('flat'); msg.classList.add('warn');
+        text(msg, 'Error: Sin conexión con el servidor principal.');
+        return;
+      }
+
+      const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
+      const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
+      const payload = { row: seleccionado.row, value: valNum, col: EST.lastCol, fechaSel: EST?.fechaSel || EST?.fechaForm || '',  authToken: token, seleccionado: seleccionado };
+
+      p.netRun()
+        .withSuccessHandler(res => {
+          $('btnGuardar').disabled = false;
+          if (res && !res.ok && res.requiereConfirmacion) {
+            const acepta = confirm(res.mensajeConfirmacion);
+            if (acepta) {
+              $('btnGuardar').disabled = true;
+              payload.confirmado = true;
+
+              p.netRun()
+                .withSuccessHandler(res2 => {
+                  $('btnGuardar').disabled = false;
+                  if (!res2 || typeof res2 !== 'object' || !res2.ok) {
+                    revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
+                    text(msg, 'Error: ' + (res2 && res2.error ? res2.error : 'respuesta inválida.'));
+                    return;
+                  }
+                  msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Guardado ✔️'); setTimeout(()=>cargarEstado(),0);
+                })
+                .withFailureHandler(err2 => {
+                  $('btnGuardar').disabled = false;
+                  revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err2?.message || String(err2)));
+                })
+                .guardarLecturaContometros(payload, user);
+              return;
+            } else {
+              revertUI();
+              text(msg, 'Operación cancelada.');
+              return;
+            }
+          }
+          if (!res || typeof res !== 'object' || !res.ok){
+            revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
+            text(msg, 'Error: ' + (res && res.error ? res.error : 'respuesta inválida.')); return;
+          }
+          msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Guardado ✔️'); setTimeout(()=>cargarEstado(),0);
+        })
+        .withFailureHandler(err => {
+          $('btnGuardar').disabled = false;
+          revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err?.message || String(err)));
+        })
+        .guardarLecturaContometros(payload, user);
+    });
 
   // Validación de lectura en tiempo real
   $('inpValor')?.addEventListener('input', function(){
