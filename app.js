@@ -2124,9 +2124,7 @@ async function cons_consultar() {
 
   if (typeof cons_resetTotales === 'function') cons_resetTotales();
   const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
-  const userActivo = (typeof window.usuarioActivo === 'function') 
-    ? window.usuarioActivo() 
-    : (sessionStorage.getItem('AUTH_USER') || 'UNKNOWN');
+  const userActivo = ;
 
   // 3. Petición 1: Historial de Recibos y Movimientos
   netRun()
@@ -2211,7 +2209,7 @@ async function cons_abrirReciboPDF() {
       btn.innerHTML = '📂 Buscar';
       alert('Error de conexión: ' + (err?.message || err));
     })
-    .consultaRecibosPDF(dpto, mes, anio, window.usuarioActivo()); // 👈 Llama a consultaRecibosPDF
+    .consultaRecibosPDF(dpto, mes, anio, userActivo); // 👈 Llama a consultaRecibosPDF
 }
 
 // funcion modificada al migrar desde el GAS
@@ -3825,7 +3823,7 @@ async function ejecutarProcesoCierreCompleto() {
   if (bannerAlerta) bannerAlerta.style.display = 'flex';
 
   window.addEventListener('beforeunload', impedirSalidaNavegador);
-  const user = (typeof window.usuarioActivo === 'function') ? window.usuarioActivo() : 'ADMIN';
+  const user = window.usuarioActivo();
 
   try {
     // -------------------------------------------------------------
@@ -4332,7 +4330,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = 'Error: ' + (err?.message || String(err));
       })
-      .reporteGeneral({userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
+      .reporteGeneral(window.usuarioActivo());
     });
   });
 
