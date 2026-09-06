@@ -3838,7 +3838,7 @@ async function ejecutarProcesoCierreCompleto() {
       netRun().withSuccessHandler(resolve).withFailureHandler(reject).getGlobalRangeDepa();
     });
 
-    if (!depas || depas.length === 0) throw new Error("No se pudo obtener la lista de departamentos.");
+    if (!depas || depas.length === 0) throw new Error("Fallo al obtener lista de Propietarios.");
     marcarEtapa(1, 'ok');
     if (bar) bar.style.width = '10%';
     if (pct) pct.textContent = '10%';
@@ -3858,7 +3858,7 @@ async function ejecutarProcesoCierreCompleto() {
         .consolidar_iniciar(user);
     });
 
-    if (!resInicio || !resInicio.ok) throw new Error(resInicio?.error || "Fallo en Fase 1");
+    if (!resInicio || !resInicio.ok) throw new Error(resInicio?.error || "Fallo en Creación File Datos Históricos y Contenedor Drive");
 
     marcarEtapa(2, 'ok');
     marcarEtapa(3, 'ok');
@@ -3922,7 +3922,7 @@ async function ejecutarProcesoCierreCompleto() {
           .consolidar_procesarLote(lote, resInicio.folderId);
       });
 
-      if (!resLote || !resLote.ok) throw new Error(`Fallo en Lote ${i + 1}: ` + resLote?.error);
+      if (!resLote || !resLote.ok) throw new Error(`Fallo en Lote de Recibos: ${i + 1}: ` + resLote?.error);
 
       const avanceLotes = 45 + Math.round(((i + 1) / totalChunks) * 35);
       if (bar) bar.style.width = `${avanceLotes}%`;
