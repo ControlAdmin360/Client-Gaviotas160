@@ -3939,7 +3939,7 @@ async function ejecutarProcesoCierreCompleto() {
     // -------------------------------------------------------------
     marcarEtapa(7, 'loading');
     marcarEtapa(8, 'loading');
-    logTerminal("Fase de Serializacion, Restauración de Temporales, Inicializacion de Periodo,  Consolidado de Saldos & Mov. Bancarios se Realizaron Correctamente...");
+    logTerminal("Fase de Serializacion, Restauración de Temporales, Inicialización de Periodo,  Consolidado de Saldos & Mov. Bancarios se Realizaron Correctamente...");
 
     const resFinal = await new Promise((resolve, reject) => {
       netRun()
@@ -3966,7 +3966,7 @@ async function ejecutarProcesoCierreCompleto() {
         <i class="fa-solid fa-circle-check" style="font-size: 1.4rem; color: #10b981;"></i>
         <div>
           <strong style="color: #34d399; font-size: 0.85rem; display: block;">✅ PROCESO CULMINADO CON ÉXITO</strong>
-          <span>Todos los registros y saldos han sido procesados. Puede cerrar este panel con seguridad.</span>
+          <span>Todos los Registros, Saldos y Recibos han sido Procesados. Puede cerrar este panel con seguridad.</span>
         </div>`;
     }
 
