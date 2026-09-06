@@ -4228,7 +4228,61 @@ window.__clockInterval = setInterval(updateClocks, 1000);
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
 
-  // 1. Verificación de Sesión al cargar
+  // 1. Reloj y Control de Expiración de Sesión
+  const tz = 'America/Lima';
+  const timeFmt = new Intl.DateTimeFormat('es-PE', {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false, timeZone: tz
+  });
+  const dateFmt = new Intl.DateTimeFormat('es-PE', {
+    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
+    timeZone: tz
+  });
+
+  const updateClocks = () => {
+    const token = getAuthToken();
+    if (token && typeof isSessionExpired === 'function' && isSessionExpired()) {
+      if (typeof cerrarSesion === 'function') {
+        cerrarSesion();
+      } else {
+        clearAuth();
+        const loginScreen = document.getElementById("login-screen");
+        const appContainer = document.getElementById("app-container");
+        if (appContainer) appContainer.style.display = "none";
+        if (loginScreen) loginScreen.style.display = "flex";
+      }
+      return;
+    }
+
+    const now = new Date();
+    const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
+    document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
+
+    const estadoActual = (typeof prev !== 'undefined') ? prev : 'IDLE';
+    if (estadoActual === 'BUSY') return;
+
+    if (typeof statusLabel === 'function') {
+      const textoActualizado = statusLabel('IDLE');
+      const pill = document.getElementById('netStatePill');
+      if (pill) {
+        pill.textContent = textoActualizado;
+        pill.classList.remove('busy');
+        pill.classList.add('idle');
+      }
+      const srv = document.getElementById('srvStatus');
+      if (srv) {
+        srv.className = 'srv-badge srv-idle';
+        const t = srv.querySelector('.txt');
+        if (t) t.textContent = textoActualizado;
+      }
+    }
+  };
+
+  if (window.__clockInterval) clearInterval(window.__clockInterval);
+  updateClocks();
+  window.__clockInterval = setInterval(updateClocks, 1000);
+
+  // 2. Verificación de Sesión al cargar
   const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
   if (token && typeof isSessionExpired === 'function' && !isSessionExpired()) {
     if (typeof mostrarAplicacion === 'function') mostrarAplicacion();
@@ -4236,7 +4290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof clearAuth === 'function') clearAuth();
   }
 
-  // 1. Modales y Vistas Iniciales
+  // 3. Modales y Vistas Iniciales
   iniServicesDepas();
   setupRouter();
   setupDeudas?.();
@@ -4251,7 +4305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarModuloServicios?.();
   netRun().calSaldosNew();
 
-  // 2. Modales y Navegación
+  // 4. Modales y Navegación
   document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
   document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
   document.getElementById('banco-refresh')?.addEventListener('click', reloadPage);
@@ -4265,11 +4319,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-consolidar-periodo')?.addEventListener('click', iniciarFlujoConsolidacion);
   document.getElementById('btn-ejecutar-cierre')?.addEventListener('click', ejecutarProcesoCierreCompleto);
   document.getElementById('btn-cancelar-cierre')?.addEventListener('click', () => {
-  document.getElementById('modal-cierre-mes').style.display = 'none';});
+    document.getElementById('modal-cierre-mes').style.display = 'none';
+  });
   document.getElementById('btn-cerrar-modal-cierre')?.addEventListener('click', () => {
-  document.getElementById('modal-cierre-mes').style.display = 'none';});
+    document.getElementById('modal-cierre-mes').style.display = 'none';
+  });
   document.getElementById('servicios-search')?.addEventListener('input', (e) => {
-    const termino = e.target.value.toLowerCase().trim(); filtrarYMostrarServicios(termino);
+    const termino = e.target.value.toLowerCase().trim();
+    filtrarYMostrarServicios(termino);
   });
 
   // 4. Recarga de Contómetros
@@ -4385,7 +4442,7 @@ document.addEventListener('DOMContentLoaded', () => {
         linksDiv.textContent = "Error: " + (err.message || err);
     })
     .obtenerRecibosXlsx(window.usuarioActivo());
-});
+  });
 
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
     const btn = document.getElementById('btnRepAguas');
