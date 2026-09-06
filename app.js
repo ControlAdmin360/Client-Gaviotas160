@@ -4389,7 +4389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
       })
-      .obtenerRecibosXlsx(null);
+      .obtenerRecibosXlsx(window.usuarioActivo(), null);
   });
 
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
