@@ -2209,7 +2209,7 @@ async function cons_abrirReciboPDF() {
       btn.innerHTML = '📂 Buscar';
       alert('Error de conexión: ' + (err?.message || err));
     })
-    .consultaRecibosPDF(dpto, mes, anio, userActivo); // 👈 Llama a consultaRecibosPDF
+    .consultaRecibosPDF(dpto, mes, anio, window.usuarioActivo()); // 👈 Llama a consultaRecibosPDF
 }
 
 // funcion modificada al migrar desde el GAS
@@ -4305,9 +4305,9 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarModuloServicios?.();
   netRun().calSaldosNew();
 
-  // 4. Modales y Navegación
-  document.getElementById('btnFormClose')?.addEventListener('click', () => closeForm('contometros'));
-  document.getElementById('btnBancoFormClose')?.addEventListener('click', () => closeForm('banco'));
+  // 4. Modales y Navegación (Corregidas las llamadas de cierre)
+  document.getElementById('btnFormClose')?.addEventListener('click', closeContometrosForm);
+  document.getElementById('btnBancoFormClose')?.addEventListener('click', closeBancoForm);
   document.getElementById('banco-refresh')?.addEventListener('click', reloadPage);
   document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
   document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
@@ -4329,7 +4329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     filtrarYMostrarServicios(termino);
   });
 
-  // 4. Recarga de Contómetros
+  // 5. Recarga de Contómetros
   document.getElementById('btnRecargarConto')?.addEventListener('click', () => {
     const b = document.getElementById('btnRecargarConto');
     const old = b.textContent;
@@ -4348,7 +4348,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 5. Botones de Reportes (Codigo Modificado al migrar de GAS)
+  // 6. Botones de Reportes
   document.getElementById('btnRepGen')?.addEventListener('click', async () => {
     const btn = document.getElementById('btnRepGen');
     const linksDiv = document.getElementById('reportLinks');
@@ -4365,7 +4365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = '📤 Reporte General';
 
         if (res?.ok && res?.html) {
-          // 1. Abre el reporte en una nueva pestaña al instante con formato A4
           const ventana = window.open('', '_blank');
           if (ventana) {
             ventana.document.open();
@@ -4373,7 +4372,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ventana.document.close();
           }
 
-          // 2. Si se generó el PDF en Drive, muestra el botón de descarga
           if (res?.urlPDF) {
             linksDiv.innerHTML = getBtnPDF(res);
           }
@@ -4406,7 +4404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = false;
         btn.textContent = '✅ Lista Generada';
         if (res?.urlPDF) {
-          linksDiv.innerHTML = getBtnPDF(res); // 👈 Solo botón PDF
+          linksDiv.innerHTML = getBtnPDF(res);
         } else {
           linksDiv.textContent = "❌ No se pudo generar el reporte";
         }
@@ -4440,8 +4438,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = false;
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
-    })
-    .obtenerRecibosXlsx(window.usuarioActivo());
+      })
+      .obtenerRecibosXlsx(window.usuarioActivo());
   });
 
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
@@ -4459,16 +4457,13 @@ document.addEventListener('DOMContentLoaded', () => {
       linksDiv.textContent = 'Error: ' + (err?.message || err);
     };
 
-    // 1. Primero genera el Excel de lecturas
     netRun()
       .withSuccessHandler((resXlsx) => {
-        // 2. Luego genera el reporte visual de aguas
         netRun()
           .withSuccessHandler((resPdf) => {
             btn.disabled = false;
             btn.textContent = '✅ Reportes Generados';
 
-            // Abre el visor del reporte de aguas inmediatamente
             if (resPdf?.ok && resPdf?.html) {
               const ventana = window.open('', '_blank');
               if (ventana) {
@@ -4478,7 +4473,6 @@ document.addEventListener('DOMContentLoaded', () => {
               }
             }
 
-            // Muestra los botones de descarga de Excel y PDF de Drive
             const parts = [];
             if (resXlsx?.urlDrive) parts.push(getBtnDrive(resXlsx));
             if (resXlsx?.urlDownload) parts.push(getBtnExcel(resXlsx));
@@ -4492,26 +4486,21 @@ document.addEventListener('DOMContentLoaded', () => {
       .obtenerContometrosXlsx();
   });
 
-  // 6. Listener Unificado de Mensajes
+  // 7. Listener Unificado de Mensajes
   window.addEventListener('message', (ev) => {
     const d = ev?.data;
     if (!d) return;
 
-    // 1. Mensajes simples en formato texto (Strings)
     if (d === 'contometros-close') closeContometrosForm?.();
     if (d === 'banco-form-close' || d === 'closeBancoForm') closeBancoForm?.();
 
-    // 2. Mensajes en formato Objeto { type, message, ... }
     if (typeof d === 'object') {
-      // Cierre de modales/diálogos
       if (d.type === 'contometros-close') closeContometrosForm?.();
       if (d.type === 'banco-form-close' || d.type === 'closeBancoForm') closeBancoForm?.();
       if (d.type === 'closeContometros') closeContometrosForm?.();
 
-      // Notificaciones Toast
       if (d.type === 'toast') toast?.(String(d.message || ''));
 
-      // Expiración de sesión
       if (d.type === 'contometros-auth-expired' || d.type === 'banco-auth-expired') {
         if (typeof cerrarSesion === 'function') {
           cerrarSesion();
