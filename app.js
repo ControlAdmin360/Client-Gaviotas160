@@ -4331,7 +4331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         linksDiv.textContent = 'Error: ' + (err?.message || String(err));
       })
       .reporteGeneral(window.usuarioActivo());
-    });
   });
 
   document.getElementById('btnDeudas')?.addEventListener('click', () => {
