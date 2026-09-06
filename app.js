@@ -4332,10 +4332,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = 'Error: ' + (err?.message || String(err));
       })
-      .reporteGeneral({
-        //authToken: token,
-        userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
-      });
+      .reporteGeneral({userAuth: typeof window.usuarioActivo === 'function' ? window.usuarioActivo() : ''
+    });
   });
 
   document.getElementById('btnDeudas')?.addEventListener('click', () => {
@@ -4388,9 +4386,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.disabled = false;
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
-      })
-      .obtenerRecibosXlsx(window.usuarioActivo(), null);
-  });
+    })
+    .obtenerRecibosXlsx(window.usuarioActivo());
+});
 
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
     const btn = document.getElementById('btnRepAguas');
