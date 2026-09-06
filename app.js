@@ -2124,7 +2124,7 @@ async function cons_consultar() {
 
   if (typeof cons_resetTotales === 'function') cons_resetTotales();
   const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = prevTxt || '🔎 Consultar'; } };
-  const userActivo = ;
+  const userActivo = window.usuarioActivo();
 
   // 3. Petición 1: Historial de Recibos y Movimientos
   netRun()
