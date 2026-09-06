@@ -3732,7 +3732,7 @@ async function iniciarFlujoConsolidacion() {
 }
 
 // ============================================================================
-// 📍 CONSOLA DE CIERRE MENSUAL (FUNCIONES DEL MODAL Y EJECUCIÓN)
+// 📍 CONSOLA DE CIERRE MENSUAL (FUNCIONES DEL MODAL Y EJECUCIÓN) emitir 74 recibos
 // ============================================================================
 
 function abrirModalCierreMes() {
@@ -3997,7 +3997,6 @@ async function ejecutarProcesoCierreCompleto() {
     window.removeEventListener('beforeunload', impedirSalidaNavegador);
   }
 }
-
 
 /* ===========================
    EVENTOS LOGGER. – INFORMATIVO
