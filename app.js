@@ -4437,7 +4437,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .reporteAguasPDF(window.usuarioActivo());
       })
       .withFailureHandler(setError)
-      .obtenerContometrosXlsx(window.usuarioActivo());
+      .obtenerContometrosXlsx();
   });
 
   // 6. Listener Unificado de Mensajes
