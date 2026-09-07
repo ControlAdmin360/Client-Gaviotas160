@@ -1158,17 +1158,16 @@ function banco_renderStyled(payload) {
 
         // Estilos condicionales panel derecho mediante clases CSS
         const limiteDepas = (window.LISTAS?.depaIds?.length) || rows.length;
-
-if (i < limiteDepas) {
-  const n = parseFloat(s.replace(/[^\d.-]/g, ''));
-  if (j === BANCO_RIGHT_START && !isNaN(n)) {
-    cls += (n === 0) ? ' kpi-orange' : (n === 1) ? ' kpi-green' : (n > 1) ? ' kpi-blue' : '';
-  } else if (j === BANCO_RIGHT_START + 1) {
-    cls += ' kpi-accent';
-  } else if (j === BANCO_RIGHT_START + 4) {
-    cls += ' kpi-brown';
-  }
-}
+        if (i < limiteDepas) {
+          const n = parseFloat(s.replace(/[^\d.-]/g, ''));
+          if (j === BANCO_RIGHT_START && !isNaN(n)) {
+            cls += (n === 0) ? ' kpi-orange' : (n === 1) ? ' kpi-green' : (n > 1) ? ' kpi-blue' : '';
+          } else if (j === BANCO_RIGHT_START + 1) {
+            cls += ' kpi-accent';
+          } else if (j === BANCO_RIGHT_START + 4) {
+            cls += ' kpi-brown';
+          }
+        }
         const bgFinal = (j >= BANCO_RIGHT_START) ? 'transparent' : bgBase;  // CORRECION
         bodyHtml += `<td class="${cls}" style="background:${bgFinal};${borders}">${raw == null ? '' : escapeHTML(raw)}</td>`; 
       }
@@ -4161,73 +4160,6 @@ function _visColsInSection(sectionEl){
     for (const td of firstRow.cells) total += (td.colSpan || 1);
     return total;
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  const tz = 'America/Lima';
-  const timeFmt = new Intl.DateTimeFormat('es-PE', {
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-    hour12: false, timeZone: tz
-  });
-  const dateFmt = new Intl.DateTimeFormat('es-PE', {
-    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
-    timeZone: tz
-  });
- 
-  
-  const updateClocks = () => {
-  // 🛡️ 1. Control de Expiración de Sesión en Tiempo Real
-  const token = getAuthToken();
-  if (token && typeof isSessionExpired === 'function' && isSessionExpired()) {
-    if (typeof cerrarSesion === 'function') {
-      cerrarSesion();
-    } else {
-      clearAuth();
-      const loginScreen = document.getElementById("login-screen");
-      const appContainer = document.getElementById("app-container");
-      if (appContainer) appContainer.style.display = "none";
-      if (loginScreen) loginScreen.style.display = "flex";
-    }
-    return; // Detiene la ejecución del reloj si expiró
-  }
-
-  // 2. Reloj de hora y fecha local
-  const now = new Date();
-  const text = `${dateFmt.format(now)} · ${timeFmt.format(now)}`;
-  document.querySelectorAll('.clock-24h').forEach(el => { el.textContent = text; });
-  
-  // 3. Leemos la variable 'prev' de tu motor NetState
-  const estadoActual = (typeof prev !== 'undefined') ? prev : 'IDLE';
-
-  // 🛡️ Si el sistema está procesando (BUSY), NetState tiene el control y no sobreescribimos
-  if (estadoActual === 'BUSY') return;
-
-  // 4. Si está en IDLE, actualizamos el texto dinámico y mantenemos la clase verde (.srv-idle)
-  if (typeof statusLabel === 'function') {
-    const textoActualizado = statusLabel('IDLE');
-
-    // Píldora #netStatePill
-    const pill = document.getElementById('netStatePill');
-    if (pill) {
-      pill.textContent = textoActualizado;
-      pill.classList.remove('busy');
-      pill.classList.add('idle');
-    }
-
-    // Badge #srvStatus
-    const srv = document.getElementById('srvStatus');
-    if (srv) {
-      srv.className = 'srv-badge srv-idle';
-      const t = srv.querySelector('.txt');
-      if (t) t.textContent = textoActualizado;
-    }
-  }
-};
-
-// Reinicio limpio del intervalo único
-if (window.__clockInterval) clearInterval(window.__clockInterval);
-updateClocks();
-window.__clockInterval = setInterval(updateClocks, 1000);
-});
 
 // =========================================================================
 // BLOQUE ÚNICO DE INICIALIZACIÓN DE LA APLICACIÓN
