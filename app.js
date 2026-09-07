@@ -1157,13 +1157,18 @@ function banco_renderStyled(payload) {
         const borders = (j >= BANCO_RIGHT_START && !isTail) ? `border:1px solid ${RIGHT_BORDER};` : 'border:0;';
 
         // Estilos condicionales panel derecho mediante clases CSS
-        if (i <= totalDepas) {
-          const n = parseFloat(s.replace(/[^\d.-]/g, ''));
-          if (j === BANCO_RIGHT_START && !isNaN(n)) {
-            cls += (n === 0) ? ' kpi-orange' : (n === 1) ? ' kpi-green' : (n > 1) ? ' kpi-blue' : '';
-          } else if (j === BANCO_RIGHT_START + 1) cls += ' kpi-accent';
-          else if (j === BANCO_RIGHT_START + 4) cls += ' kpi-brown';
-        }
+        const limiteDepas = (window.LISTAS?.depaIds?.length) || rows.length;
+
+if (i < limiteDepas) {
+  const n = parseFloat(s.replace(/[^\d.-]/g, ''));
+  if (j === BANCO_RIGHT_START && !isNaN(n)) {
+    cls += (n === 0) ? ' kpi-orange' : (n === 1) ? ' kpi-green' : (n > 1) ? ' kpi-blue' : '';
+  } else if (j === BANCO_RIGHT_START + 1) {
+    cls += ' kpi-accent';
+  } else if (j === BANCO_RIGHT_START + 4) {
+    cls += ' kpi-brown';
+  }
+}
         const bgFinal = (j >= BANCO_RIGHT_START) ? 'transparent' : bgBase;  // CORRECION
         bodyHtml += `<td class="${cls}" style="background:${bgFinal};${borders}">${raw == null ? '' : escapeHTML(raw)}</td>`; 
       }
