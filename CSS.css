@@ -721,11 +721,12 @@ body {
 .banco-table tbody td.txt-blue { color: #2563eb !important; }
 
 /* Colores condicionales panel derecho (Kpis/Panel) */
-.banco-table tbody td.kpi-orange { color: #FE8400; font-weight: 700; }
-.banco-table tbody td.kpi-green  { color: #6AF48A; font-weight: 700; }
-.banco-table tbody td.kpi-blue   { color: #6287F4; font-weight: 700; }
-.banco-table tbody td.kpi-brown  { color: #93755F; font-weight: 700; }
-.banco-table tbody td.kpi-accent { color: #2563eb; font-weight: 700; }
+/* ✅ AHORA CORREGIDO: */
+.banco-table tbody td.kpi-orange { color: #FE8400 !important; font-weight: 700 !important; }
+.banco-table tbody td.kpi-green  { color: #6AF48A !important; font-weight: 700 !important; }
+.banco-table tbody td.kpi-blue   { color: #6287F4 !important; font-weight: 700 !important; }
+.banco-table tbody td.kpi-brown  { color: #93755F !important; font-weight: 700 !important; }
+.banco-table tbody td.kpi-accent { color: #2563eb !important; font-weight: 700 !important; }
 
 /* Separador entre paneles (Gap) */
 .banco-table td.gap-cell, 

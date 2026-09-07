@@ -1164,7 +1164,8 @@ function banco_renderStyled(payload) {
           } else if (j === BANCO_RIGHT_START + 1) cls += ' kpi-accent';
           else if (j === BANCO_RIGHT_START + 4) cls += ' kpi-brown';
         }
-        bodyHtml += `<td class="${cls}" style="background:${bgBase};${borders}">${raw == null ? '' : escapeHTML(raw)}</td>`;
+        const bgFinal = (j >= BANCO_RIGHT_START) ? 'transparent' : bgBase;  // CORRECION
+        bodyHtml += `<td class="${cls}" style="background:${bgFinal};${borders}">${raw == null ? '' : escapeHTML(raw)}</td>`; 
       }
       bodyHtml += '</tr>';
     }
