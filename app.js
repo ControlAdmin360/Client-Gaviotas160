@@ -2134,33 +2134,53 @@ async function cons_consultar() {
   // 3. Petición 1: Historial de Recibos y Movimientos
   netRun()
     .withSuccessHandler((data) => {
-      if (typeof cons_render === 'function') cons_render(data);
       tbl?.removeAttribute('aria-busy');
       resetBtn();
+
+      // 🎯 VALIDACIÓN: Verificar si la respuesta trae movimientos o recibos
+      const tieneMovim = data && data.movim && data.movim.length > 0;
+      const tieneRecibos = data && data.recibos && data.recibos.length > 0;
+
+      if (!data || (!tieneMovim && !tieneRecibos)) {
+        // 📌 Caso: La base de datos está vacía o el dpto no tiene registros
+        if (meta) {
+          meta.innerHTML = `<span class="label">Dpto:</span> <span class="value">${escapeHTML(val)}</span> · <span class="label">Titular:</span> <em>${escapeHTML(data?.titular || 'SIN REGISTROS')}</em>`;
+        }
+        
+        if (tbl) {
+          tbl.innerHTML = `<tbody>
+            <tr>
+              <td colspan="5" style="padding:20px; text-align:center; color:#94a3b8; font-weight:500;">
+                <i class="fa-solid fa-folder-open" style="font-size:1.5rem; margin-bottom:8px; display:block;"></i>
+                No hay datos ni movimientos registrados para mostrar.
+              </td>
+            </tr>
+          </tbody>`;
+        }
+        return;
+      }
+
+      // 📌 Caso normal: Hay datos registrados
+      if (typeof cons_render === 'function') cons_render(data);
     })
     .withFailureHandler((err) => {
-      console.error("Error getRecibosMovimientos:", err);
-      if (meta) meta.textContent = 'No se pudo cargar el titular.';
+      console.error("Error crítico de red/servidor:", err);
+      if (meta) meta.textContent = 'Error de conexión con el servidor.';
       if (typeof cons_resetTotales === 'function') cons_resetTotales();
+      
       if (tbl) {
-        tbl.innerHTML = `<tbody><tr><td colspan="5" style="padding:12px;color:#fca5a5;text-align:center;">Error al cargar datos del servidor.</td></tr></tbody>`;
+        tbl.innerHTML = `<tbody>
+          <tr>
+            <td colspan="5" style="padding:12px; color:#fca5a5; text-align:center;">
+              🚨 Error al conectar con el servidor.
+            </td>
+          </tr>
+        </tbody>`;
         tbl.removeAttribute('aria-busy');
       }
       resetBtn();
     })
     .getRecibosMovimientos(val, userActivo);
-
-  // 4. Petición 2: Saldos del Departamento
-  netRun()
-    .withSuccessHandler((saldosData) => {
-      cons_renderSaldos(saldosData);
-    })
-    .withFailureHandler((err) => {
-      console.error("Error api_Saldos_Para_Modal:", err);
-      document.getElementById("s-loader")?.classList.add("hidden");
-    })
-    .api_Saldos_Para_Modal(val);
-}
 
 async function cons_abrirReciboPDF() {
   const btn = document.getElementById('btn-ver-recibo');
