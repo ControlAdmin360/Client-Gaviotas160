@@ -2162,25 +2162,25 @@ netRun()
 
     // 📌 Caso normal: Hay datos registrados
     if (typeof cons_render === 'function') cons_render(data);
-  })
-  .withFailureHandler((err) => {
-    console.error("Error crítico de red/servidor:", err);
-    if (meta) meta.textContent = 'Error de conexión con el servidor.';
-    if (typeof cons_resetTotales === 'function') cons_resetTotales();
-    
-    if (tbl) {
-      tbl.innerHTML = `<tbody>
-        <tr>
-          <td colspan="5" style="padding:12px; color:#fca5a5; text-align:center;">
-            🚨 Error al conectar con el servidor. Intente nuevamente.
-          </td>
-        </tr>
-      </tbody>`;
-      tbl.removeAttribute('aria-busy');
-    }
-    resetBtn();
-  })
-  .getRecibosMovimientos(val, userActivo);
+    })
+    .withFailureHandler((err) => {
+      console.error("Error crítico de red/servidor:", err);
+      if (meta) meta.textContent = 'Error de conexión con el servidor.';
+      if (typeof cons_resetTotales === 'function') cons_resetTotales();
+      
+      if (tbl) {
+        tbl.innerHTML = `<tbody>
+          <tr>
+            <td colspan="5" style="padding:12px; color:#fca5a5; text-align:center;">
+              🚨 Error de Conexón con el servidor.
+            </td>
+          </tr>
+        </tbody>`;
+        tbl.removeAttribute('aria-busy');
+      }
+      resetBtn();
+    })
+    .getRecibosMovimientos(val, userActivo);
 
   // 4. Petición 2: Saldos del Departamento
   netRun()
