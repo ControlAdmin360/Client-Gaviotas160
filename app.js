@@ -2182,6 +2182,18 @@ netRun()
   })
   .getRecibosMovimientos(val, userActivo);
 
+  // 4. Petición 2: Saldos del Departamento
+  netRun()
+    .withSuccessHandler((saldosData) => {
+      cons_renderSaldos(saldosData);
+    })
+    .withFailureHandler((err) => {
+      console.error("Error api_Saldos_Para_Modal:", err);
+      document.getElementById("s-loader")?.classList.add("hidden");
+    })
+    .api_Saldos_Para_Modal(val);
+}
+
 async function cons_abrirReciboPDF() {
   const btn = document.getElementById('btn-ver-recibo');
   if (!btn) return;
