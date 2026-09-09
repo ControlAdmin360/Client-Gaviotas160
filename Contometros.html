@@ -544,20 +544,26 @@
     const confirma = confirm(`⚠️ ADVERTENCIA:\n\nVa a modificar la fecha activa del ciclo a: (${fechaLegible}).\n\nLas lecturas registradas hasta el momento se conservarán.\n\n¿Desea continuar?`);
     if (!confirma) return;
 
-    const runner = getRunner();
-    if (!runner) { alert("Error: Sin conexión con el servidor principal."); return; }
+    const p = window.parent;
+    if (!p || typeof p.netRun !== 'function') {
+      alert("Error: Sin conexión con el servidor principal.");
+      return;
+    }
 
     const btnSubmit = $('btnConfirmarEditarFecha');
     if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = 'Guardando...'; }
 
-    runner
+    const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
+    const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
+
+    p.netRun()
       .withSuccessHandler(r => {
         if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
 
         if (r && r.ok) {
           if (dlg) dlg.close();
           alert(r.mensaje || "✅ Fecha actualizada con éxito.");
-          cargarEstado(); // Recarga el estado general con la nueva fecha activa
+          cargarEstado(); // Recarga la vista de Contómetros con la nueva fecha
         } else {
           alert("❌ Error: " + (r?.error || 'No se pudo actualizar la fecha.'));
         }
@@ -566,7 +572,7 @@
         if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
         alert("❌ Error de comunicación: " + (err?.message || String(err)));
       })
-      .api_editarFechaActivaContometros(val, AUTH_TOKEN, AUTH_USER);
+      .api_editarFechaActivaContometros(val, token, user);
   });
 
   $('btnGuardar')?.addEventListener('click', () => {
