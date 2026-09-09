@@ -2546,7 +2546,7 @@ function sincronizarEstadoControlesExon() {
   const inpMonto    = document.getElementById('exon-monto');
 
   // CASO 0: AMBOS DESMARCADOS (🕒 + 👮‍♂️)
-  if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked) {
+  if ((!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked) || chkElim?.checked) {
     if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = false; }
     if (inpMonto) { inpMonto.value = 0; inpMonto.disabled = false; }
     return;
@@ -2654,16 +2654,16 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
-        if (inpMonto){inpMonto.value = ""; inpMonto.disabled = true;} 
+        if (inpMonto){inpMonto.disabled = true;} 
         if (cboConcepto){cboConcepto.disabled = true;} 
         if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
         if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
-        if (inputDescrip) inputDescrip.value = "";
-        inpMonto.disabled = false; 
-        cboConcepto.disabled = false; 
+        if (inputDescrip) {inputDescrip.value = "";}
+        if (inpMonto){inpMonto.disabled = false; }
+        if (cboConcepto){cboConcepto.disabled = false;} 
       }
     })
     .verificarFormulaDepa(idDepa);
