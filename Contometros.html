@@ -141,24 +141,24 @@
     </div>
     <!-- Mini Modal Diálogo para Editar Fecha Activa -->
     <dialog id="dlgEditarFecha" style="border:1px solid var(--bd);border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.3);max-width:340px;background:#fff;z-index:10000;">
-      <form id="formEditarFecha" method="dialog" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
         <h3 style="margin:0;font-size:1.05rem;color:var(--acc);">✏️ Corregir Fecha Activa</h3>
-        <p id="lblFechaRef" style="margin:0;font-size:0.8rem;color:#64748b;">La fecha anterior registrada fue: —</p>
+        <p id="lblFechaRef" style="margin:0;font-size:0.8rem;color:#64748b;">Fecha anterior registrada: —</p>
         
         <div>
           <label for="inpEditarFecha" style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Nueva Fecha:</label>
-          <input type="date" id="inpEditarFecha" required style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bd);border-radius:6px;font-size:0.95rem;">
+          <input type="date" id="inpEditarFecha" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bd);border-radius:6px;font-size:0.95rem;">
         </div>
 
         <div style="font-size:0.75rem;color:#b45309;background:#fef3c7;padding:8px;border-radius:6px;line-height:1.35;">
-          ⚠️ <strong>Atención:</strong> Las lecturas registrads se migrarán a la nueva fecha.
+          ⚠️ <strong>Atención:</strong> Las lecturas registradas en este ciclo, migrarán a la nueva fecha.
         </div>
 
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
           <button type="button" class="btn close" id="btnCancelarEditarFecha" style="padding:6px 12px;font-size:0.85rem;">Cancelar</button>
-          <button type="submit" class="btn primary" id="btnConfirmarEditarFecha" style="padding:6px 14px;font-size:0.85rem;background:#0284c7;">💾 Actualizar</button>
+          <button type="button" class="btn primary" id="btnConfirmarEditarFecha" style="padding:6px 14px;font-size:0.85rem;background:#0284c7;">💾 Actualizar</button>
         </div>
-      </form>
+      </div>
     </dialog>
   </div>
 </div>
@@ -503,7 +503,7 @@
         .guardarFechaNueva(s, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '', typeof AUTH_USER !== 'undefined' ? AUTH_USER : '');
     });
 
-  $('btnEditarFechaActiva')?.addEventListener('click', () => {
+   $('btnEditarFechaActiva')?.addEventListener('click', () => {
     const dlg = $('dlgEditarFecha');
     const inp = $('inpEditarFecha');
     const lbl = $('lblFechaRef');
@@ -532,8 +532,7 @@
     $('dlgEditarFecha')?.close();
   });
 
-  $('formEditarFecha')?.addEventListener('submit', (e) => {
-    e.preventDefault();
+  $('btnConfirmarEditarFecha')?.addEventListener('click', () => {
     const dlg = $('dlgEditarFecha');
     const inp = $('inpEditarFecha');
     const val = String(inp?.value || '').trim();
@@ -554,18 +553,18 @@
     runner
       .withSuccessHandler(r => {
         if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
-        if (dlg) dlg.close();
 
         if (r && r.ok) {
+          if (dlg) dlg.close();
           alert(r.mensaje || "✅ Fecha actualizada con éxito.");
-          cargarEstado(); // Recarga el estado con la nueva fecha activa
+          cargarEstado(); // Recarga el estado general con la nueva fecha activa
         } else {
           alert("❌ Error: " + (r?.error || 'No se pudo actualizar la fecha.'));
         }
       })
       .withFailureHandler(err => {
         if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
-        alert("❌ Error de comunicación: " + (err?.message || err));
+        alert("❌ Error de comunicación: " + (err?.message || String(err)));
       })
       .api_editarFechaActivaContometros(val, AUTH_TOKEN, AUTH_USER);
   });
