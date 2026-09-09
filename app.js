@@ -2783,7 +2783,7 @@ async function validarYGuardarExon() {
 
   // Mensajes de confirmación
   let mensajeConfirm = `¿Confirma que decea registrar la operación para el Departamento ${depa}?`;
-  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n - Ud como operador asume la responsabilidad de ejecutar esta acción \ny contar con previa autorización para tal procedimiento"
+  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n → Ud como operador asume la responsabilidad de ejecutar esta acción \n y contar con previa autorización para tal procedimiento."
   if (chkElim) {
     mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}? \n\n ${mensajeAdvertencia}`;
   } else if (chkMorTot && chkMulTot) {
