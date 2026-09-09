@@ -2738,14 +2738,15 @@ async function validarYGuardarExon() {
 
   // Mensajes de confirmación
   let mensajeConfirm = `¿Confirma registrar la operación para el Departamento ${depa}?`;
+  let mensajeAdvertencia = "⚠️ Tenga en cuenta que esta opción no podrá deshacerse"
   if (chkElim) {
-    mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}?`;
+    mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}? \n\n ${mensajeAdvertencia}`;
   } else if (chkMorTot && chkMulTot) {
-    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}) y Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}) al Dpto ${depa}?`;
+    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}) y Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}) al Dpto ${depa}? \n\n ${mensajeAdvertencia}`;
   } else if (chkMorTot) {
-    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto ${depa}?`;
+    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto ${depa}? \n\n ${mensajeAdvertencia}`;
   } else if (chkMulTot) {
-    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto ${depa}?`;
+    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto ${depa}? \n\n ${mensajeAdvertencia}`;
   }
 
   if (!confirm(mensajeConfirm)) return;
