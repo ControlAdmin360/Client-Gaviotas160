@@ -2662,6 +2662,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
         if (inpMonto){inpMonto.disabled = true;} 
         if (cboConcepto){cboConcepto.disabled = true;} 
+        alert(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
         if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
         if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
