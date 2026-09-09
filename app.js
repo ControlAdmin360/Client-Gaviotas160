@@ -2789,10 +2789,10 @@ async function validarYGuardarExon() {
   }
 
   // Mensajes de confirmación
-  let mensajeConfirm = `¿Confirma que decea registrar la operación para el Departamento ${depa}?`;
   let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n → Ud como operador asume la responsabilidad de ejecutar esta acción \n y contar con previa autorización para tal procedimiento."
-  if (chkElim) {
-    mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}? \n\n ${mensajeAdvertencia}`;
+  let mensajeConfirm = `¿Confirma que decea registrar la operación para el Departamento ${depa}? \n\n ${mensajeAdvertencia}`;
+   if (chkElim) {
+    mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}?`;
   } else if (chkMorTot && chkMulTot) {
     mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}) y Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}) al Dpto ${depa}? \n\n ${mensajeAdvertencia}`;
   } else if (chkMorTot) {
