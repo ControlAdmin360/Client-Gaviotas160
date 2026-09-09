@@ -2545,7 +2545,7 @@ function sincronizarEstadoControlesExon() {
   const inpMonto    = document.getElementById('exon-monto');
 
   // CASO 0: AMBOS DESMARCADOS (🕒 + 👮‍♂️)
-  if (!chkMorTot?.checked && !chkMulTot?.checked) {
+  if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && chkCong?.checked) {
     if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = false; }
     if (inpMonto) { inpMonto.value = 0; inpMonto.disabled = false; }
     return;
