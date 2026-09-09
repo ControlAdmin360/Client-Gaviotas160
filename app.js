@@ -2546,9 +2546,15 @@ function sincronizarEstadoControlesExon() {
   const inpMonto    = document.getElementById('exon-monto');
 
   // CASO 0: AMBOS DESMARCADOS (🕒 + 👮‍♂️)
-  if ((!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked) || chkElim?.checked) {
+  if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked) {
     if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = false; }
     if (inpMonto) { inpMonto.value = 0; inpMonto.disabled = false; }
+    return;
+  }
+
+  if (chkElim?.checked){
+    if (cboConcepto) { cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.disabled = true; }
     return;
   }
 
