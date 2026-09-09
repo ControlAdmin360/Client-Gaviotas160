@@ -2132,7 +2132,7 @@ async function cons_consultar() {
   const userActivo = window.usuarioActivo();
 
   // 3. Petición 1: Historial de Recibos y Movimientos
-netRun()
+  netRun()
   .withSuccessHandler((data) => {
     tbl?.removeAttribute('aria-busy');
     resetBtn();
@@ -3215,6 +3215,117 @@ function setupComuna(){
 
 // Lógica para el buscador de la tabla
 const searchInput = document.getElementById('comuna-search');
+
+// ============================================================================
+// 📍 CONTROLADOR MODAL NUEVO DEPARTAMENTO (COMUNAS)
+// ============================================================================
+
+function abrirModalNuevoDepa() {
+  const modal = document.getElementById('modal-nuevo-depa');
+  if (!modal) return;
+  
+  // Limpiar formulario y errores
+  document.getElementById('formNuevoDepa')?.reset();
+  const errBox = document.getElementById('nuevo-depa-error');
+  if (errBox) errBox.style.display = 'none';
+
+  const btn = document.getElementById('btn-save-nuevo-depa');
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '💾 Registrar Unidad';
+  }
+
+  modal.style.display = 'flex';
+  document.getElementById('nuevo-depa-id')?.focus();
+}
+
+function cerrarModalNuevoDepa() {
+  const modal = document.getElementById('modal-nuevo-depa');
+  if (modal) modal.style.display = 'none';
+}
+
+// Auto-sugerir la torre al escribir el ID (ej: si escribe C101 -> Torre C)
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('nuevo-depa-id')?.addEventListener('input', function() {
+    const val = this.value.trim().toUpperCase();
+    const torreInput = document.getElementById('nuevo-depa-torre');
+    if (torreInput && val.length > 0) {
+      torreInput.value = val.charAt(0);
+    }
+  });
+});
+
+async function guardarNuevoDepartamento(e) {
+  if (e) e.preventDefault();
+
+  const errBox = document.getElementById('nuevo-depa-error');
+  const btn = document.getElementById('btn-save-nuevo-depa');
+
+  const payload = {
+    depaId: document.getElementById('nuevo-depa-id')?.value,
+    torre: document.getElementById('nuevo-depa-torre')?.value,
+    nombres: document.getElementById('nuevo-depa-nombres')?.value,
+    apellidos: document.getElementById('nuevo-depa-apellidos')?.value,
+    dniCe: document.getElementById('nuevo-depa-dni')?.value,
+    ocupante: document.getElementById('nuevo-depa-ocupante')?.value,
+    estac1: document.getElementById('nuevo-depa-estac1')?.value,
+    estac2: document.getElementById('nuevo-depa-estac2')?.value,
+    tlf: document.getElementById('nuevo-depa-tlf')?.value,
+    email: document.getElementById('nuevo-depa-email')?.value,
+    familiarInquilino: document.getElementById('nuevo-depa-familiar')?.value,
+    tlfContacto: document.getElementById('nuevo-depa-tlf-contacto')?.value,
+    mascotas: document.getElementById('nuevo-depa-mascotas')?.value,
+    observaciones: document.getElementById('nuevo-depa-obs')?.value
+  };
+
+  if (errBox) errBox.style.display = 'none';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Creando en 4 Nodos...';
+  }
+
+  const restaurarBtn = () => {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '💾 Registrar Unidad';
+    }
+  };
+
+  netRun()
+    .withSuccessHandler(res => {
+      restaurarBtn();
+
+      if (!res || !res.ok) {
+        if (errBox) {
+          errBox.textContent = res?.error || "Error al crear el departamento.";
+          errBox.style.display = 'block';
+        } else {
+          alert(res?.error || "Error al crear.");
+        }
+        return;
+      }
+
+      // Éxito: Cerrar modal y refrescar módulos
+      alert(res.mensaje || "✅ Departamento creado con éxito.");
+      cerrarModalNuevoDepa();
+
+      // Refrescar tabla de Comunas
+      if (typeof setupComuna === 'function') setupComuna();
+
+      // Refrescar memoria global de departamentos y títulos
+      if (typeof iniServicesDepas === 'function') iniServicesDepas();
+    })
+    .withFailureHandler(err => {
+      restaurarBtn();
+      if (errBox) {
+        errBox.textContent = "❌ Error de conexión: " + (err.message || err);
+        errBox.style.display = 'block';
+      } else {
+        alert("❌ Error: " + (err.message || err));
+      }
+    })
+    .api_crearNuevoDepartamento(payload, window.usuarioActivo?.() || 'ADMIN');
+}
 
 searchInput?.addEventListener('input', function() {
     const searchTerm = this.value.toLowerCase().trim();
