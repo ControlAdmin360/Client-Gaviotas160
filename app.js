@@ -3050,7 +3050,6 @@ document.getElementById('config-depa')?.addEventListener('change', function() {
         if (window.toast) {
           toast("⚠️ Este Departamento Cuenta con Exoneracion Activa");
         }
-
         // Deshabilitar campos si hay configuración activa
         if (cboConcepto) cboConcepto.disabled = true;
         if (inpMonto) inpMonto.disabled = true;
@@ -3058,16 +3057,11 @@ document.getElementById('config-depa')?.addEventListener('change', function() {
       } else {
         document.getElementById('config-cuota-extra').value = "";
         document.getElementById('config-descrip-cuota-extra').value = "";
-
         // Habilitar/Limpiar campos si no tiene exoneración/configuración
-        if (cboConcepto) {
-          cboConcepto.value = "";
-          cboConcepto.disabled = false;
-        }
-        if (inpMonto) {
-          inpMonto.value = "";
-          inpMonto.disabled = false;
-        }
+        if (cboConcepto) { cboConcepto.value = "";
+          cboConcepto.disabled = false; }
+        if (inpMonto) { inpMonto.value = "";
+          inpMonto.disabled = false; }
       }
     })
     .withFailureHandler(err => {
