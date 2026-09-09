@@ -2408,35 +2408,84 @@ function cerrarModalExon() {
   limpiarControlesExon();
 }
 
-function limpiarControlesExon() {
-  const ids = [
-    'exon-moras-totales-check', 'exon-multas-totales-check',
-    'exon-actual-moras-check', 'exon-moras-check', 'exon-eliminar-check'
-  ];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.checked = false; el.disabled = false; }
-  });
+function sincronizarEstadoControlesExon() {
+  const chkMorTot = document.getElementById('exon-moras-totales-check');
+  const chkMulTot = document.getElementById('exon-multas-totales-check');
+  const chkPer    = document.getElementById('exon-actual-moras-check');
+  const chkCong   = document.getElementById('exon-moras-check');
+  const chkElim   = document.getElementById('exon-eliminar-check');
 
-  const depa = document.getElementById('exon-depa');
-  const concepto = document.getElementById('exon-concepto');
-  const monto = document.getElementById('exon-monto');
-  const descrip = document.getElementById('exon-descrip');
+  const cboConcepto = document.getElementById('exon-concepto');
+  const inpMonto    = document.getElementById('exon-monto');
 
-  if (depa) depa.value = "";
-  if (concepto) { concepto.value = "Select"; concepto.disabled = false; concepto.style.backgroundColor = ""; }
-  if (monto) { monto.value = ""; monto.disabled = false; monto.style.backgroundColor = ""; }
-  if (descrip) { descrip.value = ""; descrip.disabled = false; }
+  // Helper para bloquear con estilo oscuro
+  const bloquear = (cboVal, montoVal) => {
+    if (cboConcepto) {
+      cboConcepto.value = cboVal;
+      cboConcepto.disabled = true;
+      cboConcepto.style.backgroundColor = "#334155";
+      cboConcepto.style.color = "#cbd5e1";
+    }
+    if (inpMonto) {
+      inpMonto.value = montoVal;
+      inpMonto.disabled = true;
+      inpMonto.style.backgroundColor = "#334155";
+      inpMonto.style.color = "#cbd5e1";
+    }
+  };
 
-  ['exon-s-rec', 'exon-s-mor', 'exon-s-mul', 'exon-s-act', 'exon-s-acum'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = 'S/ 0.00';
-  });
-  const acumEl = document.getElementById('exon-s-acum');
-  if (acumEl) acumEl.textContent = '0';
+  // Helper para desbloquear con estilo oscuro activo
+  const desbloquear = () => {
+    if (cboConcepto) {
+      cboConcepto.disabled = false;
+      cboConcepto.style.backgroundColor = "#0f172a";
+      cboConcepto.style.color = "#ffffff";
+    }
+    if (inpMonto) {
+      inpMonto.disabled = false;
+      inpMonto.style.backgroundColor = "#0f172a";
+      inpMonto.style.color = "#ffffff";
+    }
+  };
 
-  deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
-  tieneExoneracionPrevia = false;
+  // CASO 1: AMBOS MARCADOS (🕒 + 👮‍♂️)
+  if (chkMorTot?.checked && chkMulTot?.checked) {
+    bloquear("MORAS&MULTAS", (deudasDepaModal.morNum + deudasDepaModal.mulNum).toFixed(2));
+    return;
+  }
+
+  // CASO 2: SOLO MORAS TOTALES (🕒)
+  if (chkMorTot?.checked) {
+    bloquear("MORAS", deudasDepaModal.morNum.toFixed(2));
+    return;
+  }
+
+  // CASO 3: SOLO MULTAS TOTALES (👮‍♂️)
+  if (chkMulTot?.checked) {
+    bloquear("MULTAS", deudasDepaModal.mulNum.toFixed(2));
+    return;
+  }
+
+  // CASO 4: MORAS PERIODO ACTUAL (📆)
+  if (chkPer?.checked) {
+    bloquear("MORAS", "");
+    return;
+  }
+
+  // CASO 5: CONGELAR DEFINITIVO (🚩)
+  if (chkCong?.checked) {
+    bloquear("MORAS", "");
+    return;
+  }
+
+  // CASO 6: ELIMINAR BENEFICIO (🚫)
+  if (chkElim?.checked) {
+    bloquear("Select", "");
+    return;
+  }
+
+  // CASO 7: NINGUNO MARCADO (Ajuste Manual)
+  desbloquear();
 }
 
 // CONTROLADORES DE LOS 5 CHECKBOXES (Reglas de Exclusión y Simultaniedad)
