@@ -2535,6 +2535,7 @@ function sincronizarEstadoControlesExon() {
 
 // CONTROLADORES DE LOS 5 CHECKBOXES (Reglas de Exclusión y Simultaniedad)
 function sincronizarEstadoControlesExon() {
+
   const chkMorTot = document.getElementById('exon-moras-totales-check');
   const chkMulTot = document.getElementById('exon-multas-totales-check');
   const chkPer    = document.getElementById('exon-actual-moras-check');
@@ -3041,6 +3042,12 @@ document.getElementById('config-depa')?.addEventListener('change', function() {
       if (res) {
         document.getElementById('config-cuota-extra').value = res.valorCuota;
         document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
+        if (window.toast) toast("⚠️ Este Departamento Cuenta con Exoneracion Activa");
+          const cboConcepto = document.getElementById('exon-concepto');
+          const inpMonto    = document.getElementById('exon-monto');
+          cboConcepto.disabled = false;
+          inpMonto.disabled = false;
+
       } else {
         document.getElementById('config-cuota-extra').value = "";
         document.getElementById('config-descrip-cuota-extra').value = "";
