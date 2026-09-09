@@ -164,14 +164,7 @@
         if (el.id !== 'btnSalir') el.disabled = true;
       });
     }
-    p.netRun()
-      .withSuccessHandler(res => {
-        if (res && res.email) {
-          renderMetaUsuario(res.email); // 👈 Pasa el correo recibido como parámetro
-        }
-      })
-      .getCuentaUsuario();
-
+    
     function renderMetaUsuario(nuevoCorreo) {
       const mu = document.getElementById('metaUsuario');
       if (!mu) return;
@@ -266,7 +259,8 @@
       updateTipoMovimiento();
     } else if (p && typeof p.netRun === 'function') {
       // 2. Si no están, las pide directo a Apps Script
-      p.netRun().withSuccessHandler(res => {
+      p.netRun()
+      .withSuccessHandler(res => {
         listaDepas = (res?.depaIds || []).map(x => String(x).trim().toUpperCase());
         listaServs = (res?.servIds || []).map(x => String(x).trim().toUpperCase());
         
