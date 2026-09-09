@@ -2654,8 +2654,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
-        inpMonto.disabled = true; 
-        cboConcepto.disabled = true; 
+        if (inpMonto){inpMonto.value = ""; inpMonto.disabled = true;} 
+        if (cboConcepto){cboConcepto.disabled = true;} 
         if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
         if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
