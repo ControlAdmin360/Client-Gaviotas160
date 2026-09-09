@@ -2377,21 +2377,20 @@ uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:15,   color:'
 
 
 // 1. Funciónes para abrir el modal Exoneraciones & Reintegros Multas & Configuraciones  Globales
-function abrirModalExon() {
-  document.getElementById('modal-exon-desc').style.display = 'flex';
-  document.getElementById('exon-concepto').value = ""; 
-  document.getElementById('exon-monto').value = "";
-  document.getElementById('exon-descrip').value = "";
-  document.getElementById('exon-actual-moras-check').checked = false;
-  document.getElementById('exon-moras-check').checked = false;
-  document.getElementById('exon-actual-moras-check').checked = false;
-  document.getElementById('exon-eliminar-check').checked = false;
-  document.getElementById('exon-eliminar-check').disabled = true;
+// Variable local para almacenar las deudas en memoria al consultar el modal
+let deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
+let tieneExoneracionPrevia = false;
 
-  // Limpiar el combo antes de cargar para evitar confusiones
+function abrirModalExon() {
+  const modal = document.getElementById('modal-exon-desc');
+  if (!modal) return;
+
+  modal.style.display = 'flex';
+  limpiarControlesExon();
+
   const select = document.getElementById('exon-depa');
-  if (select.options.length <= 1) { 
-    const depas = (typeof LISTAS !== 'undefined' && LISTAS.depaIds) ? LISTAS.depaIds : [];
+  if (select && select.options.length <= 1) {
+    const depas = (window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
     select.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
       let opt = document.createElement('option');
@@ -2404,346 +2403,341 @@ function abrirModalExon() {
 
 // 2. Función para cerrar
 function cerrarModalExon() {
-  document.getElementById('modal-exon-desc').style.display = 'none';
-  // Referencias a los elementos
-  const combo = document.getElementById('exon-concepto');
-  const monto = document.getElementById('exon-monto');
-  const check = document.getElementById('exon-moras-check');
-  const checkEliminar = document.getElementById('exon-eliminar-check');
+  const modal = document.getElementById('modal-exon-desc');
+  if (modal) modal.style.display = 'none';
+  limpiarControlesExon();
+}
+
+function limpiarControlesExon() {
+  const ids = [
+    'exon-moras-totales-check', 'exon-multas-totales-check',
+    'exon-actual-moras-check', 'exon-moras-check', 'exon-eliminar-check'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.checked = false; el.disabled = false; }
+  });
+
   const depa = document.getElementById('exon-depa');
+  const concepto = document.getElementById('exon-concepto');
+  const monto = document.getElementById('exon-monto');
   const descrip = document.getElementById('exon-descrip');
-  // Reset total de valores
-  depa.value = "";
-  combo.value = "";
-  monto.value = "";
-  descrip.value = "";
-  check.checked = false;
-  checkEliminar.checked = false;
-  // Reset de estados físicos (IMPORTANTE)
-  combo.disabled = false;
-  monto.disabled = false;
-  descrip.disabled = false;
-  combo.style.backgroundColor = "#fff";
-  monto.style.backgroundColor = "#fff";
+
+  if (depa) depa.value = "";
+  if (concepto) { concepto.value = "Select"; concepto.disabled = false; concepto.style.backgroundColor = ""; }
+  if (monto) { monto.value = ""; monto.disabled = false; monto.style.backgroundColor = ""; }
+  if (descrip) { descrip.value = ""; descrip.disabled = false; }
+
+  ['exon-s-rec', 'exon-s-mor', 'exon-s-mul', 'exon-s-act', 'exon-s-acum'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'S/ 0.00';
+  });
+  const acumEl = document.getElementById('exon-s-acum');
+  if (acumEl) acumEl.textContent = '0';
+
+  deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
+  tieneExoneracionPrevia = false;
+}
+
+// CONTROLADORES DE LOS 5 CHECKBOXES (Reglas de Exclusión y Simultaniedad)
+function sincronizarEstadoControlesExon() {
+  const chkMorTot = document.getElementById('exon-moras-totales-check');
+  const chkMulTot = document.getElementById('exon-multas-totales-check');
+  const chkPer    = document.getElementById('exon-actual-moras-check');
+  const chkCong   = document.getElementById('exon-moras-check');
+  const chkElim   = document.getElementById('exon-eliminar-check');
+
+  const cboConcepto = document.getElementById('exon-concepto');
+  const inpMonto    = document.getElementById('exon-monto');
+
+  // CASO 1: AMBOS MARCADOS (🕒 + 👮‍♂️)
+  if (chkMorTot?.checked && chkMulTot?.checked) {
+    if (cboConcepto) { cboConcepto.value = "MORAS&MULTAS"; cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.value = (deudasDepaModal.morNum + deudasDepaModal.mulNum).toFixed(2); inpMonto.disabled = true; }
+    return;
+  }
+
+  // CASO 2: SOLO MORAS TOTALES (🕒)
+  if (chkMorTot?.checked) {
+    if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.value = deudasDepaModal.morNum.toFixed(2); inpMonto.disabled = true; }
+    return;
+  }
+
+  // CASO 3: SOLO MULTAS TOTALES (👮‍♂️)
+  if (chkMulTot?.checked) {
+    if (cboConcepto) { cboConcepto.value = "MULTAS"; cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.value = deudasDepaModal.mulNum.toFixed(2); inpMonto.disabled = true; }
+    return;
+  }
+
+  // CASO 4: MORAS PERIODO ACTUAL (📆)
+  if (chkPer?.checked) {
+    if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
+    return;
+  }
+
+  // CASO 5: CONGELAR DEFINITIVO (🚩)
+  if (chkCong?.checked) {
+    if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
+    return;
+  }
+
+  // CASO 6: ELIMINAR BENEFICIO (🚫)
+  if (chkElim?.checked) {
+    if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = true; }
+    if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
+    return;
+  }
+
+  // CASO 7: NINGUNO MARCADO (Ajuste Manual / Reintegro)
+  if (cboConcepto) cboConcepto.disabled = false;
+  if (inpMonto) inpMonto.disabled = false;
 }
 
 // Listener para detectar cambio de departamento buscar exoneracion de moras y descripcion existente
 document.getElementById('exon-depa')?.addEventListener('change', function() {
   const idDepa = this.value;
-  if (!idDepa) return;
-  // 1. BLOQUEAMOS EL BOTÓN DE INMEDIATO MIENTRAS CARGA LA RED
+  if (!idDepa) {
+    limpiarControlesExon();
+    return;
+  }
+
   const btnSave = document.getElementById('btn-save-exon');
-  if (btnSave) {
-    if (window.toast) toast("⏳ Cargando Informacion (Espere...)");
-    btnSave.disabled = true;
-    btnSave.textContent = "⏳ Espere...";
-    btnSave.style.backgroundColor = "#e0e0e0"; // Gris claro clásico de deshabilitado
-    btnSave.style.color = "#888888";           // Texto gris opaco
-    btnSave.style.cursor = "not-allowed";
-  }
-  document.getElementById('exon-depa').removeAttribute('data-col7');
-  const restaurarBoton = () => {
-    if (btnSave) {
-        btnSave.disabled = false;
-        btnSave.textContent = "Registrar Evento"; // Texto original del modal
-        btnSave.style.backgroundColor = "";
-        btnSave.style.color = "";
-        btnSave.style.cursor = "";
-    }
-  }
+  const loader = document.getElementById('exon-s-loader');
+  if (btnSave) { btnSave.disabled = true; btnSave.textContent = "⏳ Consultando..."; }
+  if (loader) loader.classList.remove('hidden');
+
+  // 1. Consultar saldos en tiempo real
   netRun()
-    .withSuccessHandler(res => {
-      const checkMoras = document.getElementById('exon-moras-check');
-      const actual = document.getElementById('exon-actual-moras-check');
-      const checkEliminar = document.getElementById('exon-eliminar-check');
-      const inputDescrip = document.getElementById('exon-descrip');
-      const inputConcepto = document.getElementById('exon-concepto');
-      const inputMonto = document.getElementById('exon-monto');
-      checkEliminar.disabled = true;
-      // Establecer los estados de los checks
-      checkMoras.checked = !!res.tieneFormula;
-      actual.checked = !!res.tieneExoneracion;
-      // Disparar los eventos de interfaz
-      checkMoras.dispatchEvent(new Event('change'));
-      actual.dispatchEvent(new Event('change'));
-      checkEliminar.dispatchEvent(new Event('change'));
-      document.getElementById('exon-depa').setAttribute('data-col7', res.valColumna7 || 0);
-      restaurarBoton ();
-      if (res.tieneFormula || res.descripExistente.trim() !== "") {
-        inputConcepto.value = "MORAS";
-        inputMonto.value = res.montoExistente > 0 ? Number(res.montoExistente).toFixed(2) : "";
-        if (window.toast) toast("ℹ️ Atencion! El Departamento " + idDepa + "\n Tiene una Exoneración Activa (💎)");
-        inputConcepto.disabled = true;
-        inputMonto.disabled = true;
-        inputDescrip.disabled = true;
-        actual.disabled = true;
-        checkMoras.disabled = true;
-        checkEliminar.disabled = false;
-      } else {
-        inputConcepto.value = (res.conceptoExistente && res.conceptoExistente !== "Select")
-          ? res.conceptoExistente : "";                  
-        inputMonto.value = res.montoExistente > 0 ? Number(res.montoExistente).toFixed(2) : "";
-        inputConcepto.disabled = false;
-        inputMonto.disabled = false;
-        inputDescrip.disabled = false;
-        actual.disabled = false;
-        checkMoras.disabled = false;
+    .withSuccessHandler(resSaldos => {
+      if (loader) loader.classList.add('hidden');
+      if (btnSave) { btnSave.disabled = false; btnSave.textContent = "💾 Registrar Evento"; }
+
+      if (resSaldos) {
+        document.getElementById('exon-s-rec').textContent = resSaldos.rec || 'S/ 0.00';
+        document.getElementById('exon-s-mor').textContent = resSaldos.mor || 'S/ 0.00';
+        document.getElementById('exon-s-mul').textContent = resSaldos.mul || 'S/ 0.00';
+        document.getElementById('exon-s-act').textContent = resSaldos.act || 'S/ 0.00';
+        document.getElementById('exon-s-acum').textContent = resSaldos.acum || '0';
+
+        deudasDepaModal.morNum = Number(resSaldos.morNum) || 0;
+        deudasDepaModal.mulNum = Number(resSaldos.mulNum) || 0;
       }
-      inputDescrip.value = res.descripExistente || "";
     })
     .withFailureHandler(err => {
-      restaurarBoton();
-      // Usamos la función flash si la tienes, o una alerta limpia de error
-      alert("❌ Error al conectar con el servidor: " + (err?.message || err));
+      if (loader) loader.classList.add('hidden');
+      if (btnSave) { btnSave.disabled = false; btnSave.textContent = "💾 Registrar Evento"; }
+      console.error("Error saldos:", err);
+    })
+    .api_Saldos_Para_Modal(idDepa);
+
+  // 2. Verificar si tiene exoneraciones vigentes
+  netRun()
+    .withSuccessHandler(resFormula => {
+      const chkEliminar = document.getElementById('exon-eliminar-check');
+      const chkCongelar = document.getElementById('exon-moras-check');
+      const chkPeriodo = document.getElementById('exon-actual-moras-check');
+      const inputDescrip = document.getElementById('exon-descrip');
+
+      const tieneActiva = Boolean(resFormula?.tieneFormula || resFormula?.tieneExoneracion || (resFormula?.descripExistente && resFormula.descripExistente.trim() !== ""));
+      tieneExoneracionPrevia = tieneActiva;
+
+      if (tieneActiva) {
+        if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = false; }
+        if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
+        if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
+        if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
+        if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
+      } else {
+        if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
+        if (chkCongelar) { chkCongelar.disabled = false; }
+        if (chkPeriodo) { chkPeriodo.disabled = false; }
+        if (inputDescrip) inputDescrip.value = "";
+      }
     })
     .verificarFormulaDepa(idDepa);
-}); 
-
-// Ejecutar esto dentro de una etiqueta <script> o donde inicialices tus eventos
-document.getElementById('exon-moras-check')?.addEventListener('change', function(e) {
-  const inputCombo = document.getElementById('exon-concepto');
-  const inputMonto = document.getElementById('exon-monto');
-  const checkEliminar = document.getElementById('exon-eliminar-check');
-  const checkActual = document.getElementById('exon-actual-moras-check');
-
-  if (this.checked) {
-    checkEliminar.checked = false;
-    checkActual.checked = false;
-    inputCombo.disabled = true;
-    inputMonto.disabled = true;
-    inputCombo.value = "MORAS";
-    inputCombo.style.backgroundColor = "#e9ecef"; // Color gris de bloqueado
-    inputMonto.style.backgroundColor = "#e9ecef"; // Color gris de bloqueado
-  } else {
-    inputCombo.disabled = false;
-    inputMonto.disabled = false;
-    inputCombo.style.backgroundColor = "#fff";
-    inputMonto.style.backgroundColor = "#fff";
-  }
 });
-// 2. Escuchador para el Check de ELIMINAR (Para que sea mutuo)
-document.getElementById('exon-eliminar-check')?.addEventListener('change', function(e) {
-  const checkMoras = document.getElementById('exon-moras-check');
-  const checkActual = document.getElementById('exon-actual-moras-check');
-  const inputCombo = document.getElementById('exon-concepto');
-  const inputMonto = document.getElementById('exon-monto');
-   
+
+// Check 1: 🕒 Eliminar Moras Totales
+document.getElementById('exon-moras-totales-check')?.addEventListener('change', function() {
+  const idDepa = document.getElementById('exon-depa')?.value;
+
   if (this.checked) {
-    // Si activo checkEliminar, desactivo checkMoras
-    checkMoras.checked = false;
-    checkActual.checked = false;
-    inputCombo.disabled = true;
-    inputMonto.disabled = true;
-    inputCombo.style.backgroundColor = "#e9ecef";
-    inputMonto.style.backgroundColor = "#e9ecef";
-    } else {
-    inputCombo.disabled = false;
-    inputMonto.disabled = false;
-    inputCombo.style.backgroundColor = "#fff";
-    inputMonto.style.backgroundColor = "#fff";
+    // Validación de deuda existente
+    if (deudasDepaModal.morNum <= 0) {
+      alert(`⚠️ El departamento ${idDepa || ''} no registra deuda de Moras acumuladas.`);
+      this.checked = false;
+      return;
     }
-});
 
-// 3. Escuchador para el Check de P.Actual (Para que sea mutuo)
-document.getElementById('exon-actual-moras-check')?.addEventListener('change', function(e) {
-  const checkMoras = document.getElementById('exon-moras-check');
-  const checkEliminar = document.getElementById('exon-eliminar-check');
-  const inputCombo = document.getElementById('exon-concepto');
-  const inputMonto = document.getElementById('exon-monto');
-   
-  if (this.checked) {
-    // Si activo checkEliminar, desactivo checkMoras
-    checkMoras.checked = false;
-    checkEliminar.checked = false;
-    inputCombo.disabled = true;
-    inputMonto.disabled = true;
-    if (e.isTrusted) {inputCombo.value = "MORAS";}
-    inputCombo.style.backgroundColor = "#e9ecef"; // Color gris de bloqueado
-    inputMonto.style.backgroundColor = "#e9ecef"; // Color gris de bloqueado
-    } else {
-    inputCombo.disabled = false;
-    inputMonto.disabled = false;
-    inputCombo.style.backgroundColor = "#fff";
-    inputMonto.style.backgroundColor = "#fff";
+    // Advertencia de anulación si tenía exoneración previa
+    if (tieneExoneracionPrevia) {
+      const acepta = confirm(`⚠️ ATENCIÓN:\n\nEl departamento (${idDepa}) cuenta con una exoneración activa.\n\nAl condonar la mora total, la exoneración previa quedará sin efecto.\n\n¿Desea continuar?`);
+      if (!acepta) {
+        this.checked = false;
+        return;
+      }
+    }
+
+    // Desmarca los no compatibles (conserva 👮‍♂️)
+    document.getElementById('exon-actual-moras-check').checked = false;
+    document.getElementById('exon-moras-check').checked = false;
+    document.getElementById('exon-eliminar-check').checked = false;
   }
+  sincronizarEstadoControlesExon();
 });
 
-document.getElementById('config-depa')?.addEventListener('change', function() {
-  const idDepa = this.value;
-  if (!idDepa) return;
+// Check 2: 👮‍♂️ Eliminar Multas Totales
+document.getElementById('exon-multas-totales-check')?.addEventListener('change', function() {
+  const idDepa = document.getElementById('exon-depa')?.value;
+
+  if (this.checked) {
+    if (deudasDepaModal.mulNum <= 0) {
+      alert(`⚠️ El departamento ${idDepa || ''} no registra deuda de Multas.`);
+      this.checked = false;
+      return;
+    }
+
+    // Desmarca los no compatibles (conserva 🕒)
+    document.getElementById('exon-actual-moras-check').checked = false;
+    document.getElementById('exon-moras-check').checked = false;
+    document.getElementById('exon-eliminar-check').checked = false;
+  }
+  sincronizarEstadoControlesExon();
+});
+
+// Check 3: 📆 Eliminar Moras P. Actual
+document.getElementById('exon-actual-moras-check')?.addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('exon-moras-totales-check').checked = false;
+    document.getElementById('exon-multas-totales-check').checked = false;
+    document.getElementById('exon-moras-check').checked = false;
+    document.getElementById('exon-eliminar-check').checked = false;
+  }
+  sincronizarEstadoControlesExon();
+});
+
+// Check 4: 🚩 Congelar Moras Definitivo
+document.getElementById('exon-moras-check')?.addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('exon-moras-totales-check').checked = false;
+    document.getElementById('exon-multas-totales-check').checked = false;
+    document.getElementById('exon-actual-moras-check').checked = false;
+    document.getElementById('exon-eliminar-check').checked = false;
+  }
+  sincronizarEstadoControlesExon();
+});
+
+// Check 5: 🚫 Eliminar Exoneración Actual
+document.getElementById('exon-eliminar-check')?.addEventListener('change', function() {
+  if (this.checked) {
+    document.getElementById('exon-moras-totales-check').checked = false;
+    document.getElementById('exon-multas-totales-check').checked = false;
+    document.getElementById('exon-actual-moras-check').checked = false;
+    document.getElementById('exon-moras-check').checked = false;
+  }
+  sincronizarEstadoControlesExon();
+});
+
+// 3. Validaciones y guardado
+async function validarYGuardarExon() {
+  const depa = document.getElementById('exon-depa')?.value;
+  if (!depa) {
+    alert("⚠️ Por favor seleccione un departamento.");
+    return;
+  }
+
+  const chkMorTot = document.getElementById('exon-moras-totales-check')?.checked;
+  const chkMulTot = document.getElementById('exon-multas-totales-check')?.checked;
+  const chkPer    = document.getElementById('exon-actual-moras-check')?.checked;
+  const chkCong   = document.getElementById('exon-moras-check')?.checked;
+  const chkElim   = document.getElementById('exon-eliminar-check')?.checked;
+
+  const concepto = document.getElementById('exon-concepto')?.value || 'Select';
+  const monto = parseFloat(document.getElementById('exon-monto')?.value) || 0;
+  const descrip = (document.getElementById('exon-descrip')?.value || '').trim();
+
+  // Validación de descripción obligatoria
+  if (!chkElim && descrip.length < 6) {
+    alert("⚠️ Ingrese un Motivo / Sustento válido (mínimo 6 caracteres).");
+    return;
+  }
+
+  // Validación de montos manuales
+  const esCriterioRapido = chkMorTot || chkMulTot || chkPer || chkCong || chkElim;
+  if (!esCriterioRapido) {
+    if (concepto === "Select") {
+      alert("⚠️ Seleccione un Concepto para el ajuste manual.");
+      return;
+    }
+    if (monto <= 0) {
+      alert("⚠️ Ingrese un Monto mayor a S/ 0.00.");
+      return;
+    }
+    if (concepto === "MORAS" && monto > deudasDepaModal.morNum) {
+      alert(`⚠️ El monto (S/ ${monto.toFixed(2)}) supera la deuda de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}).`);
+      return;
+    }
+    if (concepto === "MULTAS" && monto > deudasDepaModal.mulNum) {
+      alert(`⚠️ El monto (S/ ${monto.toFixed(2)}) supera la deuda de Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}).`);
+      return;
+    }
+  }
+
+  // Mensajes de confirmación
+  let mensajeConfirm = `¿Confirma registrar la operación para el Departamento ${depa}?`;
+  if (chkElim) {
+    mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}?`;
+  } else if (chkMorTot && chkMulTot) {
+    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}) y Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}) al Dpto ${depa}?`;
+  } else if (chkMorTot) {
+    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto ${depa}?`;
+  } else if (chkMulTot) {
+    mensajeConfirm = `❓ ¿Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto ${depa}?`;
+  }
+
+  if (!confirm(mensajeConfirm)) return;
+
+  const btnSave = document.getElementById('btn-save-exon');
+  if (btnSave) { btnSave.disabled = true; btnSave.textContent = "⏳ Procesando..."; }
+
+  const payload = {
+    idDepa: depa,
+    monto: monto,
+    concepto: concepto,
+    esExoneracionMora: chkCong,
+    sinMoraActual: chkPer,
+    esMorasTotales: chkMorTot,
+    esMultasTotales: chkMulTot,
+    esEliminar: chkElim,
+    descrip: descrip
+  };
+
+  const user = window.usuarioActivo?.() || 'ADMIN';
+
   netRun()
     .withSuccessHandler(res => {
-      if (res) {
-        document.getElementById('config-cuota-extra').value = res.valorCuota;
-        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
-      } else {
-        document.getElementById('config-cuota-extra').value = "";
-        document.getElementById('config-descrip-cuota-extra').value = "";
+      if (btnSave) { btnSave.disabled = false; btnSave.textContent = "💾 Registrar Evento"; }
+
+      if (!res || !res.ok) {
+        alert(res?.error || "Error al procesar la exoneración.");
+        return;
       }
+
+      if (window.toast) toast(res.mensaje || "Operación completada con éxito.");
+      cerrarModalExon();
+
+      // Refrescar la tabla de Recibos
+      if (typeof reloadRecibos === 'function') reloadRecibos();
     })
     .withFailureHandler(err => {
-      // Usamos la función flash si la tienes, o una alerta limpia de error
-      alert("❌ Error al conectar con el servidor: " + (err?.message || err));
+      if (btnSave) { btnSave.disabled = false; btnSave.textContent = "💾 Registrar Evento"; }
+      alert("❌ Error de comunicación: " + (err.message || err));
     })
-    .obtenerConfiguracionIdDepa(idDepa);
-})
-
-// 3. Validaciones
-function validarYGuardarExon() {
-  const depaInput = document.getElementById('exon-depa');
-  if (!depaInput) return;
-  const depa = depaInput.value;
-  const definitivo = document.getElementById('exon-moras-check').checked; // Congelar Moras Definitivo 
-  const actual = document.getElementById('exon-actual-moras-check').checked;  // Eliminar Moras P. Actual
-  const concepto = document.getElementById('exon-concepto').value;
-  const montoRaw = document.getElementById('exon-monto').value;
-  const monto = parseFloat(montoRaw) || 0;
-  const descrip = (document.getElementById('exon-descrip').value || "");
-  const eliminar = document.getElementById('exon-eliminar-check').checked; // Eliminar Exoneracion Actual
-  if (!depa) return;
-
-  // Variables que se enviarán al servidor
-  let finalMonto = monto;
-  let finalConcepto = concepto;
-  let finalMoras = definitivo;
-  let sinMoraActual = actual;
-  let finalDescrip = descrip;
-  let mensajeCuerpo = "";
-
-  // --- LÓGICA DE VALIDACIÓN ---
-  if (eliminar) {
-    // 1. Confirmación específica de eliminación solicitada
-    if (!confirm(` ❓ ¿Está seguro de ELIMINAR LA EXONERACIÓN ACTUAL para el departamento: ${depa}? \n⚠️ Esta Acción Será Irreversible`)) return;
-    // Si es eliminar, preparamos valores de limpieza y saltamos las alertas
-    finalMonto = 0;
-    finalConcepto = "Select";
-    finalMoras = false;
-    sinMoraActual = false;
-    finalDescrip = "";
-    } else {
-    const attrCol7 = depaInput.getAttribute('data-col7');
-    const valorColumna7 = Number(attrCol7) || 0;
-    // Tu validación estricta de pago:
-    if ((concepto === "MORAS"||concepto ==="MULTAS"||concepto === "MORAS&MULTAS") && !definitivo && valorColumna7 < 5) {
-      return alert(`🛑 No Puede Procesar esta Exoneración: \nEl Departamento ${depa} aun No Cancela su Recibo Actual. \nℹ️Solo Podrá Realizar Exoneraciones Previo al pago del Recibo Dentro del Periodo Actual.`);
-    }
-    const info = !actual && !eliminar && !definitivo && monto === 0 && ["", "Select"].includes(concepto);
-    const avisoResponsabilidad = "\n⚠️ Por conformidad esta acción requiere prévia APROBACIÓN y autorización por parte de la actual Junta De Propietarios en funciones, caso contrario ud. como Administrador(a) asume la responsabilidad de realizar esta acción!! \n❓ ¿DESEA CONTINUAR?";
-    const tieneConcepto = (concepto && concepto !== "Select");
-    const tieneMonto = (monto > 0);
-    if (actual){
-        mensajeCuerpo = `ℹ️Tenga en cuenta que va a generar una ORDEN DE EXONERACION DE MORAS para el Departamento: ${depa} para el periodo del mes ACTUAL en curso`;
-        finalConcepto = "MORAS";
-        finalMonto = 0;
-    }
-    else if (definitivo) {
-      mensajeCuerpo = `ℹ️Tenga en cuenta que va a generar una ORDEN DE CONGELAMIENTO DE MORAS para el Departamento: ${depa} de manera INDEFINIDA mientras esté activada esta opción.`;
-      finalConcepto = "MORAS";
-      finalMonto = 0;
-    } else {
-      if (tieneConcepto && !tieneMonto) {
-          if (window.toast) toast("⚠️ Falta el Monto a Exonerar (❓)");
-        return 
-      } else if (!tieneConcepto && tieneMonto) {
-          if (window.toast) toast("⚠️ Falta el Monto del Concepto a Aplicar (❓)");
-        return 
-      } else if (info){
-          if (window.toast) toast("⚠️ Debe Completar la Informacion Requerida (❓)");
-         return 
-      } else {
-        if (concepto === "REINTEGRO") {
-          mensajeCuerpo = `ℹ️Tenga en cuenta que esta opción generará una ORDEN DE REINTEGRO que será acreditado al saldo del Departamento: ${depa}. Esto SOLO deberá aplicarse cuando el propietario haya realizado un pago Mayor al monto total de su recibo y este haya solicitado una devolucion por la diferencia de pagos. \n⚠️ Aplicar SOLO posterior a la ejecucion del reintegro y por el monto devuelto.`;
-        } else if (["MORAS", "MULTAS", "MORAS&MULTAS"].includes(concepto)) {
-          mensajeCuerpo = `ℹ️Tenga en cuenta que esta opcion generará una ORDEN DE EXONERACIÓN para las ${concepto} el cual sera acreditado al saldo del Departamento ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado una solicitud formal a la Junta actual de Propietarios.`;
-        } else if (concepto === "RECIBOS") {
-          mensajeCuerpo = `ℹ️Tenga en cuenta que esta opcion generará una ORDEN DE ACREDITACION DE SALDO A FAVOR para el RECIBO del Departamento: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un reclamo formal ante la Administracion o Junta de Propietarios por algun cobro indebido o por error en su facturación.`;
-        }
-      }
-    }
-        if (descrip.length < 6) {
-        return alert("⚠️ La descripción del Motivo es muy simple. Detalle o indique el porque realiza esta acción o quien autoriza dicho evento, reintegro o congelamiento de moras.");
-      }
-    // Solo lanzamos la confirmación si hay un mensaje (no es eliminar)
-    if (mensajeCuerpo && !confirm("⚠️⚠️⚠️ ATENCIÓN! \n" + mensajeCuerpo + avisoResponsabilidad)) return;
-  }
-  // --- PROCESO DE GUARDADO ---
-  const restaurarBoton = () => {
-      if (btnSave) {
-          btnSave.disabled = false;
-          btnSave.textContent = "Registrar Evento"; // Texto original del modal
-          btnSave.style.backgroundColor = ""; 
-          btnSave.style.color = "";
-          btnSave.style.cursor = "";
-      }
-  };
-  const btnSave = document.getElementById('btn-save-exon');
-  const ejecutarGuardadoFinal = () => {
-    btnSave.disabled = true;
-    btnSave.textContent = "⏳ Espere...";
-    btnSave.style.backgroundColor = "#0354f4";
-    btnSave.style.color = "#ffffff";
-    btnSave.style.cursor = "not-allowed";
-    const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
-    netRun()
-      .withSuccessHandler((res) => {
-        // Notificación de éxito
-        if (window.toast) toast("Registro Procesado y Saldos Actualizados (✅)");
-        // Cierre de modal y refresco
-        restaurarBoton();
-        cerrarModalExon();
-        document.getElementById('recibos-refresh')?.click();
-      })
-      .withFailureHandler((error) => {
-        alert("❌ Error al Guardar: " + (error.message || error));
-        restaurarBoton();
-      })
-      .procesarGuardadoExon(depa, finalMonto, finalConcepto, finalMoras, sinMoraActual, finalDescrip, user);
-  };
-  // Solo validamos si NO es eliminar, NO es congelar moras y el concepto es de deuda
-  if (!eliminar && !definitivo && ["MORAS", "MULTAS", "MORAS&MULTAS"].includes(concepto)) {
-      btnSave.disabled = true;
-      btnSave.textContent = "⏳ Validando...";
-
-    netRun()
-      .withSuccessHandler(res => {
-        // Validación de seguridad si el servidor devuelve null
-        if (!res) {
-          alert("❌ Error: No se pudo obtener la deuda actual del departamento: " + depa);
-        restaurarBoton();
-          return;
-        }
-        let errorMonto = false;
-        if (concepto === "MORAS" && monto > res.morNum) {
-          alert(`⚠️ El Monto Introducido a Exonerar EXEDE la deuda total de MORAS para el departamento: ${depa} que actualmente es de: ${res.mor}. Corrija el Monto e Intente Nuevamente`);
-          errorMonto = true;
-        } 
-        else if (concepto === "MULTAS" && monto > res.mulNum) {
-          alert(`⚠️ El Monto Introducido a Exonerar EXEDE la deuda total de MULTAS para el departamento: ${depa} que actualmente es de: ${res.mul}. Corrija el Monto e Intente Nuevamente`);
-          errorMonto = true;
-        }
-        else if (concepto === "MORAS&MULTAS") {
-          const totalDeuda = res.morNum + res.mulNum;
-          if (monto > totalDeuda) {
-            alert(`⚠️ El Monto Introducido a Exonerar EXEDE la deuda total de (Moras: ${res.mor} + Multas: ${res.mul}) del departamento: ${depa} que hace un total de: ${totalDeuda.toFixed(2)}. Corrija el Monto e Intente Nuevamente`);
-            errorMonto = true;
-          }
-        }
-        if (errorMonto) {
-          restaurarBoton();
-          return; 
-        }
-        ejecutarGuardadoFinal();
-      })
-      .withFailureHandler(err => {
-        alert("❌ Error de comunicación: " + err.message);
-        restaurarBoton();
-      })
-      .api_Saldos_Para_Modal(depa);
-
-  } else {
-    // Si no requiere validación de montos, guarda directo
-    ejecutarGuardadoFinal();
-  }
+    .procesarGuardadoExon(payload, user);
 }
 
 // abrir el modal de Multas
@@ -2935,6 +2929,27 @@ function handlePortonToggle(checked) {
     }
   }
 }
+
+// Configuraciones de Facturación / Cuotas Extras)
+document.getElementById('config-depa')?.addEventListener('change', function() {
+  const idDepa = this.value;
+  if (!idDepa) return;
+  netRun()
+    .withSuccessHandler(res => {
+      if (res) {
+        document.getElementById('config-cuota-extra').value = res.valorCuota;
+        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
+      } else {
+        document.getElementById('config-cuota-extra').value = "";
+        document.getElementById('config-descrip-cuota-extra').value = "";
+      }
+    })
+    .withFailureHandler(err => {
+      // Usamos la función flash si la tienes, o una alerta limpia de error
+      alert("❌ Error al conectar con el servidor: " + (err?.message || err));
+    })
+    .obtenerConfiguracionIdDepa(idDepa);
+})
 
 function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCache = "") {
   let dia = document.getElementById('config-dia-pago').value;

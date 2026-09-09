@@ -490,71 +490,131 @@
       </section>
 
       <!-- MODAL DE EXONERACIONES Y REINTEGROS -->
-      <div id="modal-exon-desc" class="modal-overlay" style="display:none;">
-        <div class="modal-container" style="max-height: 74vh; display: flex; flex-direction: column; overflow: hidden;">
-          <div class="modal-header">
-            <h2>💸 Exoneraciones & Reintegros</h2>
-            <button class="btn-redd" onclick="cerrarModalExon()">&times;</button>
-          </div>
+      <div id="modal-exon-desc" class="modal-overlay" style="display:none; z-index: 9999;">
+        <div class="modal-container" style="max-width: 620px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; background: #0f172a; color: #f8fafc; border: 1px solid #334155; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);">
           
-          <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 15px 20px;">
-            <!-- Combo Departamento -->
+          <!-- Modal Header -->
+          <div class="modal-header" style="background: #1e293b; color: #f8fafc; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+            <div>
+              <h2 style="margin: 0; font-size: 1.15rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-hand-holding-dollar"></i> Exoneraciones, Condonaciones & Reintegros
+              </h2>
+              <small style="color: #94a3b8; font-size: 0.75rem;">Gestión de Beneficios y Ajustes Contables</small>
+            </div>
+            <button class="btn-close" onclick="cerrarModalExon()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">&times;</button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px;">
+            
+            <!-- Selector Departamento -->
             <div class="combo-wrap">
-              <label for="exon-depa">Departamento</label>
-              <select id="exon-depa" class="select-modern">
+              <label for="exon-depa" style="font-weight: bold; font-size: 0.82rem; color: #38bdf8;">🏢 SELECCIONE DEPARTAMENTO:</label>
+              <select id="exon-depa" class="select-modern" style="width: 100%; background: #1e293b; color: #fff; border: 1px solid #475569; padding: 8px 10px; border-radius: 6px; font-weight: 600;">
                 <option value="">Cargando departamentos...</option>
               </select>
             </div>
 
-            <!-- Combo Concepto -->
-            <div class="combo-wrap">
-              <label for="exon-concepto">Concepto</label>
-              <select id="exon-concepto" class="select-modern">
-                <option value="">Select</option>
-                <option value="MORAS">MORAS</option>
-                <option value="MULTAS">MULTAS</option>
-                <option value="RECIBOS">RECIBOS</option>
-                <option value="MORAS&MULTAS">MORAS&MULTAS</option>
-                <option value="REINTEGRO">REINTEGRO</option>
-              </select>
+            <!-- 1. Estado de Deuda Actual -->
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 14px;">
+              <div style="font-size: 0.78rem; font-weight: bold; color: #94a3b8; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <span>1. 📊 ESTADO DE DEUDA ACTUAL:</span>
+                <span id="exon-s-loader" class="dual-ring hidden" style="width: 14px; height: 14px;"></span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 0.78rem;">
+                <div style="background: #0f172a; padding: 6px 8px; border-radius: 5px; border-left: 3px solid #38bdf8;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">📝 Recibos</span>
+                  <strong id="exon-s-rec" style="color: #38bdf8; font-size: 0.9rem;">S/ 0.00</strong>
+                </div>
+                <div style="background: #0f172a; padding: 6px 8px; border-radius: 5px; border-left: 3px solid #f59e0b;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">🕒 Moras</span>
+                  <strong id="exon-s-mor" style="color: #f59e0b; font-size: 0.9rem;">S/ 0.00</strong>
+                </div>
+                <div style="background: #0f172a; padding: 6px 8px; border-radius: 5px; border-left: 3px solid #ef4444;">
+                  <span style="color: #94a3b8; display: block; font-size: 0.7rem;">👮‍♂️ Multas</span>
+                  <strong id="exon-s-mul" style="color: #ef4444; font-size: 0.9rem;">S/ 0.00</strong>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 6px; border-top: 1px dashed #334155; font-size: 0.8rem;">
+                <span>💰 Saldo Actualizado: <strong id="exon-s-act" style="color: #10b981; font-size: 0.95rem;">S/ 0.00</strong></span>
+                <span style="color: #fca5a5;">⚠️ R.A: <strong id="exon-s-acum" style="color: #ef4444;">0</strong> Recibos</span>
+              </div>
             </div>
 
-            <!-- Checkbox Moras y eliminacion de  Exoneración actual implementada -->
-            <div class="check-group" style="margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
+            <!-- 2. Criterios de Exoneración -->
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px;">
+              <label style="font-weight: bold; font-size: 0.8rem; color: #38bdf8; display: block; margin-bottom: 8px;">2. ✅ SELECCIONE EL TIPO DE EXONERACIÓN:</label>
               
-              <div style="display: flex; align-items: left; gap: 6px;">
-                <input type="checkbox" id="exon-actual-moras-check">
-                <label for="exon-actual-moras-check" style="color: #0056b3; font-size: 16px; font-weight: bold; cursor: pointer;">📆 Eliminar Moras P. Actual</label>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #fef08a;">
+                  <input type="checkbox" id="exon-moras-totales-check" style="width: 16px; height: 16px; cursor: pointer;">
+                  <span>🕒 Eliminar Moras Totales <small style="color: #94a3b8;">(Condonar 100% Moras Registradas)</small></span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #fca5a5;">
+                  <input type="checkbox" id="exon-multas-totales-check" style="width: 16px; height: 16px; cursor: pointer;">
+                  <span>👮‍♂️ Eliminar Multas Totales <small style="color: #94a3b8;">(Condonar 100% Multas Registradas)</small></span>
+                </label>
+
+                <hr style="border: 0; border-top: 1px dashed #334155; margin: 4px 0;">
+
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #bae6fd;">
+                  <input type="checkbox" id="exon-actual-moras-check" style="width: 16px; height: 16px; cursor: pointer;">
+                  <span>📆 Eliminar Moras P. Actual <small style="color: #94a3b8;">(Condonar Mora del Periodo Actual)</small></span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #e9d5ff;">
+                  <input type="checkbox" id="exon-moras-check" style="width: 16px; height: 16px; cursor: pointer;">
+                  <span>🚩 Congelar Moras Definitivo <small style="color: #94a3b8;">(Exoneración fija permanente)</small></span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; color: #f87171;">
+                  <input type="checkbox" id="exon-eliminar-check" disabled style="width: 16px; height: 16px; cursor: pointer;">
+                  <span>🚫 Eliminar Exoneracion Actual <small style="color: #94a3b8;">(Anular beneficio activo)</small></span>
+                </label>
               </div>
-              
-              <div style="display: flex; align-items: left; gap: 6px;">
-                <input type="checkbox" id="exon-moras-check">
-                <label for="exon-moras-check" style="color: #0056b3; font-size: 16px; font-weight: bold; cursor: pointer;">🚩 Congelar Moras Definitivo</label>
-              </div>
-              <div style="display: flex; align-items: left; gap: 6px;">
-                <input type="checkbox" id="exon-eliminar-check">
-                <label for="exon-eliminar-check" style="color: #0056b3; font-size: 16px; font-weight: bold; cursor: pointer;">🚫 Eliminar Exoneracion Actual</label>
-              </div>
-            </div>
-            <!-- Input Monto -->
-            <div class="input-wrap">
-              <label for="exon-monto">Monto a Acreditar / Exonerar o Reintegrar</label>
-              <input type="number" id="exon-monto" placeholder="Ingrese el Monto a Procesar S/ 0.00" class="input-modern">
             </div>
 
-            <!-- Input Descripción -->
-            <div class="input-wrap">
-              <label for="exon-descrip">📝 Motivo / Info. al Usuario (Máx 30 carac.)</label>
-              <input type="text" id="exon-descrip" class="input-modern" maxlength="30" placeholder="Indique el Responsable de la Autorización...">
+            <!-- 3. Ajuste Manual / Reintegro -->
+            <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px;">
+              <label style="font-weight: bold; font-size: 0.8rem; color: #38bdf8; display: block; margin-bottom: 8px;">3. 🧮 AJUSTE MANUAL / REINTEGRO:</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                  <label for="exon-concepto" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">Concepto:</label>
+                  <select id="exon-concepto" class="select-modern" style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 7px 8px; border-radius: 6px;">
+                    <option value="Select">Select</option>
+                    <option value="MORAS">MORAS</option>
+                    <option value="MULTAS">MULTAS</option>
+                    <option value="RECIBOS">RECIBOS</option>
+                    <option value="MORAS&MULTAS">MORAS&MULTAS</option>
+                    <option value="REINTEGRO">REINTEGRO</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="exon-monto" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">Monto a Procesar (S/.):</label>
+                  <input type="number" id="exon-monto" placeholder="S/ 0.00" step="0.01" min="0" class="input-modern" style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 7px 8px; border-radius: 6px;">
+                </div>
+              </div>
             </div>
+
+            <!-- 4. Sustento y Auditoría -->
+            <div class="input-wrap">
+              <label for="exon-descrip" style="font-weight: bold; font-size: 0.8rem; color: #fbbf24; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> 4. ⚠️ SUSTENTO Y AUDITORÍA: (Mín 6 caracteres)
+              </label>
+              <input type="text" id="exon-descrip" class="input-modern" maxlength="40" placeholder="Indique el número de acuerdo de asamblea o responsable..." style="width: 100%; background: #1e293b; color: #fff; border: 1px solid #475569; padding: 8px 10px; border-radius: 6px; text-transform: uppercase;">
+            </div>
+
           </div>
-  
-          <div class="modal-footer">
-            <button class="btn-redd" onclick="cerrarModalExon()">Cancelar</button>
-            <button id="btn-save-exon" class="btn-orange" onclick="validarYGuardarExon()">Registrar Evento</button>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer" style="padding: 12px 20px; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: flex-end; gap: 10px;">
+            <button class="btn btn-redd" onclick="cerrarModalExon()" style="padding: 7px 16px;">Cancelar</button>
+            <button id="btn-save-exon" class="btn-orange" onclick="validarYGuardarExon()" style="padding: 7px 18px; font-weight: bold;">💾 Registrar Evento</button>
           </div>
+
         </div>
-      </div> <!-- Cierra modal-overlay -->
+      </div><!-- Cierra modal-overlay -->
 
       <!-- MODAL DE MULTAS & SANCIONES -->  
       <div id="modal-multas-sanciones" class="modal-overlay" style="display:none;">
