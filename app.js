@@ -3037,28 +3037,44 @@ function handlePortonToggle(checked) {
 document.getElementById('config-depa')?.addEventListener('change', function() {
   const idDepa = this.value;
   if (!idDepa) return;
+
+  const cboConcepto = document.getElementById('exon-concepto');
+  const inpMonto    = document.getElementById('exon-monto');
+
   netRun()
     .withSuccessHandler(res => {
       if (res) {
-        document.getElementById('config-cuota-extra').value = res.valorCuota;
-        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
-        if (window.toast) toast("⚠️ Este Departamento Cuenta con Exoneracion Activa");
-          const cboConcepto = document.getElementById('exon-concepto');
-          const inpMonto    = document.getElementById('exon-monto');
-          cboConcepto.disabled = false;
-          inpMonto.disabled = false;
+        document.getElementById('config-cuota-extra').value = res.valorCuota || "";
+        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota || "";
+
+        if (window.toast) {
+          toast("⚠️ Este Departamento Cuenta con Exoneracion Activa");
+        }
+
+        // Deshabilitar campos si hay configuración activa
+        if (cboConcepto) cboConcepto.disabled = true;
+        if (inpMonto) inpMonto.disabled = true;
 
       } else {
         document.getElementById('config-cuota-extra').value = "";
         document.getElementById('config-descrip-cuota-extra').value = "";
+
+        // Habilitar/Limpiar campos si no tiene exoneración/configuración
+        if (cboConcepto) {
+          cboConcepto.value = "";
+          cboConcepto.disabled = false;
+        }
+        if (inpMonto) {
+          inpMonto.value = "";
+          inpMonto.disabled = false;
+        }
       }
     })
     .withFailureHandler(err => {
-      // Usamos la función flash si la tienes, o una alerta limpia de error
       alert("❌ Error al conectar con el servidor: " + (err?.message || err));
     })
     .obtenerConfiguracionIdDepa(idDepa);
-})
+});
 
 function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCache = "") {
   let dia = document.getElementById('config-dia-pago').value;
