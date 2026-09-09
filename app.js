@@ -2764,11 +2764,11 @@ async function validarYGuardarExon() {
   const esCriterioRapido = chkMorTot || chkMulTot || chkPer || chkCong || chkElim;
   if (!esCriterioRapido) {
     if (concepto === "Select") {
-      alert("⚠️ Seleccione un Concepto para el ajuste manual.");
+      alert("⚠️ Seleccione el tipo de Exoneración que va aplicar.");
       return;
     }
     if (monto <= 0) {
-      alert("⚠️ Ingrese un Monto mayor a S/ 0.00.");
+      alert("⚠️ Ingrese el Monto valido que va aplicar.");
       return;
     }
     if (concepto === "MORAS" && monto > deudasDepaModal.morNum) {
@@ -2782,8 +2782,8 @@ async function validarYGuardarExon() {
   }
 
   // Mensajes de confirmación
-  let mensajeConfirm = `¿Confirma registrar la operación para el Departamento ${depa}?`;
-  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE"
+  let mensajeConfirm = `¿Confirma que decea registrar la operación para el Departamento ${depa}?`;
+  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n - Ud como operador asume la responsabilidad de ejecutar esta acción \ny contar con previa autorización para tal procedimiento"
   if (chkElim) {
     mensajeConfirm = `❓ ¿Está seguro de ANULAR y eliminar la exoneración activa del Departamento ${depa}? \n\n ${mensajeAdvertencia}`;
   } else if (chkMorTot && chkMulTot) {
