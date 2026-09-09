@@ -2381,12 +2381,13 @@ uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:15,   color:'
 let deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
 let tieneExoneracionPrevia = false;
 
+
 function abrirModalExon() {
   const modal = document.getElementById('modal-exon-desc');
   if (!modal) return;
 
   modal.style.display = 'flex';
-  limpiarControlesExon();
+  limpiarControlesExon(); // 👈 Ahora sí encontrará la función
 
   const select = document.getElementById('exon-depa');
   if (select && select.options.length <= 1) {
@@ -2401,11 +2402,55 @@ function abrirModalExon() {
   }
 }
 
-// 2. Función para cerrar
 function cerrarModalExon() {
   const modal = document.getElementById('modal-exon-desc');
   if (modal) modal.style.display = 'none';
   limpiarControlesExon();
+}
+
+function limpiarControlesExon() {
+  const ids = [
+    'exon-moras-totales-check', 'exon-multas-totales-check',
+    'exon-actual-moras-check', 'exon-moras-check', 'exon-eliminar-check'
+  ];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.checked = false; el.disabled = false; }
+  });
+
+  const depa = document.getElementById('exon-depa');
+  const concepto = document.getElementById('exon-concepto');
+  const monto = document.getElementById('exon-monto');
+  const descrip = document.getElementById('exon-descrip');
+
+  if (depa) depa.value = "";
+  if (concepto) { 
+    concepto.value = "Select"; 
+    concepto.disabled = false; 
+    concepto.style.backgroundColor = "#0f172a"; 
+    concepto.style.color = "#ffffff"; 
+  }
+  if (monto) { 
+    monto.value = ""; 
+    monto.disabled = false; 
+    monto.style.backgroundColor = "#0f172a"; 
+    monto.style.color = "#ffffff"; 
+  }
+  if (descrip) { descrip.value = ""; descrip.disabled = false; }
+
+  ['exon-s-rec', 'exon-s-mor', 'exon-s-mul', 'exon-s-act'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = 'S/ 0.00';
+  });
+  const acumEl = document.getElementById('exon-s-acum');
+  if (acumEl) acumEl.textContent = '0';
+
+  if (typeof deudasDepaModal !== 'undefined') {
+    deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
+  }
+  if (typeof tieneExoneracionPrevia !== 'undefined') {
+    tieneExoneracionPrevia = false;
+  }
 }
 
 function sincronizarEstadoControlesExon() {
