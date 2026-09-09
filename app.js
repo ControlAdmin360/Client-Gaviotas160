@@ -2535,7 +2535,6 @@ function sincronizarEstadoControlesExon() {
 
 // CONTROLADORES DE LOS 5 CHECKBOXES (Reglas de Exclusión y Simultaniedad)
 function sincronizarEstadoControlesExon() {
-
   const chkMorTot = document.getElementById('exon-moras-totales-check');
   const chkMulTot = document.getElementById('exon-multas-totales-check');
   const chkPer    = document.getElementById('exon-actual-moras-check');
@@ -2790,7 +2789,7 @@ async function validarYGuardarExon() {
   }
 
   // Mensajes de confirmación
-  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n → Ud como operador asume la responsabilidad de ejecutar esta acción y contar con previa autorización para tal FIN."
+  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n → Ud como operador asume la responsabilidad de ejecutar esta acción y contar con previa autorización para tal fin."
   let mensajeConfirm = `Confirma que desea registrar la operación para el Dpto: ${depa}❓\n → Ud como operador asume la responsabilidad de ejecutar esta acción y contar con previa autorización para tal fin.`;
    if (chkElim) {
     mensajeConfirm = `Está seguro de ANULAR la exoneración activa del Departamento: ${depa}❓`;
@@ -3037,38 +3036,22 @@ function handlePortonToggle(checked) {
 document.getElementById('config-depa')?.addEventListener('change', function() {
   const idDepa = this.value;
   if (!idDepa) return;
-
-  const cboConcepto = document.getElementById('exon-concepto');
-  const inpMonto    = document.getElementById('exon-monto');
-
   netRun()
     .withSuccessHandler(res => {
       if (res) {
-        document.getElementById('config-cuota-extra').value = res.valorCuota || "";
-        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota || "";
-
-        if (window.toast) {
-          toast("⚠️ Este Departamento Cuenta con Exoneracion Activa");
-        }
-        // Deshabilitar campos si hay configuración activa
-        if (cboConcepto) cboConcepto.disabled = true;
-        if (inpMonto) inpMonto.disabled = true;
-
+        document.getElementById('config-cuota-extra').value = res.valorCuota;
+        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
       } else {
         document.getElementById('config-cuota-extra').value = "";
         document.getElementById('config-descrip-cuota-extra').value = "";
-        // Habilitar/Limpiar campos si no tiene exoneración/configuración
-        if (cboConcepto) { cboConcepto.value = "";
-          cboConcepto.disabled = false; }
-        if (inpMonto) { inpMonto.value = "";
-          inpMonto.disabled = false; }
       }
     })
     .withFailureHandler(err => {
+      // Usamos la función flash si la tienes, o una alerta limpia de error
       alert("❌ Error al conectar con el servidor: " + (err?.message || err));
     })
     .obtenerConfiguracionIdDepa(idDepa);
-});
+})
 
 function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCache = "") {
   let dia = document.getElementById('config-dia-pago').value;
