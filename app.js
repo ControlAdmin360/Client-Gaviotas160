@@ -2454,6 +2454,7 @@ function limpiarControlesExon() {
 }
 
 function sincronizarEstadoControlesExon() {
+
   const chkMorTot = document.getElementById('exon-moras-totales-check');
   const chkMulTot = document.getElementById('exon-multas-totales-check');
   const chkPer    = document.getElementById('exon-actual-moras-check');
@@ -2642,6 +2643,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       const chkCongelar = document.getElementById('exon-moras-check');
       const chkPeriodo = document.getElementById('exon-actual-moras-check');
       const inputDescrip = document.getElementById('exon-descrip');
+      const inpMonto    = document.getElementById('exon-monto');
+      const cboConcepto = document.getElementById('exon-concepto');
 
       const tieneActiva = Boolean(resFormula?.tieneFormula || resFormula?.tieneExoneracion || (resFormula?.descripExistente && resFormula.descripExistente.trim() !== ""));
       tieneExoneracionPrevia = tieneActiva;
@@ -2651,12 +2654,16 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
+        inpMonto.disabled = true; 
+        cboConcepto.disabled = true; 
         if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
         if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
         if (inputDescrip) inputDescrip.value = "";
+        inpMonto.disabled = false; 
+        cboConcepto.disabled = false; 
       }
     })
     .verificarFormulaDepa(idDepa);
@@ -2747,7 +2754,7 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
 async function validarYGuardarExon() {
   const depa = document.getElementById('exon-depa')?.value;
   if (!depa) {
-    alert("⚠️ Por favor seleccione un departamento.");
+    alert("⚠️ Por favor seleccione el dpto. a procesar");
     return;
   }
 
