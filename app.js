@@ -2553,6 +2553,8 @@ function sincronizarEstadoControlesExon() {
   }
 
   if (chkElim?.checked){
+    if (chkMorTot) { chkMorTot.disabled = true; }
+    if (chkMulTot) { chkMulTot.disabled = true; }
     if (cboConcepto) { cboConcepto.disabled = true; }
     if (inpMonto) { inpMonto.disabled = true; }
     return;
@@ -2656,7 +2658,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       tieneExoneracionPrevia = tieneActiva;
 
       if (tieneActiva) {
-        if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = false; }
+        if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = true; }
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
