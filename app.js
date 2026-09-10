@@ -2688,8 +2688,9 @@ document.getElementById('exon-concepto')?.addEventListener('change', function() 
   const idDepa = document.getElementById('exon-depa')?.value;
   const concepto =document.getElementById('exon-concepto').value;
 
-  if (deudasDepaModal.morNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Multas.`); concepto.value = "Select";}
-  if (deudasDepaModal.mulNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Moras`); concepto.value = "Select";}
+  if (concepto.value === "MORAS" && deudasDepaModal.morNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Multas.`); concepto.value = "Select";}
+  if (concepto.value === "MULTAS" && deudasDepaModal.mulNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Moras`); concepto.value = "Select";}
+  if (concepto.value === "MORAS&MULTAS" && (deudasDepaModal.morNum === 0 || deudasDepaModal.mulNum === 0)){ alert(`ℹ️ El Concepto no Aplica para este caso del Dpto. ${idDepa}`); concepto.value = "Select";}
 
   sincronizarEstadoControlesExon();
 });
