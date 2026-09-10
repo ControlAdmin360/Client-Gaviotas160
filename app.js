@@ -2828,6 +2828,10 @@ function abrirModalMultas() {
   // Limpiar campos
   const inpMonto = document.getElementById('multas-monto');
   if (inpMonto) inpMonto.value = "";
+  
+  if (selectDepa && selectDepa.value) {
+    verificarMultaPreviaExistente();
+  }
 }
 
 function cerrarModalMultas() {
