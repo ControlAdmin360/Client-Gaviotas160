@@ -2511,7 +2511,7 @@ function sincronizarEstadoControlesExon() {
   // CASO 6: ELIMINAR EXONERACION MARCADO 🚫
   if (chkElim){ inpMonto.value = morasDelPeriodo; cboConcepto.disabled = true;
     inpMonto.disabled = true;
-      return;
+    return;
   }
 
   // CASO 7: NINGUNO MARCADO (Ajuste Manual / Reintegro)
@@ -2594,7 +2594,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (inputDescrip) {inputDescrip.value = "";} 
         if (inpMonto){inpMonto.disabled = false;  inpMonto.value = 0;}
         if (cboConcepto){cboConcepto.disabled = false; cboConcepto.value = "Select";} 
-      }
+      } 
+      sincronizarEstadoControlesExon();
     })
     .verificarFormulaDepa(idDepa);
 });
