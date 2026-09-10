@@ -2701,7 +2701,7 @@ document.getElementById('exon-concepto')?.addEventListener('change', function() 
 async function validarYGuardarExon() {
   const depa = document.getElementById('exon-depa')?.value;
   if (!depa) {
-    alert("⚠️ Por favor seleccione el dpto. a procesar");
+    alert("⚠️ Por favor seleccione el Dpto. a procesar");
     return;
   }
   const chkMorTot = document.getElementById('exon-moras-totales-check')?.checked;
@@ -2879,7 +2879,7 @@ async function validarYGuardarMulta() {
   const btn   = document.getElementById('btn-save-multas');
 
   if (!depa || !tipo || !monto) {
-    if (window.toast) toast("⚠️ Seleccione Departamento, Tipo y Monto.");
+    if (window.toast) toast("⚠️ Seleccione el Dpto., Tipo y Monto al aplicar la sanción.");
     return;
   }
 
@@ -2894,13 +2894,13 @@ async function validarYGuardarMulta() {
   const modo = esSumar ? 'SUMAR' : 'REEMPLAZAR';
 
   const valorPrevio = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
-  let mensajeConfirm = `ℹ️→Confirma registrar la multa por S/ ${montoNum.toFixed(2)} al Departamento ${depa} ❓`;
+  let mensajeConfirm = `ℹ️→Confirma registrar la multa por S/ ${montoNum.toFixed(2)} al Dpto. ${depa} ❓`;
 
   if (valorPrevio > 0) {
     if (modo === 'SUMAR') {
-      mensajeConfirm = `ℹ️→Confirma SUMAR S/ ${montoNum.toFixed(2)} a la multa existente de S/ ${valorPrevio.toFixed(2)} (Total acumulado: S/ ${(valorPrevio + montoNum).toFixed(2)}) para el Dpto ${depa} ❓`;
+      mensajeConfirm = `ℹ️→Confirma SUMAR S/ ${montoNum.toFixed(2)} a la multa existente de S/ ${valorPrevio.toFixed(2)} (Total acumulado: S/ ${(valorPrevio + montoNum).toFixed(2)}) para el Dpto. ${depa} ❓`;
     } else {
-      mensajeConfirm = `ℹ️→Confirma REEMPLAZAR la multa existente de S/ ${valorPrevio.toFixed(2)} con el nuevo valor de S/ ${montoNum.toFixed(2)} para el Dpto ${depa} ❓`;
+      mensajeConfirm = `ℹ️→Confirma REEMPLAZAR la multa existente de S/ ${valorPrevio.toFixed(2)} con el nuevo valor de S/ ${montoNum.toFixed(2)} para el Dpto. ${depa} ❓`;
     }
   }
 
