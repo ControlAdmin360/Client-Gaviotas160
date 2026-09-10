@@ -2380,6 +2380,7 @@ uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:15,   color:'
 let deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
 let tieneExoneracionPrevia = false;
 let morasDelPeriodo = 0;
+let multasPreviasDepa = { multaInasist: 0, multaNormas: 0 };
 
 
 function abrirModalExon() {
@@ -2806,13 +2807,14 @@ async function validarYGuardarExon() {
 // abrir el modal de Multas
 function abrirModalMultas() {
   const modal = document.getElementById('modal-multas-sanciones');
+  if (!modal) return;
   
   modal.style.display = 'flex';
-  // Poblar el combo de departamentos de forma segura
+  cerrarPanelMultaExistente();
+
   const selectDepa = document.getElementById('multas-depa');
-  if (selectDepa && selectDepa.options.length <= 1) { // Solo si existe y no ha sido poblado
-    const depas = (typeof window.LISTAS !== 'undefined' && window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
-    
+  if (selectDepa && selectDepa.options.length <= 1) {
+    const depas = (window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
     selectDepa.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
       let opt = document.createElement('option');
@@ -2822,68 +2824,146 @@ function abrirModalMultas() {
     });
   }
 }
+function verificarMultaPreviaExistente() {
+  const idDepa = document.getElementById('multas-depa')?.value;
+  const tipo   = document.getElementById('multas-tipo')?.value;
+  const panel  = document.getElementById('panel-multa-existente');
 
-// cerrar el modal de Multas
-function validarYGuardarMulta() {
-  const depa = document.getElementById('multas-depa').value;
-  const tipo = document.getElementById('multas-tipo').value;
-  const monto = document.getElementById('multas-monto').value;
-  const btn = document.getElementById('btn-save-multas');
-
-  if (!depa || !tipo || !monto) {
-    if (window.toast) toast("⚠️ Seleccione Departamento, Tipo y Monto (❓)");
-    return 
+  if (!idDepa || !tipo) {
+    cerrarPanelMultaExistente();
+    return;
   }
-
-  if (!confirm(`❓ ¿Confirma el registro de ${tipo} por S/. ${monto} al departamento: ${depa}?`)) return;
-  const user = sessionStorage.getItem('AUTH_USER') || 'unknonw';
-
-  btn.disabled = true;
-  btn.textContent = "⏳ Espere...";
-  btn.style.backgroundColor = "#0354f4"; // El azul de otros botones
-  btn.style.color = "#ffffff";
 
   netRun()
-  .withSuccessHandler((res) => {
-    // 1. Cerramos el modal
-    cerrarModalMultas(); 
+    .withSuccessHandler(res => {
+      if (!res || !res.ok) {
+        cerrarPanelMultaExistente();
+        return;
+      }
 
-    // 2. Avisamos al usuario
-    if (window.toast) toast("Multa registrada correctamente (✅)");
+      multasPreviasDepa.multaInasist = Number(res.multaInasist) || 0;
+      multasPreviasDepa.multaNormas  = Number(res.multaNormas) || 0;
 
-    // 3. Refrescamos la tabla de recibos
-    const btnRefresh = document.getElementById('recibos-refresh');
-    if (btnRefresh) btnRefresh.click();
+      const valorActual = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
 
-    // 4. Restauramos el botón
-    btn.disabled = false;
-    btn.textContent = "Registrar Multa";
-    btn.style.backgroundColor = ""; 
-    btn.style.color = "";
-  })
-  .withFailureHandler(err => {
-    alert("❌ Error en el Servidor: " + (err.message || err));
-    btn.disabled = false;
-    btn.textContent = "Registrar Multa";
-    btn.style.backgroundColor = ""; 
-    btn.style.color = "";
-  })
-  .procesarMultas(depa, Math.abs(monto), tipo, user);
+      if (valorActual > 0) {
+        document.getElementById('lbl-multa-previa-valor').textContent = `S/ ${valorActual.toFixed(2)}`;
+        if (panel) panel.style.display = 'block';
+        document.getElementById('opt-multa-sumar').checked = true;
+        actualizarPreviewCalculoMulta();
+      } else {
+        if (panel) panel.style.display = 'none';
+      }
+    })
+    .api_consultarMultasDepa(idDepa);
 }
-// session de Configuracion
+function actualizarPreviewCalculoMulta() {
+  const tipo = document.getElementById('multas-tipo')?.value;
+  const montoInput = parseFloat(document.getElementById('multas-monto')?.value) || 0;
+  const valorPrevio = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
+
+  const totalSumado = valorPrevio + montoInput;
+  const lblSumar = document.getElementById('lbl-multa-preview-sumar');
+  const lblReemplazar = document.getElementById('lbl-multa-preview-reemplazar');
+
+  if (lblSumar) lblSumar.textContent = `(Nuevo total: S/ ${totalSumado.toFixed(2)})`;
+  if (lblReemplazar) lblReemplazar.textContent = `(Nuevo total: S/ ${montoInput.toFixed(2)})`;
+}
+
+
+// cerrar el modal de Multas
+async function validarYGuardarMulta() {
+  const depa  = document.getElementById('multas-depa')?.value;
+  const tipo  = document.getElementById('multas-tipo')?.value;
+  const monto = document.getElementById('multas-monto')?.value;
+  const btn   = document.getElementById('btn-save-multas');
+
+  if (!depa || !tipo || !monto) {
+    if (window.toast) toast("⚠️ Seleccione Departamento, Tipo y Monto.");
+    return;
+  }
+
+  const montoNum = parseFloat(monto) || 0;
+  if (montoNum <= 0) {
+    alert("⚠️ Ingrese un monto mayor a S/ 0.00.");
+    return;
+  }
+
+  // Detectar modo
+  const esSumar = document.getElementById('opt-multa-sumar')?.checked;
+  const modo = esSumar ? 'SUMAR' : 'REEMPLAZAR';
+
+  const valorPrevio = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
+  let mensajeConfirm = `ℹ️→Confirma registrar la multa por S/ ${montoNum.toFixed(2)} al Departamento ${depa} ❓`;
+
+  if (valorPrevio > 0) {
+    if (modo === 'SUMAR') {
+      mensajeConfirm = `ℹ️→Confirma SUMAR S/ ${montoNum.toFixed(2)} a la multa existente de S/ ${valorPrevio.toFixed(2)} (Total acumulado: S/ ${(valorPrevio + montoNum).toFixed(2)}) para el Dpto ${depa} ❓`;
+    } else {
+      mensajeConfirm = `ℹ️→Confirma REEMPLAZAR la multa existente de S/ ${valorPrevio.toFixed(2)} con el nuevo valor de S/ ${montoNum.toFixed(2)} para el Dpto ${depa} ❓`;
+    }
+  }
+
+  if (!confirm(mensajeConfirm)) return;
+
+  const user = window.usuarioActivo?.() || 'ADMIN';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Procesando...";
+  }
+
+  const payload = {
+    idDepa: depa,
+    monto: montoNum,
+    tipo: tipo,
+    modo: modo,
+    token: user
+  };
+
+  netRun()
+    .withSuccessHandler((res) => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "💾 Registrar Multa";
+      }
+
+      if (!res || !res.ok) {
+        alert(res?.error || "Error al procesar la multa.");
+        return;
+      }
+
+      if (window.toast) toast(res.mensaje || "Multa registrada correctamente.");
+      cerrarModalMultas();
+
+      // Refrescar tabla de recibos
+      if (typeof reloadRecibos === 'function') reloadRecibos();
+    })
+    .withFailureHandler(err => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "💾 Registrar Multa";
+      }
+      alert("❌ Error en el Servidor: " + (err.message || err));
+    })
+    .procesarMultas(payload);
+}
+function cerrarPanelMultaExistente() {
+  const panel = document.getElementById('panel-multa-existente');
+  if (panel) panel.style.display = 'none';
+  multasPreviasDepa = { multaInasist: 0, multaNormas: 0 };
+}
 function cerrarModalMultas() {
   const modal = document.getElementById('modal-multas-sanciones');
-  if (modal) {
-    modal.style.display = 'none';
-  }
-  // Limpieza segura (usando optional chaining o verificando que existan)
-  const ids = ['multas-depa', 'multas-tipo', 'multas-monto'];
+  if (modal) modal.style.display = 'none';
+
+  const ids = ['multas-depa', 'multas-monto'];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
+  cerrarPanelMultaExistente();
 }
-
+// session de Configuracion
 function abrirModalConfig() {
   const modal = document.getElementById('modal-configuraciones');
   if (!modal) return;
