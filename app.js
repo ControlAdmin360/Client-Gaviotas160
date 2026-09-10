@@ -2498,7 +2498,7 @@ function sincronizarEstadoControlesExon() {
   // CASO 4: MORAS PERIODO ACTUAL (📆)
   if (chkPer?.checked) {
     if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
-    if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
+    if (inpMonto) { inpMonto.value = morasDelPeriodo; inpMonto.disabled = true; }
     return;
   }
 
@@ -2508,13 +2508,8 @@ function sincronizarEstadoControlesExon() {
     if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
     return;
   }
-  // CASO 6: ELIMINAR EXONERACION MARCADO 🚫
-  if (chkElim){ inpMonto.value = morasDelPeriodo; cboConcepto.disabled = true;
-    inpMonto.disabled = true;
-    return;
-  }
 
-  // CASO 7: NINGUNO MARCADO (Ajuste Manual / Reintegro)
+  // CASO 6: NINGUNO MARCADO (Ajuste Manual / Reintegro)
   if (cboConcepto) cboConcepto.disabled = false;
   if (inpMonto) inpMonto.disabled = false;
 
