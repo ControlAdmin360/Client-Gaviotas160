@@ -2505,7 +2505,7 @@ function sincronizarEstadoControlesExon() {
   // CASO 5: CONGELAR DEFINITIVO (🚩)
   if (chkCong?.checked) {
     if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
-    if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
+    if (inpMonto) { inpMonto.value = 0.00; inpMonto.disabled = true; }
     return;
   }
 
