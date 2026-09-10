@@ -2692,7 +2692,7 @@ document.getElementById('exon-concepto')?.addEventListener('change', function() 
   if (concepto.value === "MULTAS" && deudasDepaModal.mulNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Moras`); concepto.value = "Select";}
   if (concepto.value === "MORAS&MULTAS" && (deudasDepaModal.morNum === 0 || deudasDepaModal.mulNum === 0)){ alert(`ℹ️ El Concepto no Aplica para este caso del Dpto. ${idDepa}`); concepto.value = "Select";}
 
-  sincronizarEstadoControlesExon();
+  //sincronizarEstadoControlesExon();
 });
 
 // 3. Validaciones y guardado
@@ -2730,6 +2730,7 @@ async function validarYGuardarExon() {
       alert("⚠️ Ingrese el Monto valido que va aplicar.");
       return;
     }
+    /*
     if (concepto === "MORAS" && monto > deudasDepaModal.morNum) {
       alert(`⚠️ El monto (S/ ${monto.toFixed(2)}) supera la deuda de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}).`);
       return;
@@ -2737,7 +2738,7 @@ async function validarYGuardarExon() {
     if (concepto === "MULTAS" && monto > deudasDepaModal.mulNum) {
       alert(`⚠️ El monto (S/ ${monto.toFixed(2)}) supera la deuda de Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}).`);
       return;
-    }
+    }*/
   }
 
   // Mensajes de confirmación
