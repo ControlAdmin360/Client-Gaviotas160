@@ -2379,6 +2379,7 @@ uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:15,   color:'
 // Variable local para almacenar las deudas en memoria al consultar el modal
 let deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
 let tieneExoneracionPrevia = false;
+let morasDelPeriodo = 0;
 
 
 function abrirModalExon() {
@@ -2558,23 +2559,25 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
 
   // 2. Verificar si tiene exoneraciones vigentes
   netRun()
-    .withSuccessHandler(resFormula => {
+    .withSuccessHandler(res => {
       const chkElim = document.getElementById('exon-eliminar-check');
       const chkCongelar = document.getElementById('exon-moras-check');
       const chkPeriodo = document.getElementById('exon-actual-moras-check');
       const inputDescrip = document.getElementById('exon-descrip');
       const inpMonto    = document.getElementById('exon-monto');
       const cboConcepto = document.getElementById('exon-concepto');
-      const tieneActiva = Boolean(resFormula?.tieneFormula || resFormula?.tieneExoneracion);
+      const tieneActiva = Boolean(res?.tieneFormula || res?.tieneExoneracion);
+      const morasdePeriod = Number(res?.morasPeriodo);
       tieneExoneracionPrevia = tieneActiva;
+      morasDelPeriodo = morasdePeriod;
 
       if (tieneActiva) {
         if (chkElim) { chkElim.checked = true; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
-        if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
-        if (inpMonto){inpMonto.disabled = true; inpMonto.value = resFormula.montoExistente || 0;} 
-        if (cboConcepto){cboConcepto.disabled = true; cboConcepto.value = resFormula.conceptoExistente || ""; cboConcepto.disabled = true;}
+        if (inputDescrip) inputDescrip.value = res.descripExistente || "";
+        if (inpMonto){inpMonto.disabled = true; inpMonto.value = res.montoExistente || 0;} 
+        if (cboConcepto){cboConcepto.disabled = true; cboConcepto.value = res.conceptoExistente || ""; cboConcepto.disabled = true;}
         alert(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
         //if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
@@ -2658,9 +2661,9 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-concepto').disabled = true;
     document.getElementById('exon-concepto').value = "MORAS";
     document.getElementById('exon-monto').disabled = true;
+    document.getElementById('exon-monto').value = morasDelPeriodo;
     document.getElementById('exon-moras-totales-check').disabled = true;
     document.getElementById('exon-multas-totales-check').disabled = true;
-    
   }
   sincronizarEstadoControlesExon();
 });
