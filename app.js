@@ -2462,13 +2462,13 @@ function sincronizarEstadoControlesExon() {
   const chkMulTot = document.getElementById('exon-multas-totales-check');
   const chkPer    = document.getElementById('exon-actual-moras-check');
   const chkCong   = document.getElementById('exon-moras-check');
-  //const chkElim   = document.getElementById('exon-eliminar-check');
+  const chkElim   = document.getElementById('exon-eliminar-check');
 
   const cboConcepto = document.getElementById('exon-concepto');
   const inpMonto    = document.getElementById('exon-monto');
 
   // CASO 0: AMBOS DESMARCADOS (🕒 + 👮‍♂️)
-  if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked) {
+  if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked && !chkElim.checked) {
     if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = false; }
     if (inpMonto) { inpMonto.value = 0; inpMonto.disabled = false; }
     return;
