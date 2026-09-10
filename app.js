@@ -2566,7 +2566,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (tieneActiva) {
         if (chkMorTot) { chkMorTot.disabled = true;}
         if (chkMulTot) { chkMulTot.disabled = true;}
-        if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = true; }
+        if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = true; }
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
@@ -2577,14 +2577,13 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       } else {
         if (chkMorTot) { chkMorTot.disabled = false;}
         if (chkMulTot) { chkMulTot.disabled = false;}
-        if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
+        if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
         if (inputDescrip) {inputDescrip.value = "";}
         if (inpMonto){inpMonto.disabled = false; }
         if (cboConcepto){cboConcepto.disabled = false;} 
       }
-      //sincronizarEstadoControlesExon();
     })
     .verificarFormulaDepa(idDepa);
 });
