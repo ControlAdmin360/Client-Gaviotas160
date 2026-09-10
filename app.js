@@ -2509,8 +2509,11 @@ function sincronizarEstadoControlesExon() {
     return;
   }
   // CASO 6: ELIMINAR EXONERACION MARCADO 🚫
-  if (chkElim) inpMonto.value = morasDelPeriodo;
-  
+  if (chkElim){ inpMonto.value = morasDelPeriodo; cboConcepto.disabled = true;
+    inpMonto.disabled = true;
+      return;
+  }
+
   // CASO 7: NINGUNO MARCADO (Ajuste Manual / Reintegro)
   if (cboConcepto) cboConcepto.disabled = false;
   if (inpMonto) inpMonto.disabled = false;
