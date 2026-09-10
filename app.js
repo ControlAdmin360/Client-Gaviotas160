@@ -2411,7 +2411,7 @@ function cerrarModalExon() {
 function limpiarControlesExon() {
   const ids = [
     'exon-moras-totales-check', 'exon-multas-totales-check',
-    'exon-actual-moras-check', 'exon-moras-check', 'exon-eliminar-check'
+    'exon-actual-moras-check', 'exon-moras-check'
   ];
   ids.forEach(id => {
     const el = document.getElementById(id);
@@ -2422,6 +2422,8 @@ function limpiarControlesExon() {
   const concepto = document.getElementById('exon-concepto');
   const monto = document.getElementById('exon-monto');
   const descrip = document.getElementById('exon-descrip');
+  const chkEliminar = document.getElementById('exon-eliminar-check');
+  chkEliminar.disabled = true;
 
   if (depa) depa.value = "";
   if (concepto) { 
