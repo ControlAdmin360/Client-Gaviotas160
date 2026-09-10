@@ -2551,6 +2551,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
   // 2. Verificar si tiene exoneraciones vigentes
   netRun()
     .withSuccessHandler(resFormula => {
+      const chkMorTot = document.getElementById('exon-moras-totales-check');
+      const chkMulTot = document.getElementById('exon-multas-totales-check');
       const chkEliminar = document.getElementById('exon-eliminar-check');
       const chkCongelar = document.getElementById('exon-moras-check');
       const chkPeriodo = document.getElementById('exon-actual-moras-check');
@@ -2562,6 +2564,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       tieneExoneracionPrevia = tieneActiva;
 
       if (tieneActiva) {
+        if (chkMorTot) { chkMorTot.disabled = true;}
+        if (chkMulTot) { chkMulTot.disabled = true;}
         if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = true; }
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
@@ -2571,6 +2575,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         alert(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
         //if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
+        if (chkMorTot) { chkMorTot.disabled = false;}
+        if (chkMulTot) { chkMulTot.disabled = false;}
         if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
@@ -2662,8 +2668,8 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-moras-check').checked = false;
     document.getElementById('exon-concepto').disabled = true;
     document.getElementById('exon-monto').disabled = true;
-    document.getElementById('exon-moras-totales-check').disabled = true;;
-    document.getElementById('exon-multas-totales-check').disabled = true;;
+    document.getElementById('exon-moras-totales-check').disabled = true;
+    document.getElementById('exon-multas-totales-check').disabled = true;
   }
   sincronizarEstadoControlesExon();
 });
