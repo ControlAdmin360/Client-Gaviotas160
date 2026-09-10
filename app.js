@@ -2710,7 +2710,7 @@ async function validarYGuardarExon() {
 
   // Validación de descripción obligatoria
   if (!chkElim && descrip.length < 6) {
-    alert("⚠️ Ingrese un Motivo / Sustento válido (mínimo 6 caracteres).");
+    alert("⚠️ Ingrese el Sustento que indique el Motivo válido para la ejecucion de esta acción (mínimo 6 caracteres).");
     return;
   }
 
