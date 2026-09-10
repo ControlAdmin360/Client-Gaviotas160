@@ -2729,8 +2729,8 @@ async function validarYGuardarExon() {
   }
 
   // Mensajes de confirmación
-  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n → Ud como operador asume la responsabilidad de ejecutar esta acción y contar con previa autorización para tal fin."
-  let mensajeConfirm = `Confirma que desea registrar la operación para el Dpto: ${depa}❓\n → Ud como operador asume la responsabilidad de ejecutar esta acción y contar con previa autorización para tal fin.`;
+  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin."
+  let mensajeConfirm = `Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin`;
    if (chkElim) {
     mensajeConfirm = `Está seguro de ANULAR la exoneración activa del Departamento: ${depa}❓`;
   } else if (chkMorTot && chkMulTot) {
@@ -2741,9 +2741,9 @@ async function validarYGuardarExon() {
     mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto: ${depa}❓ \n\n ${mensajeAdvertencia}`;
   
   } else if (concepto === "RECIBOS") {
-    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opcion generará una ORDEN DE ACREDITACION DE SALDO POR ${monto} A FAVOR para el RECIBO del Departamento: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un reclamo formal ante la Administracion o Junta de Propietarios por algun cobro indebido o por error en su facturación. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n → Ud como operador asume la responsabilidad de ejecutar esta acción si no cuenta con una autorización previa para tal fin.`;
+    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opción generará una ORDEN DE ACREDITACION DE SALDO POR S/ ${monto} A FAVOR en el RECIBO del Dpto: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un RECLAMO formal ante la Administracion o Junta de Propietarios por algun cobro indebido o por error en su facturación. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin.`;
   } else if (concepto === "REINTEGRO") {
-    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opcion generará una ORDEN DE REINTEGRO DE SALDO POR ${monto} A FAVOR para el RECIBO del Departamento: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un pago EXEDENTE al monto total de su recibo y este haya solicitado una devolucion por la DIFERENCIA del mismo. \n⚠️ Aplicar SOLO posterior a la ejecucion del reintegro y por el monto devuelto. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n → Ud como operador asume la responsabilidad de ejecutar esta acción si no cuenta con una autorización previa para tal fin.`;
+    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opción generará una ORDEN DE REINTEGRO DE SALDO POR S/ ${monto} A FAVOR en el RECIBO del Dpto: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un pago EXEDENTE al monto total de su recibo y este haya formalizado una solicitud de reintegro por la DIFERENCIA de pago. \n⚠️ SOLO APLICAR posterior a la ejecucion del reintegro y por el monto EXACTO devuelto. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin.`;
   }
 
   if (!confirm(mensajeConfirm)) return;
