@@ -2727,15 +2727,15 @@ async function validarYGuardarExon() {
       return;
     }
     if (concepto === "MORAS" && monto > deudasDepaModal.morNum) {
-      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Moras: ${deudasDepaModal.morNum}`);
+      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Moras: S/ ${deudasDepaModal.morNum}`);
       return;
     }
     if (concepto === "MULTAS" && monto > deudasDepaModal.mulNum) {
-      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Multas: ${deudasDepaModal.mulNum}`);
+      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Multas: S/ ${deudasDepaModal.mulNum}`);
       return;
     }
     if (concepto === "MORAS&MULTAS" && monto > (deudasDepaModal.mulNum + deudasDepaModal.morNum)) {
-      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Moras y Multas: ${deudasDepaModal.morNum+deudasDepaModal.mulNum}`);
+      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la suma de la Deuda Total de Moras y Multas: S/ ${deudasDepaModal.morNum+deudasDepaModal.mulNum}`);
       return;
     }
 
