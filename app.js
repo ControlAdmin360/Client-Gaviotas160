@@ -2569,12 +2569,12 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (tieneActiva) {
         if (chkMorTot) { chkMorTot.disabled = true;}
         if (chkMulTot) { chkMulTot.disabled = true;}
-        if (chkElim) { chkElim.checked = false; chkElim.disabled = false;}
+        if (chkElim) { chkElim.checked = false; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
         if (inpMonto){inpMonto.disabled = true; inpMonto.value = resFormula.montoExistente || 0;} 
-        if (cboConcepto){cboConcepto.disabled = true; cboConcepto.value = resFormula.conceptoExistente || "";}
+        if (cboConcepto){cboConcepto.disabled = true; cboConcepto.value = resFormula.conceptoExistente || ""; cboConcepto.disabled = true;}
         alert(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
         //if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
