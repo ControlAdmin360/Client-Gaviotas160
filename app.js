@@ -2579,6 +2579,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (cboConcepto){cboConcepto.disabled = false;} 
       }
     })
+    sincronizarEstadoControlesExon();
     .verificarFormulaDepa(idDepa);
 });
 
