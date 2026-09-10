@@ -2392,8 +2392,8 @@ function abrirModalExon() {
 
   const select = document.getElementById('exon-depa');
   if (select && select.options.length <= 1) {
-    const chkEliminar = document.getElementById('exon-eliminar-check');
-    chkEliminar.disabled = true;
+    //const chkElim = document.getElementById('exon-eliminar-check');
+    //chkElim.disabled = true;
     const depas = (window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
     select.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
@@ -2556,7 +2556,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
     .withSuccessHandler(resFormula => {
       const chkMorTot = document.getElementById('exon-moras-totales-check');
       const chkMulTot = document.getElementById('exon-multas-totales-check');
-      const chkEliminar = document.getElementById('exon-eliminar-check');
+      const chkElim = document.getElementById('exon-eliminar-check');
       const chkCongelar = document.getElementById('exon-moras-check');
       const chkPeriodo = document.getElementById('exon-actual-moras-check');
       const inputDescrip = document.getElementById('exon-descrip');
@@ -2569,7 +2569,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (tieneActiva) {
         if (chkMorTot) { chkMorTot.disabled = true;}
         if (chkMulTot) { chkMulTot.disabled = true;}
-        if (chkEliminar) { chkEliminar.checked = true; }
+        if (chkElim) { chkElim.checked = true; }
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
@@ -2580,7 +2580,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       } else {
         if (chkMorTot) { chkMorTot.disabled = false;}
         if (chkMulTot) { chkMulTot.disabled = false;}
-        if (chkEliminar) { chkEliminar.checked = false; }
+        if (chkElim) { chkElim.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
         if (inputDescrip) {inputDescrip.value = "";} 
@@ -2660,7 +2660,7 @@ document.getElementById('exon-moras-check')?.addEventListener('change', function
   }
   sincronizarEstadoControlesExon();
 });
-/*
+
 // Check 5: 🚫 Eliminar Exoneración Actual
 document.getElementById('exon-eliminar-check')?.addEventListener('change', function() {
   if (this.checked) {
@@ -2674,7 +2674,7 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-multas-totales-check').disabled = true;
   }
   sincronizarEstadoControlesExon();
-});*/
+});
 
 // 3. Validaciones y guardado
 async function validarYGuardarExon() {
