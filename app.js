@@ -2688,7 +2688,7 @@ async function validarYGuardarExon() {
   const chkMulTot = document.getElementById('exon-multas-totales-check')?.checked;
   const chkPer    = document.getElementById('exon-actual-moras-check')?.checked;
   const chkCong   = document.getElementById('exon-moras-check')?.checked;
-  //const chkElim   = document.getElementById('exon-eliminar-check')?.checked;
+  const chkElim   = document.getElementById('exon-eliminar-check')?.checked;
 
   const concepto = document.getElementById('exon-concepto')?.value || 'Select';
   const monto = parseFloat(document.getElementById('exon-monto')?.value) || 0;
