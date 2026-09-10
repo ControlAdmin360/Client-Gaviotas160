@@ -2583,9 +2583,9 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         if (chkEliminar) { chkEliminar.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
-        if (inputDescrip) {inputDescrip.value = "";}
-        if (inpMonto){inpMonto.disabled = false; }
-        if (cboConcepto){cboConcepto.disabled = false;} 
+        if (inputDescrip) {inputDescrip.value = "";} 
+        if (inpMonto){inpMonto.disabled = false;  inpMonto.value = 0;}
+        if (cboConcepto){cboConcepto.disabled = false; cboConcepto.value = "";} 
       }
     })
     .verificarFormulaDepa(idDepa);
