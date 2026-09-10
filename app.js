@@ -2685,14 +2685,29 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
 
 // Validar Deudas
 document.getElementById('exon-concepto')?.addEventListener('change', function() {
-  const idDepa = document.getElementById('exon-depa')?.value;
-  const concepto =document.getElementById('exon-concepto').value;
-
-  if (concepto.value === "MORAS" && deudasDepaModal.morNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Multas.`); concepto.value = "Select";}
-  if (concepto.value === "MULTAS" && deudasDepaModal.mulNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Moras`); concepto.value = "Select";}
-  if (concepto.value === "MORAS&MULTAS" && (deudasDepaModal.morNum === 0 || deudasDepaModal.mulNum === 0)){ alert(`ℹ️ El Concepto no Aplica para este caso del Dpto. ${idDepa}`); concepto.value = "Select";}
-
-  //sincronizarEstadoControlesExon();
+  const cboDepa = document.getElementById('exon-depa');
+  const idDepa  = cboDepa?.value || '';
+  if (!idDepa) {
+    if (this.value !== "Select") {
+      alert("⚠️ Seleccione un Dpto. Valido");
+      this.value = "Select";
+    }
+    return;
+  }
+  const deudaMora   = Number(window.deudasDepaModal?.morNum) || 0;
+  const deudaMulta  = Number(window.deudasDepaModal?.mulNum) || 0;
+  if (this.value === "MORAS" && deudaMora === 0) {
+    alert(`ℹ️ El Dpto. ${idDepa} actualmente no cuenta con Deuda de Moras.`);
+    this.value = "Select";
+  }
+  if (this.value === "MULTAS" && deudaMulta === 0) {
+    alert(`ℹ️ El Dpto. ${idDepa} actualmente no cuenta con Deuda de Multas.`);
+    this.value = "Select";
+  }
+  if (this.value === "MORAS&MULTAS" && (deudaMora === 0 || deudaMulta === 0)) {
+    alert(`ℹ️ El concepto no aplica para el Dpto. ${idDepa} (debe registrar deuda activa en ambos rubros).`);
+    this.value = "Select";
+  }
 });
 
 // 3. Validaciones y guardado
