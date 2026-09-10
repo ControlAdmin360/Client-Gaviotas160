@@ -2515,7 +2515,6 @@ function sincronizarEstadoControlesExon() {
 
 }
 
-
 // Listener para detectar cambio de departamento buscar exoneracion de moras y descripcion existente
 document.getElementById('exon-depa')?.addEventListener('change', function() {
   const idDepa = this.value;
