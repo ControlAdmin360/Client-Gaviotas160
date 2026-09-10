@@ -1482,7 +1482,7 @@ body {
   opacity: 0;
   transition: .25s;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 999999;
 }
 
 #toast.show {
