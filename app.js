@@ -2992,7 +2992,6 @@ async function validarYGuardarMulta() {
     .procesarMultas(payload);
 }
 
-
 // session de Configuracion
 function abrirModalConfig() {
   const modal = document.getElementById('modal-configuraciones');
@@ -4581,6 +4580,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('banco-buscar')?.addEventListener('click', refreshBanco);
   document.getElementById('recibos-refresh')?.addEventListener('click', reloadRecibos);
   document.getElementById('servicios-refresh')?.addEventListener('click', cargarModuloServicios);
+  document.getElementById('multas-depa')?.addEventListener('change', verificarMultaPreviaExistente);
+  document.getElementById('multas-tipo')?.addEventListener('change', verificarMultaPreviaExistente);
+  document.getElementById('multas-monto')?.addEventListener('input', actualizarPreviewCalculoMulta);
+  document.getElementById('opt-multa-sumar')?.addEventListener('change', actualizarPreviewCalculoMulta);
+  document.getElementById('opt-multa-reemplazar')?.addEventListener('change', actualizarPreviewCalculoMulta);
   document.getElementById('comuna-refresh')?.addEventListener('click', setupComuna);
   document.getElementById('cons-buscar')?.addEventListener('click', cons_consultar);
   document.getElementById('btn-ver-recibo')?.addEventListener('click', cons_abrirReciboPDF);
@@ -4588,7 +4592,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-consolidar-periodo')?.addEventListener('click', iniciarFlujoConsolidacion);
   document.getElementById('btn-ejecutar-cierre')?.addEventListener('click', ejecutarProcesoCierreCompleto);
   document.getElementById('btn-cancelar-cierre')?.addEventListener('click', () => {
-    document.getElementById('modal-cierre-mes').style.display = 'none';
+  document.getElementById('modal-cierre-mes').style.display = 'none';
+
   });
   document.getElementById('btn-cerrar-modal-cierre')?.addEventListener('click', () => {
     document.getElementById('modal-cierre-mes').style.display = 'none';
