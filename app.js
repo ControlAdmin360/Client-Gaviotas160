@@ -2459,7 +2459,7 @@ function sincronizarEstadoControlesExon() {
   const chkMulTot = document.getElementById('exon-multas-totales-check');
   const chkPer    = document.getElementById('exon-actual-moras-check');
   const chkCong   = document.getElementById('exon-moras-check');
-  const chkElim   = document.getElementById('exon-eliminar-check');
+  //const chkElim   = document.getElementById('exon-eliminar-check');
 
   const cboConcepto = document.getElementById('exon-concepto');
   const inpMonto    = document.getElementById('exon-monto');
@@ -2566,7 +2566,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (tieneActiva) {
         if (chkMorTot) { chkMorTot.disabled = true;}
         if (chkMulTot) { chkMulTot.disabled = true;}
-        if (chkEliminar) { chkEliminar.disabled = true; chkEliminar.checked = true; }
+        if (chkEliminar) { chkEliminar.checked = true; }
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
@@ -2577,7 +2577,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       } else {
         if (chkMorTot) { chkMorTot.disabled = false;}
         if (chkMulTot) { chkMulTot.disabled = false;}
-        if (chkEliminar) { chkEliminar.disabled = false; chkEliminar.checked = false; }
+        if (chkEliminar) { chkEliminar.checked = false; }
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
         if (inputDescrip) {inputDescrip.value = "";}
@@ -2642,7 +2642,7 @@ document.getElementById('exon-actual-moras-check')?.addEventListener('change', f
     document.getElementById('exon-moras-totales-check').checked = false;
     document.getElementById('exon-multas-totales-check').checked = false;
     document.getElementById('exon-moras-check').checked = false;
-    document.getElementById('exon-eliminar-check').checked = false;
+    //document.getElementById('exon-eliminar-check').checked = false;
   }
   sincronizarEstadoControlesExon();
 });
@@ -2653,11 +2653,11 @@ document.getElementById('exon-moras-check')?.addEventListener('change', function
     document.getElementById('exon-moras-totales-check').checked = false;
     document.getElementById('exon-multas-totales-check').checked = false;
     document.getElementById('exon-actual-moras-check').checked = false;
-    document.getElementById('exon-eliminar-check').checked = false;
+    //document.getElementById('exon-eliminar-check').checked = false;
   }
   sincronizarEstadoControlesExon();
 });
-
+/*
 // Check 5: 🚫 Eliminar Exoneración Actual
 document.getElementById('exon-eliminar-check')?.addEventListener('change', function() {
   if (this.checked) {
@@ -2671,7 +2671,7 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-multas-totales-check').disabled = true;
   }
   sincronizarEstadoControlesExon();
-});
+});*/
 
 // 3. Validaciones y guardado
 async function validarYGuardarExon() {
@@ -2685,7 +2685,7 @@ async function validarYGuardarExon() {
   const chkMulTot = document.getElementById('exon-multas-totales-check')?.checked;
   const chkPer    = document.getElementById('exon-actual-moras-check')?.checked;
   const chkCong   = document.getElementById('exon-moras-check')?.checked;
-  const chkElim   = document.getElementById('exon-eliminar-check')?.checked;
+  //const chkElim   = document.getElementById('exon-eliminar-check')?.checked;
 
   const concepto = document.getElementById('exon-concepto')?.value || 'Select';
   const monto = parseFloat(document.getElementById('exon-monto')?.value) || 0;
