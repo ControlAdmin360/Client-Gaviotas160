@@ -2569,7 +2569,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (tieneActiva) {
         if (chkMorTot) { chkMorTot.disabled = true;}
         if (chkMulTot) { chkMulTot.disabled = true;}
-        if (chkElim) { chkElim.checked = true; }
+        if (chkElim) { chkElim.checked = false; chkElim.disabled = false;}
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
@@ -2580,12 +2580,12 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       } else {
         if (chkMorTot) { chkMorTot.disabled = false;}
         if (chkMulTot) { chkMulTot.disabled = false;}
-        if (chkElim) { chkElim.checked = false; }
+        if (chkElim) { chkElim.checked = false; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
         if (inputDescrip) {inputDescrip.value = "";} 
         if (inpMonto){inpMonto.disabled = false;  inpMonto.value = 0;}
-        if (cboConcepto){cboConcepto.disabled = false; cboConcepto.value = "";} 
+        if (cboConcepto){cboConcepto.disabled = false; cboConcepto.value = "Select";} 
       }
     })
     .verificarFormulaDepa(idDepa);
@@ -2645,7 +2645,7 @@ document.getElementById('exon-actual-moras-check')?.addEventListener('change', f
     document.getElementById('exon-moras-totales-check').checked = false;
     document.getElementById('exon-multas-totales-check').checked = false;
     document.getElementById('exon-moras-check').checked = false;
-    //document.getElementById('exon-eliminar-check').checked = false;
+    document.getElementById('exon-eliminar-check').checked = false;
   }
   sincronizarEstadoControlesExon();
 });
@@ -2656,7 +2656,7 @@ document.getElementById('exon-moras-check')?.addEventListener('change', function
     document.getElementById('exon-moras-totales-check').checked = false;
     document.getElementById('exon-multas-totales-check').checked = false;
     document.getElementById('exon-actual-moras-check').checked = false;
-    //document.getElementById('exon-eliminar-check').checked = false;
+    document.getElementById('exon-eliminar-check').checked = false;
   }
   sincronizarEstadoControlesExon();
 });
