@@ -2388,10 +2388,11 @@ function abrirModalExon() {
 
   modal.style.display = 'flex';
   limpiarControlesExon(); // 👈 Ahora sí encontrará la función
-  const chkEliminar = document.getElementById('exon-eliminar-check');
+  
 
   const select = document.getElementById('exon-depa');
   if (select && select.options.length <= 1) {
+    const chkEliminar = document.getElementById('exon-eliminar-check');
     chkEliminar.disabled = true;
     const depas = (window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
     select.innerHTML = '<option value="">Seleccione Departamento...</option>';
