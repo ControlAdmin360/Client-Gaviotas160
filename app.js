@@ -2672,7 +2672,13 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-monto').disabled = true;
     document.getElementById('exon-moras-totales-check').disabled = true;
     document.getElementById('exon-multas-totales-check').disabled = true;
+    document.getElementById('exon-concepto').value = "MORAS";
   }
+  sincronizarEstadoControlesExon();
+});
+
+document.getElementById('exon-depa')?.addEventListener('change', function() {
+  document.getElementById('exon-eliminar-check').checked = false;
   sincronizarEstadoControlesExon();
 });
 
