@@ -2683,6 +2683,17 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
   sincronizarEstadoControlesExon();
 });
 
+// Validar Deudas
+document.getElementById('exon-concepto')?.addEventListener('change', function() {
+  const idDepa = document.getElementById('exon-depa')?.value;
+  const concepto =document.getElementById('exon-concepto').value;
+
+  if (deudasDepaModal.morNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Multas.`); concepto.value = "Select";}
+  if (deudasDepaModal.mulNum === 0){ alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Moras`); concepto.value = "Select";}
+
+  sincronizarEstadoControlesExon();
+});
+
 // 3. Validaciones y guardado
 async function validarYGuardarExon() {
   const depa = document.getElementById('exon-depa')?.value;
