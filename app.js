@@ -2563,7 +2563,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       const inpMonto    = document.getElementById('exon-monto');
       const cboConcepto = document.getElementById('exon-concepto');
 
-      const tieneActiva = Boolean(resFormula?.tieneFormula || resFormula?.tieneExoneracion || (resFormula?.descripExistente && resFormula.descripExistente.trim() !== ""));
+      const tieneActiva = Boolean(resFormula?.tieneFormula || resFormula?.tieneExoneracion));
       tieneExoneracionPrevia = tieneActiva;
 
       if (tieneActiva) {
