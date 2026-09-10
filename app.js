@@ -2828,7 +2828,7 @@ function abrirModalMultas() {
   // Limpiar campos
   const inpMonto = document.getElementById('multas-monto');
   if (inpMonto) inpMonto.value = "";
-  
+
   if (selectDepa && selectDepa.value) {
     verificarMultaPreviaExistente();
   }
@@ -2879,7 +2879,7 @@ function verificarMultaPreviaExistente() {
         : multasPreviasDepa.multaNormas;
 
       // Si el departamento YA TIENE una multa en ese rubro (> 0):
-      if (valorActual > 0) {
+      if (valorActual > -2) {
         document.getElementById('lbl-multa-previa-valor').textContent = `S/ ${valorActual.toFixed(2)}`;
         if (panel) panel.style.display = 'block'; // 👈 Despliega el panel rojo
         
