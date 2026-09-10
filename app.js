@@ -2375,7 +2375,6 @@ uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:13,   color:'
 uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:14,   color:'#9CF5CD',bg:'#3F5E44' }); // N
 uiPaintCell({ tableId:'tabla-recibos', section:'thead', row:2, col:15,   color:'#9CF5CD',bg:'#3F5E44' }); // O
 
-
 // 1. Funciónes para abrir el modal Exoneraciones & Reintegros Multas & Configuraciones  Globales
 // Variable local para almacenar las deudas en memoria al consultar el modal
 let deudasDepaModal = { morNum: 0, mulNum: 0, recNum: 0, actNum: 0 };
@@ -2559,21 +2558,16 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
   // 2. Verificar si tiene exoneraciones vigentes
   netRun()
     .withSuccessHandler(resFormula => {
-      //const chkMorTot = document.getElementById('exon-moras-totales-check');
-      //const chkMulTot = document.getElementById('exon-multas-totales-check');
       const chkElim = document.getElementById('exon-eliminar-check');
       const chkCongelar = document.getElementById('exon-moras-check');
       const chkPeriodo = document.getElementById('exon-actual-moras-check');
       const inputDescrip = document.getElementById('exon-descrip');
       const inpMonto    = document.getElementById('exon-monto');
       const cboConcepto = document.getElementById('exon-concepto');
-
       const tieneActiva = Boolean(resFormula?.tieneFormula || resFormula?.tieneExoneracion);
       tieneExoneracionPrevia = tieneActiva;
 
       if (tieneActiva) {
-        //if (chkMorTot) { chkMorTot.disabled = true;}
-        //if (chkMulTot) { chkMulTot.disabled = true;}
         if (chkElim) { chkElim.checked = true; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
@@ -2583,8 +2577,6 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         alert(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
         //if (window.toast) toast(`ℹ️ El Dpto. ${idDepa} cuenta con una Exoneración Activa.`);
       } else {
-        //if (chkMorTot) { chkMorTot.disabled = false;}
-        //if (chkMulTot) { chkMulTot.disabled = false;}
         if (chkElim) { chkElim.checked = false; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = false; }
         if (chkPeriodo) { chkPeriodo.disabled = false; }
@@ -2602,11 +2594,6 @@ document.getElementById('exon-moras-totales-check')?.addEventListener('change', 
 
   if (this.checked) {
     // Validación de deuda existente
-    if (deudasDepaModal.morNum <= 0) {
-      alert(`⚠️ El departamento ${idDepa || ''} no registra deuda de Moras acumuladas.`);
-      this.checked = false;
-      return;
-    }
 
     // Advertencia de anulación si tenía exoneración previa
     if (tieneExoneracionPrevia) {
@@ -2630,12 +2617,6 @@ document.getElementById('exon-multas-totales-check')?.addEventListener('change',
   const idDepa = document.getElementById('exon-depa')?.value;
 
   if (this.checked) {
-    if (deudasDepaModal.mulNum <= 0) {
-      alert(`⚠️ El departamento ${idDepa || ''} no registra deuda de Multas.`);
-      this.checked = false;
-      return;
-    }
-
     // Desmarca los no compatibles (conserva 🕒)
     document.getElementById('exon-actual-moras-check').checked = false;
     document.getElementById('exon-moras-check').checked = false;
@@ -2745,15 +2726,6 @@ async function validarYGuardarExon() {
       alert("⚠️ Ingrese el Monto valido que va aplicar.");
       return;
     }
-    /*
-    if (concepto === "MORAS" && monto > deudasDepaModal.morNum) {
-      alert(`⚠️ El monto (S/ ${monto.toFixed(2)}) supera la deuda de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}).`);
-      return;
-    }
-    if (concepto === "MULTAS" && monto > deudasDepaModal.mulNum) {
-      alert(`⚠️ El monto (S/ ${monto.toFixed(2)}) supera la deuda de Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}).`);
-      return;
-    }*/
   }
 
   // Mensajes de confirmación
@@ -2767,6 +2739,11 @@ async function validarYGuardarExon() {
     mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto: ${depa}❓ \n\n ${mensajeAdvertencia}`;
   } else if (chkMulTot) {
     mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto: ${depa}❓ \n\n ${mensajeAdvertencia}`;
+  
+  } else if (concepto === "RECIBOS") {
+    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opcion generará una ORDEN DE ACREDITACION DE SALDO POR ${monto} A FAVOR para el RECIBO del Departamento: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un reclamo formal ante la Administracion o Junta de Propietarios por algun cobro indebido o por error en su facturación. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n → Ud como operador asume la responsabilidad de ejecutar esta acción si no cuenta con una autorización previa para tal fin.`;
+  } else if (concepto === "REINTEGRO") {
+    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opcion generará una ORDEN DE REINTEGRO DE SALDO POR ${monto} A FAVOR para el RECIBO del Departamento: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un pago EXEDENTE al monto total de su recibo y este haya solicitado una devolucion por la DIFERENCIA del mismo. \n⚠️ Aplicar SOLO posterior a la ejecucion del reintegro y por el monto devuelto. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n → Ud como operador asume la responsabilidad de ejecutar esta acción si no cuenta con una autorización previa para tal fin.`;
   }
 
   if (!confirm(mensajeConfirm)) return;
