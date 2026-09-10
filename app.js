@@ -2506,16 +2506,7 @@ function sincronizarEstadoControlesExon() {
     return;
   }
 
-  // CASO 6: ELIMINAR BENEFICIO (🚫)
-    if (chkElim?.checked){
-    if (chkMorTot) { chkMorTot.disabled = true; }
-    if (chkMulTot) { chkMulTot.disabled = true; }
-    if (cboConcepto) { cboConcepto.disabled = true; }
-    if (inpMonto) { inpMonto.disabled = true; }
-    return;
-  }
-
-  // CASO 7: NINGUNO MARCADO (Ajuste Manual / Reintegro)
+  // CASO 6: NINGUNO MARCADO (Ajuste Manual / Reintegro)
   if (cboConcepto) cboConcepto.disabled = false;
   if (inpMonto) inpMonto.disabled = false;
 }
@@ -2668,6 +2659,10 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-multas-totales-check').checked = false;
     document.getElementById('exon-actual-moras-check').checked = false;
     document.getElementById('exon-moras-check').checked = false;
+    document.getElementById('exon-concepto').disabled = true;
+    document.getElementById('exon-monto').disabled = true;
+    document.getElementById('exon-moras-totales-check').disabled = true;;
+    document.getElementById('exon-multas-totales-check').disabled = true;;
   }
   sincronizarEstadoControlesExon();
 });
