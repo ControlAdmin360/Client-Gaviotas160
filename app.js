@@ -2467,7 +2467,7 @@ function sincronizarEstadoControlesExon() {
   const cboConcepto = document.getElementById('exon-concepto');
   const inpMonto    = document.getElementById('exon-monto');
 
-  // CASO 0: AMBOS DESMARCADOS (🕒 + 👮‍♂️)
+  // CASO 0: TODOS DESMARCADOS  (🕒 + 👮‍♂️ + 📆 + 🚩 ) MENOS 🚫
   if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked && !chkElim.checked) {
     if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = false; }
     if (inpMonto) { inpMonto.value = 0; inpMonto.disabled = false; }
@@ -2508,11 +2508,15 @@ function sincronizarEstadoControlesExon() {
     if (inpMonto) { inpMonto.value = ""; inpMonto.disabled = true; }
     return;
   }
-
-  // CASO 6: NINGUNO MARCADO (Ajuste Manual / Reintegro)
+  // CASO 6: ELIMINAR EXONERACION MARCADO 🚫
+  if (chkElim) inpMonto.value = morasDelPeriodo;
+  
+  // CASO 7: NINGUNO MARCADO (Ajuste Manual / Reintegro)
   if (cboConcepto) cboConcepto.disabled = false;
   if (inpMonto) inpMonto.disabled = false;
+
 }
+
 
 // Listener para detectar cambio de departamento buscar exoneracion de moras y descripcion existente
 document.getElementById('exon-depa')?.addEventListener('change', function() {
@@ -2661,7 +2665,6 @@ document.getElementById('exon-eliminar-check')?.addEventListener('change', funct
     document.getElementById('exon-concepto').disabled = true;
     document.getElementById('exon-concepto').value = "MORAS";
     document.getElementById('exon-monto').disabled = true;
-    document.getElementById('exon-monto').value = morasDelPeriodo;
     document.getElementById('exon-moras-totales-check').disabled = true;
     document.getElementById('exon-multas-totales-check').disabled = true;
   }
