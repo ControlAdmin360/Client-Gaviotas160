@@ -2730,7 +2730,11 @@ async function validarYGuardarExon() {
       alert("⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Moras.");
       return;
     }
-    if (concepto === "MORAS& MULTAS" && monto > (deudasDepaModal.mulNum + deudasDepaModal.morNum)) {
+    if (concepto === "MULTAS" && monto > deudasDepaModal.mulNum) {
+      alert("⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Multas.");
+      return;
+    }
+    if (concepto === "MORAS&MULTAS" && monto > (deudasDepaModal.mulNum + deudasDepaModal.morNum)) {
       alert("⚠️ El Monto a Exonerar NO puede ser Mayor a la Deuda Total de Moras y Multas.");
       return;
     }
