@@ -2713,12 +2713,6 @@ async function validarYGuardarExon() {
   const monto = parseFloat(document.getElementById('exon-monto')?.value) || 0;
   const descrip = (document.getElementById('exon-descrip')?.value || '').trim();
 
-  // Validación de descripción obligatoria
-  if (!chkElim && descrip.length < 6) {
-    alert("⚠️ Ingrese el Sustento que indique el Motivo válido para la ejecucion de esta acción (mínimo 6 caracteres).");
-    return;
-  }
-
   // Validación de montos manuales
   const esCriterioRapido = chkMorTot || chkMulTot || chkPer || chkCong || chkElim;
   if (!esCriterioRapido) {
@@ -2740,6 +2734,11 @@ async function validarYGuardarExon() {
     }
     if (concepto === "MORAS&MULTAS" && monto > (deudasDepaModal.mulNum + deudasDepaModal.morNum)) {
       alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la suma de la Deuda Total de Moras y Multas que corresponde a S/ ${deudasDepaModal.morNum+deudasDepaModal.mulNum}`);
+      return;
+    }
+    // Validación de descripción obligatoria
+    if (!chkElim && descrip.length < 6) {
+      alert("⚠️ Ingrese el Sustento que indique el Motivo válido para la ejecucion de esta acción (mínimo 6 caracteres).");
       return;
     }
 
