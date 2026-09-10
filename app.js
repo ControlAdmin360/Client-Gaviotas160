@@ -2804,7 +2804,8 @@ async function validarYGuardarExon() {
     .procesarGuardadoExon(payload, user);
 }
 
-// abrir el modal de Multas
+
+// 🎯 session de multas
 function abrirModalMultas() {
   const modal = document.getElementById('modal-multas-sanciones');
   if (!modal) return;
@@ -2823,7 +2824,31 @@ function abrirModalMultas() {
       selectDepa.appendChild(opt);
     });
   }
+  
+  // Limpiar campos
+  const inpMonto = document.getElementById('multas-monto');
+  if (inpMonto) inpMonto.value = "";
 }
+
+function cerrarModalMultas() {
+  const modal = document.getElementById('modal-multas-sanciones');
+  if (modal) modal.style.display = 'none';
+
+  const selectDepa = document.getElementById('multas-depa');
+  const inpMonto   = document.getElementById('multas-monto');
+  if (selectDepa) selectDepa.value = "";
+  if (inpMonto) inpMonto.value = "";
+
+  cerrarPanelMultaExistente();
+}
+
+function cerrarPanelMultaExistente() {
+  const panel = document.getElementById('panel-multa-existente');
+  if (panel) panel.style.display = 'none';
+  multasPreviasDepa = { multaInasist: 0, multaNormas: 0 };
+}
+
+// 🎯 CONSULTA EN VIVO: Detecta si ya tiene multa en ese rubro
 function verificarMultaPreviaExistente() {
   const idDepa = document.getElementById('multas-depa')?.value;
   const tipo   = document.getElementById('multas-tipo')?.value;
@@ -2844,23 +2869,40 @@ function verificarMultaPreviaExistente() {
       multasPreviasDepa.multaInasist = Number(res.multaInasist) || 0;
       multasPreviasDepa.multaNormas  = Number(res.multaNormas) || 0;
 
-      const valorActual = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
+      // Evalúa cuál de las dos multas corresponde al tipo seleccionado
+      const valorActual = (tipo === "MULTA_INASISTENC") 
+        ? multasPreviasDepa.multaInasist 
+        : multasPreviasDepa.multaNormas;
 
+      // Si el departamento YA TIENE una multa en ese rubro (> 0):
       if (valorActual > 0) {
         document.getElementById('lbl-multa-previa-valor').textContent = `S/ ${valorActual.toFixed(2)}`;
-        if (panel) panel.style.display = 'block';
-        document.getElementById('opt-multa-sumar').checked = true;
+        if (panel) panel.style.display = 'block'; // 👈 Despliega el panel rojo
+        
+        const optSumar = document.getElementById('opt-multa-sumar');
+        if (optSumar) optSumar.checked = true;
+
         actualizarPreviewCalculoMulta();
       } else {
+        // Si no tiene multa previa en ese rubro, mantiene el panel oculto
         if (panel) panel.style.display = 'none';
       }
     })
+    .withFailureHandler(err => {
+      console.error("Error al consultar multas previas:", err);
+      cerrarPanelMultaExistente();
+    })
     .api_consultarMultasDepa(idDepa);
 }
+
+// 🎯 CÁLCULO DINÁMICO EN VIVO MIENTRAS EL OPERADOR ESCRIBE
 function actualizarPreviewCalculoMulta() {
   const tipo = document.getElementById('multas-tipo')?.value;
   const montoInput = parseFloat(document.getElementById('multas-monto')?.value) || 0;
-  const valorPrevio = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
+  
+  const valorPrevio = (tipo === "MULTA_INASISTENC") 
+    ? multasPreviasDepa.multaInasist 
+    : multasPreviasDepa.multaNormas;
 
   const totalSumado = valorPrevio + montoInput;
   const lblSumar = document.getElementById('lbl-multa-preview-sumar');
@@ -2870,8 +2912,7 @@ function actualizarPreviewCalculoMulta() {
   if (lblReemplazar) lblReemplazar.textContent = `(Nuevo total: S/ ${montoInput.toFixed(2)})`;
 }
 
-
-// cerrar el modal de Multas
+// 🎯 GUARDAR MULTA (Envía modo SUMAR o REEMPLAZAR al Backend)
 async function validarYGuardarMulta() {
   const depa  = document.getElementById('multas-depa')?.value;
   const tipo  = document.getElementById('multas-tipo')?.value;
@@ -2879,7 +2920,7 @@ async function validarYGuardarMulta() {
   const btn   = document.getElementById('btn-save-multas');
 
   if (!depa || !tipo || !monto) {
-    if (window.toast) toast("⚠️ Seleccione el Dpto., Tipo y Monto al aplicar la sanción.");
+    if (window.toast) toast("⚠️ Seleccione Departamento, Tipo y Monto.");
     return;
   }
 
@@ -2889,18 +2930,21 @@ async function validarYGuardarMulta() {
     return;
   }
 
-  // Detectar modo
+  // Detectar si el usuario eligió SUMAR o REEMPLAZAR
   const esSumar = document.getElementById('opt-multa-sumar')?.checked;
   const modo = esSumar ? 'SUMAR' : 'REEMPLAZAR';
 
-  const valorPrevio = (tipo === "MULTA_INASISTENC") ? multasPreviasDepa.multaInasist : multasPreviasDepa.multaNormas;
-  let mensajeConfirm = `ℹ️→Confirma registrar la multa por S/ ${montoNum.toFixed(2)} al Dpto. ${depa} ❓`;
+  const valorPrevio = (tipo === "MULTA_INASISTENC") 
+    ? multasPreviasDepa.multaInasist 
+    : multasPreviasDepa.multaNormas;
+
+  let mensajeConfirm = `❓ ¿Confirma registrar la multa por S/ ${montoNum.toFixed(2)} al Departamento ${depa}?`;
 
   if (valorPrevio > 0) {
     if (modo === 'SUMAR') {
-      mensajeConfirm = `ℹ️→Confirma SUMAR S/ ${montoNum.toFixed(2)} a la multa existente de S/ ${valorPrevio.toFixed(2)} (Total acumulado: S/ ${(valorPrevio + montoNum).toFixed(2)}) para el Dpto. ${depa} ❓`;
+      mensajeConfirm = `❓ ¿Confirma SUMAR S/ ${montoNum.toFixed(2)} a la multa existente de S/ ${valorPrevio.toFixed(2)} (Total acumulado: S/ ${(valorPrevio + montoNum).toFixed(2)}) para el Dpto ${depa}?`;
     } else {
-      mensajeConfirm = `ℹ️→Confirma REEMPLAZAR la multa existente de S/ ${valorPrevio.toFixed(2)} con el nuevo valor de S/ ${montoNum.toFixed(2)} para el Dpto. ${depa} ❓`;
+      mensajeConfirm = `❓ ¿Confirma REEMPLAZAR la multa existente de S/ ${valorPrevio.toFixed(2)} con el nuevo valor de S/ ${montoNum.toFixed(2)} para el Dpto ${depa}?`;
     }
   }
 
@@ -2917,7 +2961,7 @@ async function validarYGuardarMulta() {
     monto: montoNum,
     tipo: tipo,
     modo: modo,
-    token: user
+    userAuth: user
   };
 
   netRun()
@@ -2947,22 +2991,8 @@ async function validarYGuardarMulta() {
     })
     .procesarMultas(payload);
 }
-function cerrarPanelMultaExistente() {
-  const panel = document.getElementById('panel-multa-existente');
-  if (panel) panel.style.display = 'none';
-  multasPreviasDepa = { multaInasist: 0, multaNormas: 0 };
-}
-function cerrarModalMultas() {
-  const modal = document.getElementById('modal-multas-sanciones');
-  if (modal) modal.style.display = 'none';
 
-  const ids = ['multas-depa', 'multas-monto'];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = "";
-  });
-  cerrarPanelMultaExistente();
-}
+
 // session de Configuracion
 function abrirModalConfig() {
   const modal = document.getElementById('modal-configuraciones');
