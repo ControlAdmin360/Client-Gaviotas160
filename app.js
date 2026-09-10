@@ -2569,7 +2569,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (tieneActiva) {
         if (chkMorTot) { chkMorTot.disabled = true;}
         if (chkMulTot) { chkMulTot.disabled = true;}
-        if (chkElim) { chkElim.checked = false; chkElim.disabled = true;}
+        if (chkElim) { chkElim.checked = true; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = true; chkCongelar.checked = false; }
         if (chkPeriodo) { chkPeriodo.disabled = true; chkPeriodo.checked = false; }
         if (inputDescrip) inputDescrip.value = resFormula.descripExistente || "";
