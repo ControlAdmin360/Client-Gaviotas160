@@ -2542,6 +2542,11 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
 
         deudasDepaModal.morNum = Number(resSaldos.morNum) || 0;
         deudasDepaModal.mulNum = Number(resSaldos.mulNum) || 0;
+        const chkMorTot = document.getElementById('exon-moras-totales-check');
+        const chkMulTot = document.getElementById('exon-multas-totales-check');
+        chkMorTot.disabled = true; chkMulTot.disabled = true;
+        if (deudasDepaModal.morNum > 0){ chkMorTot.disabled = false; }
+        if (deudasDepaModal.mulNum > 0){ chkMulTot.disabled = false; }
       }
     })
     .withFailureHandler(err => {
