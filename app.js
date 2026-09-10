@@ -2694,14 +2694,14 @@ document.getElementById('exon-concepto')?.addEventListener('change', function() 
     }
     return;
   }
-  const deudaMora   = Number(window.deudasDepaModal?.morNum) || 0;
-  const deudaMulta  = Number(window.deudasDepaModal?.mulNum) || 0;
+  const deudaMora   = Number(deudasDepaModal.morNum) || 0;
+  const deudaMulta  = Number(deudasDepaModal.mulNum) || 0;
   if (this.value === "MORAS" && deudaMora === 0) {
-    alert(`ℹ️ El Dpto. ${idDepa} actualmente no cuenta con Deuda de Moras.`);
+    alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Moras.`);
     this.value = "Select";
   }
   if (this.value === "MULTAS" && deudaMulta === 0) {
-    alert(`ℹ️ El Dpto. ${idDepa} actualmente no cuenta con Deuda de Multas.`);
+    alert(`ℹ️ El Dpto. ${idDepa} Actualmente no cuenta con Deuda de Multas.`);
     this.value = "Select";
   }
   if (this.value === "MORAS&MULTAS" && (deudaMora === 0 || deudaMulta === 0)) {
