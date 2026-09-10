@@ -2544,6 +2544,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
         const chkMorTot = document.getElementById('exon-moras-totales-check');
         const chkMulTot = document.getElementById('exon-multas-totales-check');
         chkMorTot.disabled = true; chkMulTot.disabled = true;
+        chkMorTot.checked = false; chkMulTot.checked = false;
         if (deudasDepaModal.morNum > 0){ chkMorTot.disabled = false; }
         if (deudasDepaModal.mulNum > 0){ chkMulTot.disabled = false; }
       }
