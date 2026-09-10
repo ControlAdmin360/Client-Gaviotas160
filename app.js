@@ -2470,7 +2470,7 @@ function sincronizarEstadoControlesExon() {
   // CASO 0: TODOS DESMARCADOS  (🕒 + 👮‍♂️ + 📆 + 🚩 ) MENOS 🚫
   if (!chkMorTot?.checked && !chkMulTot?.checked && !chkPer?.checked && !chkCong?.checked && !chkElim.checked) {
     if (cboConcepto) { cboConcepto.value = "Select"; cboConcepto.disabled = false; }
-    if (inpMonto) { inpMonto.value = 0; inpMonto.disabled = false; }
+    if (inpMonto) { inpMonto.value = 0.00; inpMonto.disabled = false; }
     return;
   }
 
@@ -2498,7 +2498,7 @@ function sincronizarEstadoControlesExon() {
   // CASO 4: MORAS PERIODO ACTUAL (📆)
   if (chkPer?.checked) {
     if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
-    if (inpMonto) { inpMonto.value = morasDelPeriodo; inpMonto.disabled = true; }
+    if (inpMonto) { inpMonto.value = morasDelPeriodo.toFixed(2); inpMonto.disabled = true; }
     return;
   }
 
