@@ -2998,28 +2998,30 @@ async function validarYGuardarMulta() {
     .procesarMultas(payload);
 }
 
-// session de Configuracion
+// ============================================================================
+// 📍 MODAL DE CONFIGURACIONES GLOBALES Y CUOTAS EXTRAS
+// ============================================================================
 function abrirModalConfig() {
   const modal = document.getElementById('modal-configuraciones');
   if (!modal) return;
   
   modal.style.display = 'flex';
 
-  // 1. Poblar el combo de días del 1 al 20 (si está vacío)
+  // 1. Poblar el combo de días del 1 al 31 (si está vacío)
   const selDia = document.getElementById('config-dia-pago');
   if (selDia && selDia.options.length === 0) {
-    for (let i = 1; i <= 20; i++) {
+    for (let i = 1; i <= 31; i++) {
       let opt = document.createElement('option');
       opt.value = i;
-      opt.textContent = i;
+      opt.textContent = `Día ${String(i).padStart(2, '0')}`;
       selDia.appendChild(opt);
     }
   }
 
-  // 2. Poblar el combo de departamentos (usando LISTAS que ya tienes)
+  // 2. Poblar el combo de departamentos
   const selDepa = document.getElementById('config-depa');
   if (selDepa && selDepa.options.length <= 1) {
-    const depas = (typeof LISTAS !== 'undefined' && LISTAS.depaIds) ? LISTAS.depaIds : [];
+    const depas = (window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
     selDepa.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
       let opt = document.createElement('option');
@@ -3033,25 +3035,30 @@ function abrirModalConfig() {
   netRun()
     .withSuccessHandler(res => {
       if (res) {
-        document.getElementById('config-dia-pago').value = res.diaLimite;
-        document.getElementById('config-fondo').value = res.fondoContingencia;
-        document.getElementById('config-porton-pct').value = res.portonPercent;
-        document.getElementById("config-exonerados-text").value = res.exonerados || "";
+        document.getElementById('config-dia-pago').value = res.diaLimite || 6;
+        document.getElementById('config-fondo').value = Number(res.fondoContingencia || 0).toFixed(2);
+        document.getElementById('config-porton-pct').value = res.portonPercent || 80;
+        document.getElementById('config-exonerados-text').value = res.exonerados || "";
+        
         const checkSinMora = document.getElementById('config-sin-mora-check');
-        checkSinMora.checked = (res.sinMorasDia === true);
-        document.getElementById('config-sin-mora-check').value = res.sinMorasDia;
-        document.getElementById("config-cuota-extra").value = res.montoExtra;
-        document.getElementById("config-descrip-cuota-extra").value = res.descripMontoExtra;
-        toggleSinMora(checkSinMora.checked);
+        if (checkSinMora) {
+          checkSinMora.checked = (res.sinMorasDia === true);
+          toggleSinMora(checkSinMora.checked);
+        }
+
+        document.getElementById('config-cuota-extra').value = res.montoExtra > 0 ? Number(res.montoExtra).toFixed(2) : "";
+        document.getElementById('config-descrip-cuota-extra').value = res.descripMontoExtra || "";
       }
     })
     .obtenerConfiguracionesIniciales();
 }
 
 function cerrarModalConfig() {
-  document.getElementById('modal-configuraciones').style.display = 'none';
+  const modal = document.getElementById('modal-configuraciones');
+  if (modal) modal.style.display = 'none';
+
   document.getElementById('config-cuota-extra').value = "";
-  document.getElementById("config-descrip-cuota-extra").value = "";
+  document.getElementById('config-descrip-cuota-extra').value = "";
   document.getElementById('config-todos-check').checked = false;
   document.getElementById('config-sin-mora-check').checked = false;
   document.getElementById('config-porton-check').checked = false;
@@ -3059,160 +3066,156 @@ function cerrarModalConfig() {
   toggleCuotaExtra(false);
   toggleSinMora(false);
 }
-// check: Aplica a Todos
+
+// Check: Aplicar Cuota a Todos
 function toggleCuotaExtra(aplicarATodos) {
   const selDepa = document.getElementById('config-depa');
   const wrapDepa = document.getElementById('wrap-config-depa');
   const portonCheck = document.getElementById('config-porton-check');
   const pctInput = document.getElementById('config-porton-pct');
+
   if (aplicarATodos) {
-    selDepa.disabled = true;
-    selDepa.value = ""; // Limpiamos selección
-    wrapDepa.style.opacity = "0.4"; // Efecto visual de deshabilitado
+    if (selDepa) { selDepa.disabled = true; selDepa.value = ""; }
+    if (wrapDepa) wrapDepa.style.opacity = "0.4";
   } else {
-    selDepa.disabled = false;
-    wrapDepa.style.opacity = "1";
-    if (portonCheck) {portonCheck.checked = false;
-      if (pctInput) pctInput.disabled = true; // Deshabilitamos el % también
-    }
+    if (selDepa) selDepa.disabled = false;
+    if (wrapDepa) wrapDepa.style.opacity = "1";
+    if (portonCheck) portonCheck.checked = false;
+    if (pctInput) pctInput.disabled = true;
   }
 }
-// check: Excluir Moras Diarias
+
+// Check: Excluir Moras Diarias
 function toggleSinMora(aplicaSinMoras) {
-  const selDia = document.getElementById('config-dia-pago'); // combo de días
-  const labelDia = document.querySelector('label[for="config-dia-pago"]');
+  const selDia = document.getElementById('config-dia-pago');
+  const wrapDia = document.getElementById('wrap-dia-pago');
   
-  if (aplicaSinMoras) {// Efecto visual de deshabilitado
-    selDia.disabled = true;
-    labelDia.style.opacity = "0.4";
-    labelDia.style.color = "#999";
+  if (aplicaSinMoras) {
+    if (selDia) selDia.disabled = true;
+    if (wrapDia) wrapDia.style.opacity = "0.4";
   } else {
-    selDia.disabled = false;
-    labelDia.style.opacity = "1";
-    labelDia.style.color = "";
+    if (selDia) selDia.disabled = false;
+    if (wrapDia) wrapDia.style.opacity = "1";
   }
 }
-// check: Asignar cuota Mant. Correctivo Portón
+
+// Check: Asignar cuota Mant. Correctivo Portón
 function handlePortonToggle(checked) {
   const pctInput = document.getElementById('config-porton-pct');
   const todosCheck = document.getElementById('config-todos-check');
-  // 1. Habilitar/Deshabilitar el campo de porcentaje
-  pctInput.disabled = !checked;
-  if (checked) {
-    // 2. Forzar que "Aplicar a Todos" sea true
-    if (todosCheck) {
-      todosCheck.checked = true;
-      // 3. Llamamos a tu función existente para que oculte/muestre el selector de depa
-      toggleCuotaExtra(true);
-    }
+
+  if (pctInput) pctInput.disabled = !checked;
+  if (checked && todosCheck) {
+    todosCheck.checked = true;
+    toggleCuotaExtra(true);
   }
 }
 
-// Configuraciones de Facturación / Cuotas Extras)
-document.getElementById('config-depa')?.addEventListener('change', function() {
-  const idDepa = this.value;
-  if (!idDepa) return;
-  netRun()
-    .withSuccessHandler(res => {
-      if (res) {
-        document.getElementById('config-cuota-extra').value = res.valorCuota;
-        document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota;
-      } else {
-        document.getElementById('config-cuota-extra').value = "";
-        document.getElementById('config-descrip-cuota-extra').value = "";
-      }
-    })
-    .withFailureHandler(err => {
-      // Usamos la función flash si la tienes, o una alerta limpia de error
-      alert("❌ Error al conectar con el servidor: " + (err?.message || err));
-    })
-    .obtenerConfiguracionIdDepa(idDepa);
-})
+// Consultar cuota individual al elegir departamento
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('config-depa')?.addEventListener('change', function() {
+    const idDepa = this.value;
+    if (!idDepa) return;
+    netRun()
+      .withSuccessHandler(res => {
+        if (res) {
+          document.getElementById('config-cuota-extra').value = res.valorCuota > 0 ? Number(res.valorCuota).toFixed(2) : "";
+          document.getElementById('config-descrip-cuota-extra').value = res.descriprCuota || "";
+        } else {
+          document.getElementById('config-cuota-extra').value = "";
+          document.getElementById('config-descrip-cuota-extra').value = "";
+        }
+      })
+      .withFailureHandler(err => {
+        console.error("Error al obtener cuota individual:", err);
+      })
+      .obtenerConfiguracionIdDepa(idDepa);
+  });
+});
 
+// Guardar configuración con validaciones y autenticación SuperAdmin
 function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCache = "") {
-  let dia = document.getElementById('config-dia-pago').value;
-  const fondo = Number(document.getElementById('config-fondo').value) || 0;
-  const cuota = Number(document.getElementById('config-cuota-extra').value) || 0; 
-  let cuotaDescrip = document.getElementById("config-descrip-cuota-extra").value;
-  const todos = document.getElementById('config-todos-check').checked;
-  const sinMoras = document.getElementById('config-sin-mora-check').checked;
-  const percent = document.getElementById('config-porton-pct').value;
-  const porton = document.getElementById('config-porton-check').checked;
-  const depa = document.getElementById('config-depa').value;
-  const exonerados = document.getElementById('config-exonerados-text').value;
+  const dia = document.getElementById('config-dia-pago')?.value || 6;
+  const fondo = Number(document.getElementById('config-fondo')?.value) || 0;
+  const cuota = Number(document.getElementById('config-cuota-extra')?.value) || 0; 
+  let cuotaDescrip = (document.getElementById('config-descrip-cuota-extra')?.value || '').trim();
+  const todos = document.getElementById('config-todos-check')?.checked || false;
+  const sinMoras = document.getElementById('config-sin-mora-check')?.checked || false;
+  const percent = Number(document.getElementById('config-porton-pct')?.value) || 80;
+  const porton = document.getElementById('config-porton-check')?.checked || false;
+  const depa = document.getElementById('config-depa')?.value || '';
+  const exonerados = (document.getElementById('config-exonerados-text')?.value || '').trim();
   const btn = document.getElementById('btn-save-config');
 
-  // 1. Validaciones locales rápidas
+  // 1. Validaciones previas
   if (!esConfirmacion) {
     if (!todos && cuota > 0 && !depa && !porton) {
-      if (window.toast) toast("⚠️ Debe seleccionar un departamento o marcar \n'Aplicar a Todos' para asignar la cuota extra (❓)");
+      if (window.toast) toast("⚠️ Debe seleccionar un departamento o marcar 'Aplicar a Todos'.");
       return;
     }
-    if ((!cuotaDescrip || cuotaDescrip.trim().length < 10) && cuota > 0) {
-      if (window.toast) toast("⚠️ Debe asignar una descripción que valide el monto de la cuota extra aplicada (❓)");
+    if (cuota > 0 && cuotaDescrip.length < 10) {
+      if (window.toast) toast("⚠️ Ingrese una descripción de la cuota extra (mínimo 10 caracteres).");
       return;
     }
-    if (!confirm("❓ ¿Desea guardar los cambios en la configuración global y cuotas?")) return;
+    if (!confirm("❓ ¿Desea aplicar los cambios a la configuración contable y cuotas extras?")) return;
   }
 
-  const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || 'unknonw';
-  if (cuota <= 0) { cuotaDescrip = ""; }
+  const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || 'ADMIN';
+  if (cuota <= 0) cuotaDescrip = "";
 
-  btn.disabled = true;
-  btn.textContent = "⏳ Validando...";
-  btn.style.backgroundColor = "#647AEB";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "⏳ Validando...";
+  }
 
   const restaurarBoton = () => {
-    btn.disabled = false;
-    btn.textContent = "💾 Guardar Configuración";
-    btn.style.backgroundColor = "";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "💾 Guardar Configuración";
+    }
   };
 
-  // 2. Ejecución en el servidor
+  // 2. Ejecutar en el servidor
   netRun()
     .withSuccessHandler((res) => {
-
-      // A) Error de negocio/Portón activo
       if (res && res.ok === false && !res.requiereConfirmacion && !res.requiereAuth) {
         restaurarBoton();
         alert(res.mensaje || "⚠️ No se pudo completar la operación.");
         return;
       }
 
-      // B) Requiere confirmación de borrado
+      // Requiere confirmación de borrado/reseteo
       if (res && res.requiereConfirmacion) {
         restaurarBoton();
         if (confirm(res.mensaje)) {
-          // Re-ejecuta indicando que ya confirmó para no repetir confirmación local
           guardarConfiguraciones(true, userCache, passCache);
         }
         return;
       }
 
-      // C) El servidor validó el negocio y AHORA pide credenciales
+      // Solicitar credenciales SuperAdmin
       if (res && res.requiereAuth) {
         restaurarBoton();
-        const user = prompt("🛡️ 👤 Ingrese User_Admin 🛡️");
+        const user = prompt("🛡️ 👤 Ingrese Usuario Administrador:");
         if (!user) return;
-        const pass = prompt("🔑 Ingrese Password 🔏");
+        const pass = prompt("🔑 Ingrese Contraseña de Seguridad:");
         if (!pass) return;
 
-        // Re-ejecuta enviando credenciales y esConfirmacion = true para evitar el confirm() inicial
         guardarConfiguraciones(true, user, pass);
         return;
       }
 
-      // D) Éxito final
+      // Éxito final
       restaurarBoton();
       if (res && res.ok) {
-        alert(res.mensaje || "✅ CONFIGURACIÓN APLICADA CON EXITO.");
+        alert(res.mensaje || "✅ CONFIGURACIÓN APLICADA CON ÉXITO.");
         cerrarModalConfig();
-        if (document.getElementById('recibos-refresh')) document.getElementById('recibos-refresh').click();
+        if (typeof reloadRecibos === 'function') reloadRecibos();
       }
     })
     .withFailureHandler(err => {
       restaurarBoton();
-      alert("❌: " + err.message);
+      alert("❌ Error: " + (err.message || err));
     })
     .superUsuario(
       userCache, passCache, dia, Math.abs(fondo), Math.abs(cuota), 
