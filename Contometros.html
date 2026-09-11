@@ -270,9 +270,10 @@
     const btnEditFecha = $('btnEditarFechaActiva');
     if (btnEditFecha) {
       const tieneFechaValida = res.fechaForm && res.fechaForm !== '—';
-      const esFechaEditable = !res.viewOnly && !res.doneAll;
+      const esFechaEditable = !res.viewOnly;
       show(btnEditFecha, (tieneFechaValida && esFechaEditable), 'inline-block');
     }
+
 
     // Toggle lecturas en chips
     if (grid) grid.classList.toggle('show-readings', mostrarLecturas);
