@@ -581,7 +581,7 @@
       if (!seleccionado){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Elija un Dpto.'); return; }
 
       const valStr = String($('inpValor').value || '').trim();
-      if (/^\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
+      if (!/^-?\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
       const valNum = parseInt(valStr, 10);
 
       // 🎯 Confirmación de advertencia al operador si supera 6000 Litros
@@ -729,14 +729,13 @@
     msg.textContent = '';
     if (btn) btn.disabled = false;
   });
-
-  $('inpValor')?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault(); // Evita que el Enter haga un salto de línea o envíe un formulario
-    $('btnGuardar')?.click(); // Simula el clic en el botón Guardar
-  }
-});
  
+  $('inpValor')?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Evita que el Enter haga un salto de línea o envíe un formulario
+      $('btnGuardar')?.click(); // Simula el clic en el botón Guardar
+    }
+});
   // Validación de seguridad inicial
   if (!AUTH_TOKEN){
     try { parent.postMessage({ type:'contometros-auth-expired' }, '*'); } catch(e){}
