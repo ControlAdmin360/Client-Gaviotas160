@@ -586,8 +586,8 @@
     const msg = $('msg');
     const btnGuardar = $('btnGuardar');
     const inpValor = $('inpValor');
-
-    console.log("📥 [btnGuardar RESPONDE]:", getRangoAlerta);
+    const rango = getRangoAlerta();
+    console.log("📥 [btnGuardar RESPONDE]:", rango);
 
     if (!EST || (EST.doneAll && !EST.viewOnly)) return;
     if (!seleccionado) { msg.className = 'warn'; text(msg, 'Elija un Dpto.'); return; }
@@ -599,7 +599,7 @@
     // 🎯 Validación de Consumo Elevado (Usando ALERTAS_LEC unificado con el Login)
     if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
       const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-      if (consumoLts > getRangoAlerta) {
+      if (consumoLts > rango) {
         const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→ Si la lectura es correcta, proceda con el registro.`);
         if (!confirma) return;
       }
@@ -737,7 +737,8 @@
 
     // 2. Advertencia si supera rango Lts (alerta ámbar, pero permite guardar)
     const consumoLts = n - prevNum;
-    if (consumoLts > getRangoAlerta) {
+    const rango = getRangoAlerta();
+    if (consumoLts > rango) {
       this.style.borderColor = '#f59e0b';
       this.classList.remove('input-error');
       msg.classList.remove('flat');
