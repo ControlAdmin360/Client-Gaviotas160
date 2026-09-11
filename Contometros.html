@@ -683,29 +683,53 @@
         .guardarLecturaContometros(payload, user);
     });
 
-  // Validación de lectura en tiempo real
+// Validación de lectura en tiempo real
   $('inpValor')?.addEventListener('input', function(){
-    const msg=$('msg'), btn=$('btnGuardar'), s=this.value.trim();
-    if (s==='' || isNaN(s) || prevDeSeleccionado==null){
-      this.style.borderColor=''; msg.textContent=''; this.classList.remove('input-error'); if(btn) btn.disabled=true; return;
+    const msg = $('msg'), btn = $('btnGuardar'), s = this.value.trim();
+    if (s === '' || isNaN(s) || prevDeSeleccionado == null) {
+      this.style.borderColor = ''; 
+      msg.textContent = ''; 
+      this.classList.remove('input-error'); 
+      if (btn) btn.disabled = true; 
+      return;
     }
-    const n=parseInt(s,10);
-    if (n < prevDeSeleccionado){
-      this.classList.add('input-error'); msg.classList.remove('flat'); msg.classList.add('warn');
-      text(msg,'🚫 La lectura actual no puede ser menor que la anterior ('+prevDeSeleccionado+').'); if(btn) btn.disabled=true; return;
+
+    const n = parseInt(s, 10);
+    const prevNum = parseInt(prevDeSeleccionado, 10) || 0;
+
+    // 1. Error bloqueante si es menor a la anterior
+    if (n < prevNum) {
+      this.classList.add('input-error'); 
+      this.style.borderColor = '';
+      msg.classList.remove('flat'); 
+      msg.classList.add('warn');
+      text(msg, `🚫 La lectura actual no puede ser menor que la anterior (${prevNum}).`); 
+      if (btn) btn.disabled = true; 
+      return;
     }
+
+    // 2. Advertencia si supera 5000 Lts (alerta ámbar, pero permite guardar)
     const consumoLts = n - prevNum;
-      const LIMITE_ALERTA_LTS = 5000;
-      if (consumoLts > LIMITE_ALERTA_LTS) {
-        this.style.borderColor = '#f59e0b';
-        this.classList.remove('input-error');
-        msg.classList.remove('flat');
-        msg.classList.add('warn');
-        text(msg, `⚠️ Consumo elevado (+${consumoLts} Lts). Revise bien la lectura antes de guardar.`);
-        if (btn) btn.disabled = false; // 👈 Mantiene el botón habilitado
-        return;
-      }
-  })
+    const LIMITE_ALERTA_LTS = 5000;
+    if (consumoLts > LIMITE_ALERTA_LTS) {
+      this.style.borderColor = '#f59e0b';
+      this.classList.remove('input-error');
+      msg.classList.remove('flat');
+      msg.classList.add('warn');
+      text(msg, `⚠️ Consumo elevado (+${consumoLts} Lts). Revise bien la lectura antes de guardar.`);
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    // 🎯 3. Estado Válido Normal (Limpia errores y activa el botón Guardar)
+    this.classList.remove('input-error');
+    this.style.borderColor = '';
+    msg.classList.remove('warn');
+    msg.classList.add('flat');
+    msg.textContent = '';
+    if (btn) btn.disabled = false;
+  });
+ 
   // Validación de seguridad inicial
   if (!AUTH_TOKEN){
     try { parent.postMessage({ type:'contometros-auth-expired' }, '*'); } catch(e){}
