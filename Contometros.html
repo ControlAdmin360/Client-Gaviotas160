@@ -560,15 +560,15 @@
     const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
 
     p.netRun()
-      .withSuccessHandler(r => {
+      .withSuccessHandler(res => {
         if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
 
-        if (r && r.ok) {
+        if (res && res.ok) {
           if (dlg) dlg.close();
-          //alert(r.mensaje);
+          alert(res.mensaje);
           cargarEstado(); // Recarga la vista de Contómetros con la nueva fecha
         } else {
-          alert("❌ Error: " + (r?.error || 'No se pudo actualizar la fecha.'));
+          alert("❌ Error: " + (res?.error || 'No se pudo actualizar la fecha.'));
         }
       })
       .withFailureHandler(err => {
@@ -582,8 +582,8 @@
     const msg = $('msg');
     const btnGuardar = $('btnGuardar');
     const inpValor = $('inpValor');
-    
     const rango = window.parent?.ALERTAS_LEC || 6000; // Fallback a 6000 si no existe
+    console.log("📥 [BACKEND RESPONDE]:", rango);
 
     if (!EST || (EST.doneAll && !EST.viewOnly)) return;
     if (!seleccionado) { msg.className = 'warn'; text(msg, 'Elija un Dpto.'); return; }
@@ -595,8 +595,6 @@
     // 🎯 Validación de Consumo Elevado (Usando ALERTAS_LEC unificado con el Login)
     if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
       const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-      console.log("📥 [BACKEND RESPONDE]:", rango);
-      
       if (consumoLts > rango) {
         const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→ Si la lectura es correcta, proceda con el registro.`);
         if (!confirma) return;
@@ -731,10 +729,9 @@
       return;
     }
 
-    // 2. Advertencia si supera 5000 Lts (alerta ámbar, pero permite guardar)
+    // 2. Advertencia si supera rango Lts (alerta ámbar, pero permite guardar)
     const consumoLts = n - prevNum;
-    const LIMITE_ALERTA_LTS = 5000;
-    if (consumoLts > LIMITE_ALERTA_LTS) {
+    if (consumoLts > rango) {
       this.style.borderColor = '#f59e0b';
       this.classList.remove('input-error');
       msg.classList.remove('flat');
