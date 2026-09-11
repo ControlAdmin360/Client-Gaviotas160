@@ -172,6 +172,8 @@
   const show = (el, on, display='') => { if (el) el.style.display = on ? (display || '') : 'none'; };
   const enable = (el, on) => { if (el) el.disabled = !on; };
 
+  const rango = window.parent?.ALERTAS_LEC || 6000; // Fallback a 6000 si no existe
+
   // Parámetros URL y Sesión
   const params = new URLSearchParams(location.search);
   const AUTH_USER_PARAM = params.get('user') || '';
@@ -590,7 +592,6 @@
     // 🎯 Validación de Consumo Elevado (Usando ALERTAS_LEC unificado con el Login)
     if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
       const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-      const rango = window.parent?.ALERTAS_LEC || 6000; // Fallback a 6000 si no existe
       console.log("📥 [BACKEND RESPONDE]:", rango);
       
       if (consumoLts > rango) {
