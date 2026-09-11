@@ -584,6 +584,15 @@
       if (!/^-?\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
       const valNum = parseInt(valStr, 10);
 
+      // 🎯 Confirmación de advertencia al operador si supera 5000 Litros
+      if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
+        const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
+        if (consumoLts > 5000) {
+          const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nSi revisado bien la lectura es correcta, proceda con el registro de la misma`);
+          if (!confirma) return;
+        }
+      }
+
       const idx = seleccionado.idx, grid = $('gridIds');
       const btnId = (grid && Number.isInteger(idx)) ? grid.children[idx] : null;
       const yaEstabaVacio = EST?.currVals && (EST.currVals[idx] === '' || EST.currVals[idx] == null);
@@ -685,16 +694,17 @@
       this.classList.add('input-error'); msg.classList.remove('flat'); msg.classList.add('warn');
       text(msg,'🚫 La lectura actual no puede ser menor que la anterior ('+prevDeSeleccionado+').'); if(btn) btn.disabled=true; return;
     }
-    const ps=String(Math.abs(parseInt(prevDeSeleccionado,10))), cs=String(Math.abs(n));
-    if (cs.length > ps.length){
-      const ok = (ps.charAt(0)==='9' && cs.charAt(0)==='1' && cs.length===ps.length+1);
-      if (!ok){
-        this.classList.add('input-error'); msg.classList.remove('flat'); msg.classList.add('warn');
-        text(msg,'⚠️ La lectura ingresada tiene valor muy alto, favor corregir'); if(btn) btn.disabled=true; return;
+    const consumoLts = n - prevNum;
+      const LIMITE_ALERTA_LTS = 5000;
+      if (consumoLts > LIMITE_ALERTA_LTS) {
+        this.style.borderColor = '#f59e0b';
+        this.classList.remove('input-error');
+        msg.classList.remove('flat');
+        msg.classList.add('warn');
+        text(msg, `⚠️ Consumo elevado (+${consumoLts} Lts). Revise bien la lectura antes de guardar.`);
+        if (btn) btn.disabled = false; // 👈 Mantiene el botón habilitado
+        return;
       }
-    }
-    this.classList.remove('input-error'); this.style.borderColor=''; msg.classList.remove('warn'); msg.classList.add('flat'); msg.textContent=''; if(btn) btn.disabled=false;
-  });
 
   // Validación de seguridad inicial
   if (!AUTH_TOKEN){
