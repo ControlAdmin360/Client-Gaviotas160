@@ -629,6 +629,7 @@
       const p = window.parent;
       if (!p || typeof p.netRun !== 'function') {
         $('btnGuardar').disabled = false;
+        $('btnGuardar').value = "";
         revertUI();
         msg.classList.remove('flat'); msg.classList.add('warn');
         text(msg, 'Error: Sin conexión con el servidor principal.');
@@ -642,6 +643,7 @@
       p.netRun()
         .withSuccessHandler(res => {
           $('btnGuardar').disabled = false;
+          $('btnGuardar').value = "";
           if (res && !res.ok && res.requiereConfirmacion) {
             const acepta = confirm(res.mensajeConfirmacion);
             if (acepta) {
@@ -651,6 +653,7 @@
               p.netRun()
                 .withSuccessHandler(res2 => {
                   $('btnGuardar').disabled = false;
+                  $('btnGuardar').value = "";
                   if (!res2 || typeof res2 !== 'object' || !res2.ok) {
                     revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
                     text(msg, 'Error: ' + (res2 && res2.error ? res2.error : 'respuesta inválida.'));
