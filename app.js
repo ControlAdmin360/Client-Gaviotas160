@@ -2863,9 +2863,14 @@ function verificarMultaPreviaExistente() {
     return;
   }
 
+  console.log(`🔎 [FRONTEND] Consultando multas para ${idDepa}...`);
+
   netRun()
     .withSuccessHandler(res => {
+      console.log("📥 [BACKEND RESPONDE]:", res);
+
       if (!res || !res.ok) {
+        console.warn("⚠️ La respuesta del backend vino con ok: false");
         cerrarPanelMultaExistente();
         return;
       }
@@ -2873,27 +2878,27 @@ function verificarMultaPreviaExistente() {
       multasPreviasDepa.multaInasist = Number(res.multaInasist) || 0;
       multasPreviasDepa.multaNormas  = Number(res.multaNormas) || 0;
 
-      // Evalúa cuál de las dos multas corresponde al tipo seleccionado
       const valorActual = (tipo === "MULTA_INASISTENC") 
         ? multasPreviasDepa.multaInasist 
         : multasPreviasDepa.multaNormas;
 
-      // Si el departamento YA TIENE una multa en ese rubro (> 0):
+      console.log(`📊 Dpto: ${idDepa} | Tipo: ${tipo} | Multa previa: S/ ${valorActual}`);
+
       if (valorActual > 0) {
         document.getElementById('lbl-multa-previa-valor').textContent = `S/ ${valorActual.toFixed(2)}`;
-        if (panel) panel.style.display = 'block'; // 👈 Despliega el panel rojo
+        if (panel) panel.style.display = 'block';
         
         const optSumar = document.getElementById('opt-multa-sumar');
         if (optSumar) optSumar.checked = true;
 
         actualizarPreviewCalculoMulta();
       } else {
-        // Si no tiene multa previa en ese rubro, mantiene el panel oculto
+        console.log("ℹ️ El departamento tiene S/ 0 en este rubro (el panel permanece oculto)");
         if (panel) panel.style.display = 'none';
       }
     })
     .withFailureHandler(err => {
-      console.error("Error al consultar multas previas:", err);
+      console.error("❌ Error de red:", err);
       cerrarPanelMultaExistente();
     })
     .api_consultarMultasDepa(idDepa);
