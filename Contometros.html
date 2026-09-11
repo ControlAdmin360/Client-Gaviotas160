@@ -178,6 +178,8 @@
   const AUTH_USER = AUTH_USER_PARAM || sessionStorage.getItem('AUTH_USER') || '';
   const AUTH_TOKEN = params.get('token') || sessionStorage.getItem('AUTH_TOKEN') || '';
 
+  const toast = window.toast || window.parent?.toast;
+
   function setUserLogg(){
     const el = $('userLogg');
     if (el) el.textContent = 'User: ' + (AUTH_USER || '—');
@@ -537,7 +539,7 @@
     const dlg = $('dlgEditarFecha');
     const inp = $('inpEditarFecha');
     const val = String(inp?.value || '').trim();
-    if (!val) { alert("Seleccione una fecha válida."); return; }
+    if (!val) { toast("Seleccione una fecha válida."); return; }
 
     const [yyyy, mm, dd] = val.split('-');
     const fechaLegible = `${dd}/${mm}/${yyyy}`;
@@ -563,7 +565,7 @@
 
         if (r && r.ok) {
           if (dlg) dlg.close();
-          alert(r.mensaje);
+          toast(r.mensaje);
           cargarEstado(); // Recarga la vista de Contómetros con la nueva fecha
         } else {
           alert("❌ Error: " + (r?.error || 'No se pudo actualizar la fecha.'));
