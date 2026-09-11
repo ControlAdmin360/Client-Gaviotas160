@@ -172,8 +172,6 @@
   const show = (el, on, display='') => { if (el) el.style.display = on ? (display || '') : 'none'; };
   const enable = (el, on) => { if (el) el.disabled = !on; };
 
-  const rango = window.parent?.ALERTAS_LEC || 6000; // Fallback a 6000 si no existe
-
   // Parámetros URL y Sesión
   const params = new URLSearchParams(location.search);
   const AUTH_USER_PARAM = params.get('user') || '';
@@ -581,6 +579,8 @@
     const msg = $('msg');
     const btnGuardar = $('btnGuardar');
     const inpValor = $('inpValor');
+    
+    const rango = window.parent?.ALERTAS_LEC || 6000; // Fallback a 6000 si no existe
 
     if (!EST || (EST.doneAll && !EST.viewOnly)) return;
     if (!seleccionado) { msg.className = 'warn'; text(msg, 'Elija un Dpto.'); return; }
