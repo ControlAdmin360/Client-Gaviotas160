@@ -503,7 +503,7 @@
         .guardarFechaNueva(s, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '', typeof AUTH_USER !== 'undefined' ? AUTH_USER : '');
     });
 
-   $('btnEditarFechaActiva')?.addEventListener('click', () => {
+  $('btnEditarFechaActiva')?.addEventListener('click', () => {
     const dlg = $('dlgEditarFecha');
     const inp = $('inpEditarFecha');
     const lbl = $('lblFechaRef');
@@ -562,7 +562,7 @@
 
         if (r && r.ok) {
           if (dlg) dlg.close();
-          alert(r.mensaje || "✅ Fecha actualizada con éxito.");
+          alert(r.mensaje);
           cargarEstado(); // Recarga la vista de Contómetros con la nueva fecha
         } else {
           alert("❌ Error: " + (r?.error || 'No se pudo actualizar la fecha.'));
