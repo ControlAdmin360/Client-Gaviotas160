@@ -273,8 +273,6 @@
       const esFechaEditable = !res.viewOnly;
       show(btnEditFecha, (tieneFechaValida && esFechaEditable), 'inline-block');
     }
-
-
     // Toggle lecturas en chips
     if (grid) grid.classList.toggle('show-readings', mostrarLecturas);
     if (btnToggleLect) btnToggleLect.textContent = mostrarLecturas ? 'Ocultar lecturas' : 'Mostrar lecturas';
@@ -284,7 +282,6 @@
       enable(btnGuardar, false);
       return;
     }
-
     renderGrid(res);
   }
 
