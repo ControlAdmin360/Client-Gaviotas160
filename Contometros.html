@@ -705,7 +705,7 @@
         if (btn) btn.disabled = false; // 👈 Mantiene el botón habilitado
         return;
       }
-
+  })
   // Validación de seguridad inicial
   if (!AUTH_TOKEN){
     try { parent.postMessage({ type:'contometros-auth-expired' }, '*'); } catch(e){}
@@ -728,6 +728,7 @@
 
   cargarEstado();
 })();
+
 </script>
 </body>
 </html>
