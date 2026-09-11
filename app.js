@@ -82,7 +82,7 @@ function validarIngreso(event) {
       if (res && res.ok && res.token) {
         // 1. Guardar Token
         setAuthToken(res.token);
-        
+
         // 2. Guardar Usuario
         const usuarioFinal = res.user || userInput;
         setAuthUser(usuarioFinal);
@@ -94,6 +94,10 @@ function validarIngreso(event) {
         // 4. Limpiar campos al ingresar con éxito
         if (userEl) userEl.value = '';
         if (passEl) passEl.value = '';
+
+        // approvechamos y obtenemos el valor de alerta para lecturas de contometros
+        const alertaLect = res?.alertaLect || 6000;
+        window.ALERTASLECT = alertaLect;
 
         // 5. Ocultar Login y Mostrar App
         mostrarAplicacion();
