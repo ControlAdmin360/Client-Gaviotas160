@@ -95,10 +95,6 @@ function validarIngreso(event) {
         if (userEl) userEl.value = '';
         if (passEl) passEl.value = '';
 
-        // approvechamos y obtenemos el valor de alerta para lecturas de contometros
-        const alertaLect = res?.alertaLect || 6000;
-        window.ALERTASLECT = alertaLect;
-
         // 5. Ocultar Login y Mostrar App
         mostrarAplicacion();
       } else {
