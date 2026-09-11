@@ -158,6 +158,100 @@
 }
 /**//**//**//**//**//**//**//**/
 
+/* --- PANTALL MANTENIMIENTO --- */
+.maintenance-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 40px 30px;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border-top: 4px solid #1f5fa8; /* Color de acento corporativo */
+}
+
+/* --- ANIMACIÓN DE ENGRANAJES --- */
+.gears-container {
+  position: relative;
+  height: 80px;
+  margin-bottom: 20px;
+  color: #1f5fa8;
+}
+.gear-large {
+  font-size: 3.5rem;
+  position: absolute;
+  top: 10px;
+  left: calc(50% - 30px);
+  animation: spinRight 6s linear infinite;
+}
+.gear-small {
+  font-size: 2rem;
+  position: absolute;
+  top: 40px;
+  left: calc(50% + 15px);
+  color: #64748b; /* Gris azulado */
+  animation: spinLeft 4s linear infinite;
+}
+
+/* --- TEXTOS Y CUERPO --- */
+.maintenance-body h3 {
+  font-size: 1.3rem;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+.maintenance-desc {
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
+.maintenance-footer {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 15px;
+  font-weight: 500;
+}
+
+/* --- ANIMACIONES --- */
+@keyframes spinRight {
+  100% { transform: rotate(360deg); }
+}
+@keyframes spinLeft {
+  100% { transform: rotate(-360deg); }
+}
+
+/* Texto pulsante sutil */
+.pulse-text {
+  animation: pulseColor 2s infinite alternate;
+}
+@keyframes pulseColor {
+  0% { color: #1e293b; }
+  100% { color: #1f5fa8; }
+}
+
+/* Barra de carga estilo Cylon/Indeterminada */
+.progress-container {
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  width: 80%;
+  margin: 0 auto;
+}
+.progress-bar-animated {
+  position: absolute;
+  height: 100%;
+  width: 30%;
+  background-color: #1f5fa8;
+  border-radius: 10px;
+  animation: slideLoad 1.5s ease-in-out infinite alternate;
+}
+@keyframes slideLoad {
+  0% { left: 0; width: 30%; }
+  100% { left: 70%; width: 40%; }
+}
+/**//**//**//**//**//**//**//**/
 
 :root {
   --bg:#0f172a; --panel:#111827; --muted:#94a3b8; --fg:#e5e7eb;
