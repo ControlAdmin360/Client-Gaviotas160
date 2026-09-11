@@ -660,6 +660,7 @@
                 })
                 .withFailureHandler(err2 => {
                   $('btnGuardar').disabled = false;
+                  $('btnGuardar').value = "";
                   revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err2?.message || String(err2)));
                 })
                 .guardarLecturaContometros(payload, user);
@@ -678,6 +679,7 @@
         })
         .withFailureHandler(err => {
           $('btnGuardar').disabled = false;
+          $('btnGuardar').value = "";
           revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err?.message || String(err)));
         })
         .guardarLecturaContometros(payload, user);
