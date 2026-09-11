@@ -2863,14 +2863,12 @@ function verificarMultaPreviaExistente() {
     return;
   }
 
-  console.log(`🔎 [FRONTEND] Consultando multas para ${idDepa}...`);
-
   netRun()
     .withSuccessHandler(res => {
-      console.log("📥 [BACKEND RESPONDE]:", res);
+      //console.log("📥 [BACKEND RESPONDE]:", res);
 
       if (!res || !res.ok) {
-        console.warn("⚠️ La respuesta del backend vino con ok: false");
+        //console.warn("⚠️ La respuesta del backend vino con ok: false");
         cerrarPanelMultaExistente();
         return;
       }
@@ -2882,7 +2880,7 @@ function verificarMultaPreviaExistente() {
         ? multasPreviasDepa.multaInasist 
         : multasPreviasDepa.multaNormas;
 
-      console.log(`📊 Dpto: ${idDepa} | Tipo: ${tipo} | Multa previa: S/ ${valorActual}`);
+      //console.log(`📊 Dpto: ${idDepa} | Tipo: ${tipo} | Multa previa: S/ ${valorActual}`);
 
       if (valorActual > 0) {
         document.getElementById('lbl-multa-previa-valor').textContent = `S/ ${valorActual.toFixed(2)}`;
@@ -2893,7 +2891,6 @@ function verificarMultaPreviaExistente() {
 
         actualizarPreviewCalculoMulta();
       } else {
-        console.log("ℹ️ El departamento tiene S/ 0 en este rubro (el panel permanece oculto)");
         if (panel) panel.style.display = 'none';
       }
     })
