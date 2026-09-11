@@ -591,6 +591,7 @@
     if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
       const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
       const rango = window.parent?.ALERTAS_LEC || 6000; // Fallback a 6000 si no existe
+      console.log("📥 [BACKEND RESPONDE]:", rango);
       
       if (consumoLts > rango) {
         const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→ Si la lectura es correcta, proceda con el registro.`);
