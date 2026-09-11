@@ -565,7 +565,7 @@
 
         if (r && r.ok) {
           if (dlg) dlg.close();
-          alert(r.mensaje);
+          //alert(r.mensaje);
           cargarEstado(); // Recarga la vista de Contómetros con la nueva fecha
         } else {
           alert("❌ Error: " + (r?.error || 'No se pudo actualizar la fecha.'));
