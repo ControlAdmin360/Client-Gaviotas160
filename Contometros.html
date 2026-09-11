@@ -584,11 +584,11 @@
       if (!/^-?\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
       const valNum = parseInt(valStr, 10);
 
-      // 🎯 Confirmación de advertencia al operador si supera 5000 Litros
+      // 🎯 Confirmación de advertencia al operador si supera 6000 Litros
       if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
         const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-        if (consumoLts > 5000) {
-          const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nSi revisado bien la lectura es correcta, proceda con el registro de la misma`);
+        if (consumoLts > 6000) {
+          const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→Si la lectura es correcta, proceda con el registro de la misma`);
           if (!confirma) return;
         }
       }
