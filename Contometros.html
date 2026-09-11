@@ -583,7 +583,7 @@
     const btnGuardar = $('btnGuardar');
     const inpValor = $('inpValor');
     const rango = window.parent?.ALERTAS_LEC || 6000;
-    console.log("📥 [BACKEND RESPONDE]:", rango);
+    console.log("📥 [btnGuardar RESPONDE]:", rango);
 
     if (!EST || (EST.doneAll && !EST.viewOnly)) return;
     if (!seleccionado) { msg.className = 'warn'; text(msg, 'Elija un Dpto.'); return; }
@@ -718,6 +718,7 @@
     const n = parseInt(s, 10);
     const prevNum = parseInt(prevDeSeleccionado, 10) || 0;
     const rango = window.parent?.ALERTAS_LEC || 6000;
+    console.log("📥 [inpValor RESPONDE]:", rango);
 
     // 1. Error bloqueante si es menor a la anterior
     if (n < prevNum) {
