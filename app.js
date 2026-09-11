@@ -3010,7 +3010,7 @@ function abrirModalConfig() {
   // 1. Poblar el combo de días del 1 al 31 (si está vacío)
   const selDia = document.getElementById('config-dia-pago');
   if (selDia && selDia.options.length === 0) {
-    for (let i = 1; i <= 31; i++) {
+    for (let i = 1; i <= 20; i++) {
       let opt = document.createElement('option');
       opt.value = i;
       opt.textContent = `Día ${String(i).padStart(2, '0')}`;

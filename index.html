@@ -720,12 +720,12 @@
                 <div class="combo-wrap" id="wrap-dia-pago">
                   <label for="config-dia-pago" id="label-dia-pago" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">Día Límite de Pago:</label>
                   <select id="config-dia-pago" class="select-modern" style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 7px 8px; border-radius: 6px; font-weight: bold;">
-                    <!-- Se poblará del 1 al 31 vía JS -->
+                    <!-- Se poblará del 1 al 20 vía JS -->
                   </select>
                 </div>
 
                 <div class="input-wrap">
-                  <label for="config-fondo" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">Fondo Contingencia (S/.):</label>
+                  <label for="config-fondo" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">💰 Fondo Contingencia (S/.):</label>
                   <input type="text" id="config-fondo" placeholder="0.00" class="input-modern"
                         style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 7px 8px; border-radius: 6px; font-weight: bold;"
                         oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');">
@@ -735,7 +735,7 @@
               <div style="display: flex; align-items: center; gap: 8px; padding-top: 4px; border-top: 1px dashed #334155;">
                 <input type="checkbox" id="config-sin-mora-check" onchange="toggleSinMora(this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
                 <label for="config-sin-mora-check" style="font-weight: 600; color: #fef08a; cursor: pointer; font-size: 0.8rem;">
-                  🕒 Excluir cálculo de Moras Diarias en este período
+                  🕒 Suspender Cálculo de Moras Diarias en este Período
                 </label>
               </div>
             </div>
@@ -743,7 +743,7 @@
             <!-- TARJETA 2: Exonerados de Administración -->
             <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px;">
               <label for="config-exonerados-text" style="font-weight: bold; font-size: 0.8rem; color: #38bdf8; display: block; margin-bottom: 4px;">
-                2. 👥 EXONERADOS DE ADMINISTRACIÓN (Cuota Junta):
+                2. 👥 EXONERADOS POR COBRO DE ADMINISTRACIÓN (Cuota Junta):
               </label>
               <input type="text" id="config-exonerados-text" maxlength="36" placeholder="Ej: A101, B203, A402..." 
                     style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 8px 10px; border-radius: 6px; font-size: 0.85rem; text-transform: uppercase;">
@@ -760,12 +760,12 @@
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <input type="checkbox" id="config-porton-check" onchange="handlePortonToggle(this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
                   <label for="config-porton-check" style="font-weight: 600; color: #fde047; font-size: 0.8rem; cursor: pointer;">
-                    Prorratear proporcionalmente según Cocheras (#1 y #2)
+                    ProrrateO Porcentual según Numero de Cocheras 
                   </label>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 4px;">
-                  <label for="config-porton-pct" style="font-size: 0.75rem; color: #94a3b8;">% Cocheras:</label>
+                  <label for="config-porton-pct" style="font-size: 0.75rem; color: #94a3b8;">% A aplicar:</label>
                   <input type="number" id="config-porton-pct" min="0" max="100" disabled
                         style="width: 55px; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 4px; text-align: center; border-radius: 4px; font-weight: bold;">
                   <span style="font-weight: bold; color: #fde047;">%</span>
@@ -790,13 +790,13 @@
                 <div style="display: flex; align-items: center; gap: 8px; padding-top: 18px;">
                   <input type="checkbox" id="config-todos-check" onchange="toggleCuotaExtra(this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
                   <label for="config-todos-check" style="font-weight: 600; color: #38bdf8; cursor: pointer; font-size: 0.8rem;">
-                    Aplicar a TODOS los dptos
+                    Aplicar a TODOS los Dptos.
                   </label>
                 </div>
               </div>
 
               <div class="combo-wrap" id="wrap-config-depa" style="margin-bottom: 10px;">
-                <label for="config-depa" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">Departamento Individual (Si no aplica a todos):</label>
+                <label for="config-depa" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">Cuota Dpto. Individual (Si no aplica a todos):</label>
                 <select id="config-depa" class="select-modern" style="width: 100%; background: #0f172a; color: #fff; border: 1px solid #475569; padding: 7px 8px; border-radius: 6px; font-weight: 600;">
                   <option value="">Seleccione Departamento...</option>
                 </select>
@@ -804,7 +804,7 @@
 
               <div>
                 <label for="config-descrip-cuota-extra" style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 3px;">
-                  📝 Motivo / Descripción (Mínimo 10 caracteres):
+                  📝 Motivo / Descripción de la Cuota Extra (Mínimo 10 caracteres):
                 </label>
                 <input type="text" id="config-descrip-cuota-extra" maxlength="40" class="input-modern" 
                       placeholder="Ej: CUOTA EXTRA MANTENIMIENTO FACHADA" 
