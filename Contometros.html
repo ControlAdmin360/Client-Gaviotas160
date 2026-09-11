@@ -205,13 +205,21 @@
     document.querySelectorAll('.idbtn.sel').forEach(n => n.classList.remove('sel'));
   }
 
-  function pintar(res){
+ function pintar(res){
     EST = res;
     // Top info
     text($('estado'), res.mensaje ?? '');
     text($('total'),  res.total ?? 0);
     text($('hechos'), res.total && typeof res.vacias === 'number' ? (res.total - res.vacias) : 0);
     text($('fecha'),  res.fechaForm || '—');
+
+    // 🎯 GESTIÓN DEL LÁPIZ: Colocarlo aquí para que SIEMPRE se evalúe antes de cualquier return
+    const btnEditFecha = $('btnEditarFechaActiva');
+    if (btnEditFecha) {
+      const tieneFechaValida = res.fechaForm && res.fechaForm !== '—';
+      const esFechaEditable = !res.viewOnly;
+      show(btnEditFecha, (tieneFechaValida && esFechaEditable), 'inline-block');
+    }
 
     // Estados
     const pedirFecha       = (res.needDate === true && res.nextCol);
@@ -250,7 +258,7 @@
         if (grid) grid.innerHTML = '';
         enable(inpValor, false);
         show(btnGuardar, false); enable(btnGuardar, false);
-        return;
+        return; // Ahora este return ya no oculta el lápiz
       }
     } else if (esRevision) {
       show(bloque, true, 'flex');
@@ -267,12 +275,7 @@
       enable(inpValor, true);
       show(btnGuardar, true, 'inline-block'); enable(btnGuardar, true);
     }
-    const btnEditFecha = $('btnEditarFechaActiva');
-    if (btnEditFecha) {
-      const tieneFechaValida = res.fechaForm && res.fechaForm !== '—';
-      const esFechaEditable = !res.viewOnly;
-      show(btnEditFecha, (tieneFechaValida && esFechaEditable), 'inline-block');
-    }
+
     // Toggle lecturas en chips
     if (grid) grid.classList.toggle('show-readings', mostrarLecturas);
     if (btnToggleLect) btnToggleLect.textContent = mostrarLecturas ? 'Ocultar lecturas' : 'Mostrar lecturas';
