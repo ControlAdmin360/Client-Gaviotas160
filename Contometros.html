@@ -172,6 +172,10 @@
   const show = (el, on, display='') => { if (el) el.style.display = on ? (display || '') : 'none'; };
   const enable = (el, on) => { if (el) el.disabled = !on; };
 
+  const getRangoAlerta = () => {
+    return window.parent?.ALERTAS_LEC || 6000;
+  };
+
   // Parámetros URL y Sesión
   const params = new URLSearchParams(location.search);
   const AUTH_USER_PARAM = params.get('user') || '';
@@ -582,8 +586,8 @@
     const msg = $('msg');
     const btnGuardar = $('btnGuardar');
     const inpValor = $('inpValor');
-    const rango = window.parent?.ALERTAS_LEC || 6000;
-    console.log("📥 [btnGuardar RESPONDE]:", rango);
+
+    console.log("📥 [btnGuardar RESPONDE]:", getRangoAlerta);
 
     if (!EST || (EST.doneAll && !EST.viewOnly)) return;
     if (!seleccionado) { msg.className = 'warn'; text(msg, 'Elija un Dpto.'); return; }
@@ -595,7 +599,7 @@
     // 🎯 Validación de Consumo Elevado (Usando ALERTAS_LEC unificado con el Login)
     if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
       const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-      if (consumoLts > rango) {
+      if (consumoLts > getRangoAlerta) {
         const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→ Si la lectura es correcta, proceda con el registro.`);
         if (!confirma) return;
       }
@@ -717,8 +721,8 @@
 
     const n = parseInt(s, 10);
     const prevNum = parseInt(prevDeSeleccionado, 10) || 0;
-    const rango = window.parent?.ALERTAS_LEC || 6000;
-    console.log("📥 [inpValor RESPONDE]:", rango);
+
+    console.log("📥 [inpValor RESPONDE]:", getRangoAlerta);
 
     // 1. Error bloqueante si es menor a la anterior
     if (n < prevNum) {
@@ -733,7 +737,7 @@
 
     // 2. Advertencia si supera rango Lts (alerta ámbar, pero permite guardar)
     const consumoLts = n - prevNum;
-    if (consumoLts > rango) {
+    if (consumoLts > getRangoAlerta) {
       this.style.borderColor = '#f59e0b';
       this.classList.remove('input-error');
       msg.classList.remove('flat');
