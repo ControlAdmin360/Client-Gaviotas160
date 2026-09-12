@@ -2750,14 +2750,21 @@ async function validarYGuardarExon() {
   const descrip = (document.getElementById('exon-descrip')?.value || '').trim();
 
   // Validación de montos manuales
+  if (!chkElim && descrip.length < 6) {
+    alert("⚠️ Ingrese el Sustento que indique el Motivo válido para la ejecución de esta acción (mínimo 6 caracteres).");
+    document.getElementById('exon-descrip')?.focus();
+    return;
+  }
+
+  // 2. Validación de montos para ajustes manuales
   const esCriterioRapido = chkMorTot || chkMulTot || chkPer || chkCong || chkElim;
   if (!esCriterioRapido) {
     if (concepto === "Select") {
-      alert("⚠️ Seleccione el tipo de Exoneración que va aplicar.");
+      alert("⚠️ Seleccione el tipo de Exoneración que va a aplicar.");
       return;
     }
     if (monto <= 0) {
-      alert("⚠️ Ingrese el Monto valido que va aplicar.");
+      alert("⚠️ Ingrese un Monto válido mayor a S/ 0.00.");
       return;
     }
     if (concepto === "MORAS" && monto > deudasDepaModal.morNum) {
@@ -2769,33 +2776,31 @@ async function validarYGuardarExon() {
       return;
     }
     if (concepto === "MORAS&MULTAS" && monto > (deudasDepaModal.mulNum + deudasDepaModal.morNum)) {
-      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la suma de la Deuda Total de Moras y Multas que corresponde a S/ ${deudasDepaModal.morNum+deudasDepaModal.mulNum}`);
+      alert(`⚠️ El Monto a Exonerar NO puede ser Mayor a la suma de la Deuda Total de Moras y Multas que corresponde a S/ ${deudasDepaModal.morNum + deudasDepaModal.mulNum}`);
       return;
     }
-    // Validación de descripción obligatoria
-    if (!chkElim && descrip.length < 6) {
-      alert("⚠️ Ingrese el Sustento que indique el Motivo válido para la ejecucion de esta acción (mínimo 6 caracteres).");
-      return;
-    }
-
   }
 
-  // Mensajes de confirmación
-  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin."
-  let mensajeConfirm = `Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin`;
-   if (chkElim) {
+  // 3. Mensajes de confirmación
+  let mensajeAdvertencia = "⚠️ TENGA EN CUENTA QUE ESTA OPCIÓN NO PODRÁ DESHACERSE\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin.";
+  let mensajeConfirm = `Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin.`;
+
+  if (chkElim) {
     mensajeConfirm = `Está seguro de ANULAR la exoneración activa del Departamento: ${depa}❓`;
   } else if (chkMorTot && chkMulTot) {
-    mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}) y Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}) al Dpto: ${depa}❓ \n\n ${mensajeAdvertencia}`;
+    mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Moras (S/ ${deudasDepaModal.morNum.toFixed(2)}) y Multas (S/ ${deudasDepaModal.mulNum.toFixed(2)}) al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (chkMorTot) {
-    mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto: ${depa}❓ \n\n ${mensajeAdvertencia}`;
+    mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (chkMulTot) {
-    mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto: ${depa}❓ \n\n ${mensajeAdvertencia}`;
-  
+    mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
+  } else if (chkPer) {
+    mensajeConfirm = `Confirma exonerar la mora generada en el período actual al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
+  } else if (chkCong) {
+    mensajeConfirm = `Confirma el CONGELAMIENTO PERMANENTE de moras para el Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (concepto === "RECIBOS") {
-    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opción generará una ORDEN DE ACREDITACIÓN DE SALDO POR S/ ${monto} A FAVOR en el RECIBO del Dpto: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un RECLAMO formal ante la Administracion o Junta de Propietarios por algun cobro indebido o por error en su facturación. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin.`;
+    mensajeConfirm = `⚠️ ADVERTENCIA: ℹ️ Tenga en cuenta que esta opción generará una ORDEN DE ACREDITACIÓN DE SALDO POR S/ ${monto.toFixed(2)} A FAVOR en el RECIBO del Dpto: ${depa}.\n\nConfirma que desea registrar la operación❓\n${mensajeAdvertencia}`;
   } else if (concepto === "REINTEGRO") {
-    mensajeConfirm = `⚠️ ADVERTENCIA: ℹTenga en cuenta que esta opción generará una ORDEN DE REINTEGRO DE SALDO POR S/ ${monto} A FAVOR en el RECIBO del Dpto: ${depa}. Esto SOLO debe aplicarse cuando el Propietario haya realizado un PAGO EXEDENTE al MONTO total de su SALDO y este haya formalizado una solicitud de REINTEGRO por la DIFERENCIA de pago. \n⚠️ SOLO APLICAR posterior al REINTEGRO y por el MONTO EXACTO DEVUELTO. \n →Confirma que desea registrar la operación para el Dpto: ${depa}❓\n ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin.`;
+    mensajeConfirm = `⚠️ ADVERTENCIA: ℹ️ Tenga en cuenta que esta opción generará una ORDEN DE REINTEGRO DE SALDO POR S/ ${monto.toFixed(2)} A FAVOR en el RECIBO del Dpto: ${depa}.\n\nConfirma que desea registrar la operación❓\n${mensajeAdvertencia}`;
   }
 
   if (!confirm(mensajeConfirm)) return;
