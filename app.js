@@ -22,18 +22,16 @@ function verificarModoMantenimiento() {
   const cardMantenimiento = document.getElementById('maintenance-card');
   const cardLogin = document.getElementById('form-login-card');
 
-  // 1. Si entras con la URL secreta (?admin=1), muestra el Login directamente
+  // 1. Si entra con URL de administración (?admin=1), forzar Login
   if (esBypassAdmin) {
     if (cardMantenimiento) cardMantenimiento.style.display = 'none';
     if (cardLogin) cardLogin.style.display = 'block';
     return;
   }
 
-  // 2. Si no es admin, consulta la configuración en Firebase
-
+  // 2. Consulta al backend mediante el canal netRun()
   netRun()
     .withSuccessHandler(config => {
-      // 🎯 Clave actualizada en inglés
       const enMantenimiento = config && config["_MAINTENANCE_MODE"] === true;
 
       if (enMantenimiento) {
@@ -44,13 +42,14 @@ function verificarModoMantenimiento() {
         if (cardLogin) cardLogin.style.display = 'block';
       }
     })
-    .withFailureHandler(() => {
+    .withFailureHandler(err => {
+      console.warn("⚠️ No se pudo consultar el modo mantenimiento:", err);
+      // En caso de falla de conexión, muestra el login por seguridad
       if (cardMantenimiento) cardMantenimiento.style.display = 'none';
       if (cardLogin) cardLogin.style.display = 'block';
     })
-    .getFirebaseData("CONFIG");
+    .api_obtenerConfiguracion(); // 👈 Llama al puente del backend
 }
-
 
 // --- Gestión de Sesión y Token (sessionStorage) ---
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
