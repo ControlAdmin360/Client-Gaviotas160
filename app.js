@@ -15,6 +15,47 @@ if (DEBUG) {
   });
 }
 
+function verificarModoMantenimiento() {
+  const params = new URLSearchParams(window.location.search);
+  // Revisa si entras con la clave secreta en la URL (Ej: tu-pagina.com?admin=1)
+  const esBypassAdmin = params.get('admin') === '1' || params.get('mode') === 'admin';
+
+  const cardMantenimiento = document.getElementById('maintenance-card');
+  const cardLogin = document.getElementById('form-login-card');
+
+  // Si vienes con la URL de admin, te muestra el Login directamente sin consultar Firebase
+  if (esBypassAdmin) {
+    if (cardMantenimiento) cardMantenimiento.style.display = 'none';
+    if (cardLogin) cardLogin.style.display = 'block';
+    return;
+  }
+
+  // Si es un usuario normal, verificamos en Firebase el estado del sistema
+  netRun()
+    .withSuccessHandler(config => {
+      const enMantenimiento = config && config["_MAINTENANCE_MODE"] === true;
+
+      if (enMantenimiento) {
+        if (cardMantenimiento) cardMantenimiento.style.display = 'block';
+        if (cardLogin) cardLogin.style.display = 'none';
+      } else {
+        if (cardMantenimiento) cardMantenimiento.style.display = 'none';
+        if (cardLogin) cardLogin.style.display = 'block';
+      }
+    })
+    .withFailureHandler(() => {
+      // Si falla la red, muestra el Login por seguridad
+      if (cardMantenimiento) cardMantenimiento.style.display = 'none';
+      if (cardLogin) cardLogin.style.display = 'block';
+    })
+    .getFirebaseData("CONFIG");
+}
+
+// Ejecutar al cargar la página
+document.addEventListener("DOMContentLoaded", verificarModoMantenimiento);
+
+
+
 // --- Gestión de Sesión y Token (sessionStorage) ---
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
 function setAuthToken(t){ if (t) sessionStorage.setItem('AUTH_TOKEN', t); }
@@ -175,7 +216,6 @@ function iniServicesDepas() {
     })
     .getListasIdBanco();
 }
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4568,6 +4608,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 3. Modales y Vistas Iniciales
+  verificarModoMantenimiento();
   iniServicesDepas();
   setupRouter();
   setupDeudas?.();
@@ -4581,6 +4622,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupRecibos?.();
   cargarModuloServicios?.();
   netRun().calSaldosNew();
+
 
   // 4. Modales y Navegación (Corregidas las llamadas de cierre)
   document.getElementById('btnFormClose')?.addEventListener('click', closeContometrosForm);
