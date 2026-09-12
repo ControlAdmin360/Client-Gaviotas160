@@ -27,79 +27,66 @@
 </head>
 <body>
 
-  <div id="login-screen" class="login-wrapper"></div>
+  <div id="login-screen" class="login-wrapper">
 
-    <!-- PANTALLA DE MANTENIMIENTO ESTILO EMPRESARIAL -->
-    <div id="maintenance-screen" class="login-wrapper">
-      <div class="maintenance-card">
-        
-        <!-- Animación de Engranajes -->
-        <div class="gears-container">
-          <i class="fa-solid fa-gear gear-large"></i>
-          <i class="fa-solid fa-gear gear-small"></i>
+    <!-- 1. PANTALLA DE MANTENIMIENTO (Visible para usuarios por defecto si el modo está activo) -->
+    <div id="maintenance-card" class="maintenance-card" style="display: none;">
+      <div class="gears-container">
+        <i class="fa-solid fa-gear gear-large"></i>
+        <i class="fa-solid fa-gear gear-small"></i>
+      </div>
+      <div class="login-header">
+        <span class="logo-icon">🕊️</span>
+        <h2>Gaviotas 160</h2>
+        <p>ControlAdmin360 Gestión & Administración</p>
+      </div>
+      <div class="maintenance-body">
+        <h3 class="pulse-text">Sistema en Mantenimiento</h3>
+        <p class="maintenance-desc">
+          Estamos realizando actualizaciones programadas en la plataforma para mejorar el rendimiento y la seguridad.
+        </p>
+        <div class="progress-container">
+          <div class="progress-bar-animated"></div>
         </div>
-
-        <!-- Cabecera -->
-        <div class="login-header">
-          <span class="logo-icon">🕊️</span>
-          <h2>Gaviotas 160</h2>
-          <p>ControlAdmin360 Gestión & Administración</p>
-        </div>
-
-        <!-- Mensaje Principal -->
-        <div class="maintenance-body">
-          <h3 class="pulse-text">Sistema en Mantenimiento</h3>
-          <p class="maintenance-desc">
-            Estamos realizando actualizaciones programadas en la plataforma para mejorar el rendimiento y la seguridad.
-          </p>
-          
-          <!-- Barra de progreso animada -->
-          <div class="progress-container">
-            <div class="progress-bar-animated"></div>
-          </div>
-          
-          <p class="maintenance-footer">Estaremos de vuelta en breve. Gracias por su paciencia.</p>
-        </div>
-
+        <p class="maintenance-footer">Estaremos de vuelta en breve. Gracias por su paciencia.</p>
       </div>
     </div>
 
-    <!-- PANTALLA DE LOGIN ESTILO EMPRESARIAL -->
-    <div id="login-screen" class="login-wrapper">
-      <div class="login-card">
-        <div class="login-header">
-          <span class="logo-icon">🕊️</span>
-          <h2>Gaviotas 160</h2>
-          <p>ControlAdmin360 Gestión & Administración</p>
-        </div>
-        <form id="form-login" onsubmit="validarIngreso(event)">
-          <div class="form-group">
-            <label for="login-user">Usuario</label>
-            <div class="input-container">
-              <i class="fa-solid fa-user"></i>
-              <input type="text" id="login-user" required placeholder="Ej. admin" autocomplete="username">
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="login-pass">Contraseña</label>
-            <div class="input-container">
-              <i class="fa-solid fa-lock"></i>
-              <input type="password" id="login-pass" required placeholder="••••••••" autocomplete="current-password">
-            </div>
-          </div>
-          <div id="login-error" class="error-msg" style="display: none;">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <span>Usuario o contraseña incorrectos.</span>
-          </div>
-          <button type="submit" class="btn-login">
-            <span>Iniciar Sesión</span>
-            <i class="fa-solid fa-arrow-right"></i>
-          </button>
-        </form>
+    <!-- 2. FORMULARIO DE LOGIN (Tu caja de Login original) -->
+    <div id="form-login-card" class="login-card">
+      <div class="login-header">
+        <span class="logo-icon">🕊️</span>
+        <h2>Gaviotas 160</h2>
+        <p>ControlAdmin360 Gestión & Administración</p>
       </div>
+      <form id="form-login" onsubmit="validarIngreso(event)">
+        <div class="form-group">
+          <label for="login-user">Usuario</label>
+          <div class="input-container">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="login-user" required placeholder="Ej. admin" autocomplete="username">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Contraseña</label>
+          <div class="input-container">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="login-pass" required placeholder="••••••••" autocomplete="current-password">
+          </div>
+        </div>
+        <div id="login-error" class="error-msg" style="display: none;">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>Usuario o contraseña incorrectos.</span>
+        </div>
+        <button type="submit" class="btn-login">
+          <span>Iniciar Sesión</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
     </div>
+
   </div>
-  
+
   <div class="app">
     <!-- Topbar -->
     <header class="topbar" role="banner">
