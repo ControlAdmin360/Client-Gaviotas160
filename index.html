@@ -28,7 +28,7 @@
 <body>
 
   <div id="login-screen" class="login-wrapper"></div>
-  
+
     <!-- PANTALLA DE MANTENIMIENTO ESTILO EMPRESARIAL -->
     <div id="maintenance-screen" class="login-wrapper">
       <div class="maintenance-card">
@@ -64,43 +64,42 @@
       </div>
     </div>
 
-  </div>
-
-<!-- PANTALLA DE LOGIN ESTILO EMPRESARIAL -->
-<div id="login-screen" class="login-wrapper">
-  <div class="login-card">
-    <div class="login-header">
-      <span class="logo-icon">🕊️</span>
-      <h2>Gaviotas 160</h2>
-      <p>ControlAdmin360 Gestión & Administración</p>
+    <!-- PANTALLA DE LOGIN ESTILO EMPRESARIAL -->
+    <div id="login-screen" class="login-wrapper">
+      <div class="login-card">
+        <div class="login-header">
+          <span class="logo-icon">🕊️</span>
+          <h2>Gaviotas 160</h2>
+          <p>ControlAdmin360 Gestión & Administración</p>
+        </div>
+        <form id="form-login" onsubmit="validarIngreso(event)">
+          <div class="form-group">
+            <label for="login-user">Usuario</label>
+            <div class="input-container">
+              <i class="fa-solid fa-user"></i>
+              <input type="text" id="login-user" required placeholder="Ej. admin" autocomplete="username">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="login-pass">Contraseña</label>
+            <div class="input-container">
+              <i class="fa-solid fa-lock"></i>
+              <input type="password" id="login-pass" required placeholder="••••••••" autocomplete="current-password">
+            </div>
+          </div>
+          <div id="login-error" class="error-msg" style="display: none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span>Usuario o contraseña incorrectos.</span>
+          </div>
+          <button type="submit" class="btn-login">
+            <span>Iniciar Sesión</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+      </div>
     </div>
-    <form id="form-login" onsubmit="validarIngreso(event)">
-      <div class="form-group">
-        <label for="login-user">Usuario</label>
-        <div class="input-container">
-          <i class="fa-solid fa-user"></i>
-          <input type="text" id="login-user" required placeholder="Ej. admin" autocomplete="username">
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="login-pass">Contraseña</label>
-        <div class="input-container">
-          <i class="fa-solid fa-lock"></i>
-          <input type="password" id="login-pass" required placeholder="••••••••" autocomplete="current-password">
-        </div>
-      </div>
-      <div id="login-error" class="error-msg" style="display: none;">
-        <i class="fa-solid fa-circle-exclamation"></i>
-        <span>Usuario o contraseña incorrectos.</span>
-      </div>
-      <button type="submit" class="btn-login">
-        <span>Iniciar Sesión</span>
-        <i class="fa-solid fa-arrow-right"></i>
-      </button>
-    </form>
   </div>
-</div>
-
+  
   <div class="app">
     <!-- Topbar -->
     <header class="topbar" role="banner">
