@@ -17,22 +17,23 @@ if (DEBUG) {
 
 function verificarModoMantenimiento() {
   const params = new URLSearchParams(window.location.search);
-  // Revisa si entras con la clave secreta en la URL (Ej: tu-pagina.com?admin=1)
   const esBypassAdmin = params.get('admin') === '1' || params.get('mode') === 'admin';
 
   const cardMantenimiento = document.getElementById('maintenance-card');
   const cardLogin = document.getElementById('form-login-card');
 
-  // Si vienes con la URL de admin, te muestra el Login directamente sin consultar Firebase
+  // 1. Si entras con la URL secreta (?admin=1), muestra el Login directamente
   if (esBypassAdmin) {
     if (cardMantenimiento) cardMantenimiento.style.display = 'none';
     if (cardLogin) cardLogin.style.display = 'block';
     return;
   }
 
-  // Si es un usuario normal, verificamos en Firebase el estado del sistema
+  // 2. Si no es admin, consulta la configuración en Firebase
+
   netRun()
     .withSuccessHandler(config => {
+      // 🎯 Clave actualizada en inglés
       const enMantenimiento = config && config["_MAINTENANCE_MODE"] === true;
 
       if (enMantenimiento) {
@@ -44,16 +45,11 @@ function verificarModoMantenimiento() {
       }
     })
     .withFailureHandler(() => {
-      // Si falla la red, muestra el Login por seguridad
       if (cardMantenimiento) cardMantenimiento.style.display = 'none';
       if (cardLogin) cardLogin.style.display = 'block';
     })
     .getFirebaseData("CONFIG");
 }
-
-// Ejecutar al cargar la página
-document.addEventListener("DOMContentLoaded", verificarModoMantenimiento);
-
 
 
 // --- Gestión de Sesión y Token (sessionStorage) ---
