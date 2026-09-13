@@ -288,7 +288,13 @@
 
     // Cierre local
     document.getElementById('btnSalir')?.addEventListener('click', () => {
-      try { parent.closeForm('banco'); } catch(e){}
+      try { 
+        if (window.parent && typeof window.parent.closeBancoForm === 'function') {
+          window.parent.closeBancoForm();
+        } else if (window.parent && typeof window.parent.closeForm === 'function') {
+          window.parent.closeForm('banco');
+        }
+      } catch(e){}
     });
 
     document.getElementById('btnLimpiar')?.addEventListener('click', () => limpiarFormulario());
