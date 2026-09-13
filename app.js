@@ -522,7 +522,7 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
         alert('Error al guardar M3: ' + (err?.message || String(err)));
         restore();
       })
-      .api_banco_setM3({ value: num, userAuth: window.usuarioActivo() });
+      .api_banco_setM3({ value: num, userAuth: window.usuarioActivo(), authToken: getAuthToken() });
 
   } catch (e) {
     console.error('Error en M3:', e);
@@ -3560,7 +3560,7 @@ async function guardarNuevoDepartamento(e) {
         alert("❌ Error: " + (err.message || err));
       }
     })
-    .api_crearNuevoDepartamento(payload, window.usuarioActivo?.() || 'ADMIN');
+    .api_crearNuevoDepartamento(payload, getAuthToken());
 }
 
 searchInput?.addEventListener('input', function() {
