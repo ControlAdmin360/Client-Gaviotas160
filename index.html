@@ -1000,7 +1000,7 @@
     window.FORM_CONTOMETROS_URL = 'Contometros.html';
     window.FORM_BANCO_URL       = 'RegistroMov.html';
 
-    // Cierre genérico de modales
+    // refresca los movimientos al cerrar el formulario RegistroMov.
     function closeForm(kind){
       const isBanco = (kind === 'banco');
       const dlg = document.getElementById(isBanco ? 'dlgBancoForm' : 'dlgContometros');
@@ -1008,7 +1008,13 @@
 
       if (dlg && dlg.open) dlg.close();
       if (ifr) ifr.src = 'about:blank';
+      // 🎯 Al cerrar el formulario de banco, refresca DataBank y Recibos automáticamente
+      if (isBanco) {
+        if (typeof reloadPage === 'function') reloadPage();
+        if (typeof reloadRecibos === 'function') reloadRecibos();
+      }
     }
+    window.closeBancoForm = () => closeForm('banco');
 
     // Funciones helper para botones de reportes
     const getBtnDrive = (res) => `
