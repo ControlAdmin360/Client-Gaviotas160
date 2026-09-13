@@ -609,7 +609,7 @@ async function refreshBanco() {
           restore();
           if (window.toast) toast("🔴 Error al cargar periodo");
         })
-        .api_banco_getDashboardData({ year, month, userAuth: user }); // 👈 Punto y coma asegurado
+        .api_banco_getDashboardData({ year, month, userAuth: user, authToken: getAuthToken() }); // 👈 Punto y coma asegurado
     } else {
       console.error("🔴 netRun no está disponible");
       restore();
@@ -667,7 +667,7 @@ function reloadPage() {
       restore();
       if (window.toast) toast("🔴 Error al conectar con el servidor");
     })
-    .api_banco_getDashboardData({ year, month, userAuth: user });
+    .api_banco_getDashboardData({ year, month, userAuth: user, authToken: getAuthToken() });
 }
 
 // Rellenar combos e iniciar carga del mes en curso
@@ -1255,7 +1255,7 @@ function banco_loadStyled(params, cb){
   netRun()
     .withSuccessHandler(cb)
     .withFailureHandler(err => toast('Error Banco Estilos: ' + (err?.message || err)))
-    .api_banco_getDashboardData(params||{});
+    .api_banco_getDashboardData({ ...(params || {}), authToken: getAuthToken() });
 }
 
 function setupBanco(){
@@ -2841,7 +2841,7 @@ async function validarYGuardarExon() {
       if (btnSave) { btnSave.disabled = false; btnSave.textContent = "💾 Registrar Evento"; }
       alert("❌ Error de comunicación: " + (err.message || err));
     })
-    .procesarGuardadoExon(payload, user);
+    .procesarGuardadoExon(payload, getAuthToken());
 }
 
 
@@ -3007,7 +3007,8 @@ async function validarYGuardarMulta() {
     monto: montoNum,
     tipo: tipo,
     modo: modo,
-    userAuth: user
+    userAuth: user,
+    authToken: getAuthToken()
   };
 
   netRun()
@@ -3897,7 +3898,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       })
       .withFailureHandler(err => alert('Error de red: ' + (err?.message || err)))
-      .api_comuna_updateRows({ updates: updates }, window.usuarioActivo());
+      .api_comuna_updateRows({ updates: updates }, getAuthToken());
   });
 
   byId('btnComunaDiscard')?.addEventListener('click', () => {
@@ -4208,6 +4209,7 @@ async function ejecutarProcesoCierreCompleto() {
 
   window.addEventListener('beforeunload', impedirSalidaNavegador);
   const user = window.usuarioActivo();
+  const authTokenConsolidacion = getAuthToken();
 
   try {
     // -------------------------------------------------------------
@@ -4237,7 +4239,7 @@ async function ejecutarProcesoCierreCompleto() {
       netRun()
         .withSuccessHandler(resolve)
         .withFailureHandler(reject)
-        .consolidar_iniciar(user);
+        .consolidar_iniciar(authTokenConsolidacion);
     });
 
     if (!resInicio || !resInicio.ok) throw new Error(resInicio?.error || "Fallo en Creación File Datos Históricos y Contenedor Drive");
@@ -4327,7 +4329,7 @@ async function ejecutarProcesoCierreCompleto() {
       netRun()
         .withSuccessHandler(resolve)
         .withFailureHandler(reject)
-        .consolidar_finalizar(user);
+        .consolidar_finalizar(authTokenConsolidacion);
     });
 
     if (!resFinal || !resFinal.ok) throw new Error(resFinal?.error || "Fallo en Fase Final");
