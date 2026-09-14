@@ -31,8 +31,8 @@ function verificarModoMantenimiento() {
 
   // 2. Consulta al backend mediante el canal netRun()
   netRun()
-    .withSuccessHandler(config => {
-      const enMantenimiento = config && config["_MAINTENANCE_MODE"] === true;
+    .withSuccessHandler(res => {
+      const enMantenimiento = res && res.mantenimiento === true;
 
       if (enMantenimiento) {
         if (cardMantenimiento) cardMantenimiento.style.display = 'block';
@@ -44,11 +44,10 @@ function verificarModoMantenimiento() {
     })
     .withFailureHandler(err => {
       console.warn("⚠️ No se pudo consultar el modo mantenimiento:", err);
-      // En caso de falla de conexión, muestra el login por seguridad
       if (cardMantenimiento) cardMantenimiento.style.display = 'none';
       if (cardLogin) cardLogin.style.display = 'block';
     })
-    .api_obtenerConfiguracion(); // 👈 Llama al puente del backend
+    .api_obtenerModoMantenimiento();
 }
 
 // --- Gestión de Sesión y Token (sessionStorage) ---
@@ -4280,7 +4279,7 @@ async function ejecutarProcesoCierreCompleto() {
       netRun()
         .withSuccessHandler(resolve)
         .withFailureHandler(reject)
-        .consolidar_generarReporteGeneral(resInicio.folderId, user);
+        .consolidar_generarReporteGeneral(resInicio.folderId, user, authTokenConsolidacion);
     });
 
     if (!resRepGen || !resRepGen.ok) throw new Error(resRepGen?.error || "Fallo al generar Reporte General");
@@ -4299,7 +4298,7 @@ async function ejecutarProcesoCierreCompleto() {
       netRun()
         .withSuccessHandler(resolve)
         .withFailureHandler(reject)
-        .consolidar_generarReporteDeudas(resInicio.folderId, user, 15);
+        .consolidar_generarReporteDeudas(resInicio.folderId, user, 15, authTokenConsolidacion);
     });
 
     if (!resDeudas || !resDeudas.ok) throw new Error(resDeudas?.error || "Fallo al generar Lista Deudores");
@@ -4323,7 +4322,7 @@ async function ejecutarProcesoCierreCompleto() {
         netRun()
           .withSuccessHandler(resolve)
           .withFailureHandler(reject)
-          .consolidar_procesarLote(lote, resInicio.folderId);
+          .consolidar_procesarLote(lote, resInicio.folderId, authTokenConsolidacion);
       });
 
       if (!resLote || !resLote.ok) throw new Error(`Fallo en Lote de Recibos: ${i + 1}: ` + resLote?.error);
