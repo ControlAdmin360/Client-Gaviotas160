@@ -151,31 +151,31 @@
     let listaDepas = [];
     let listaServs = [];
 
+    // 🎯 Sesión y Token con respaldo seguro en parent
     const params = new URLSearchParams(location.search);
-    const AUTH_TOKEN = params.get('token') || sessionStorage.getItem('AUTH_TOKEN') || '';
-    if (params.get('token')) sessionStorage.setItem('AUTH_TOKEN', params.get('token'));
-    const AUTH_USER_PARAM = params.get('user') || '';
-    const AUTH_USER = AUTH_USER_PARAM || sessionStorage.getItem('AUTH_USER') || '';
-    const LOCK_MSG = 'Debes Autenticarte Para Registrar Movimientos.';
+    const AUTH_TOKEN = params.get('token') || sessionStorage.getItem('AUTH_TOKEN') || (window.parent && window.parent.sessionStorage ? window.parent.sessionStorage.getItem('AUTH_TOKEN') : '');
+    const AUTH_USER = params.get('user') || sessionStorage.getItem('AUTH_USER') || (window.parent && window.parent.sessionStorage ? window.parent.sessionStorage.getItem('AUTH_USER') : '') || 'ADMIN';
+
     const p = window.parent;
+
+    function getRunner() {
+      if (window.parent && typeof window.parent.netRun === 'function') return window.parent.netRun();
+      if (typeof window.netRun === 'function') return window.netRun();
+      return null;
+    }
 
     function disableForm(){
       document.querySelectorAll('input, select, textarea, button').forEach(el => {
         if (el.id !== 'btnSalir') el.disabled = true;
       });
     }
-    
+
     function renderMetaUsuario(nuevoCorreo) {
       const mu = document.getElementById('metaUsuario');
       if (!mu) return;
-      // Si le pasan un correo nuevo válido (no vacío ni guión), lo actualiza y lo guarda
       if (nuevoCorreo && nuevoCorreo !== '—' && nuevoCorreo !== '-') {
         correoUsuario = nuevoCorreo;
         sessionStorage.setItem('ADMIN_ACCOUNT_EMAIL', nuevoCorreo);
-      }
-      // Si correoUsuario sigue vacío pero en sessionStorage ya existe, lo recupera
-      if ((!correoUsuario || correoUsuario === '—' || correoUsuario === '-') && sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL')) {
-        correoUsuario = sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL');
       }
       mu.innerHTML = `<strong>Admin Account:</strong> ${correoUsuario || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${AUTH_USER || '—'}`;
     }
@@ -184,24 +184,20 @@
       if (!fbMsg) return;
       fbMsg.textContent = texto;
       fbMsg.style.color = color;
-      
       if (fbWrap) {
         fbWrap.style.display = 'block';
         fbWrap.className = 'feedback ' + (esError ? 'err' : 'ok');
       }
     }
     
-    // 2. Función para evaluar el estado y decidir qué mensaje mostrar
     function validarMensajeInicial() {
       if (!AUTH_TOKEN) {
         setMensajeAuth('USUARIO RESTRINGIDO', 'red', true);
         disableForm();
       } else {
-        const usuario = AUTH_USER || 'Usuario';
-        setMensajeAuth(`¡Hola ${usuario}! Todo Listo.`, '#0249FA', false);
+        setMensajeAuth(`¡Hola ${AUTH_USER}! Todo Listo.`, '#0249FA', false);
       }
     }
-    
 
     const REG_FECHA = /^\d{2}\/\d{2}\/\d{4}$/;
     const REG_MONTO = /^S\/-?\d{1,3}(?:,\d{3})*\.\d{2}$/;
@@ -252,49 +248,28 @@
     initIDBlock();
     validarMensajeInicial();
 
-    if (p && p.LISTAS && p.LISTAS.depaIds?.length && p.LISTAS.servIds?.length) {
-      // 1. Si ya existen en memoria, las toma al instante
-      listaDepas = p.LISTAS.depaIds;
-      listaServs = p.LISTAS.servIds;
-      updateTipoMovimiento();
-    } else if (p && typeof p.netRun === 'function') {
-      // 2. Si no están, las pide directo a Apps Script
-      p.netRun()
-      .withSuccessHandler(res => {
-        listaDepas = (res?.depaIds || []).map(x => String(x).trim().toUpperCase());
-        listaServs = (res?.servIds || []).map(x => String(x).trim().toUpperCase());
-        
-        // Guarda en memoria para no volver a pedir
-        p.LISTAS = { depaIds: listaDepas, servIds: listaServs };
+    const runner = getRunner();
+    if (runner) {
+      if (p && p.LISTAS && p.LISTAS.depaIds?.length && p.LISTAS.servIds?.length) {
+        listaDepas = p.LISTAS.depaIds;
+        listaServs = p.LISTAS.servIds;
         updateTipoMovimiento();
-      }).getListasIdBanco();
+      } else {
+        runner.withSuccessHandler(res => {
+          listaDepas = (res?.depaIds || []).map(x => String(x).trim().toUpperCase());
+          listaServs = (res?.servIds || []).map(x => String(x).trim().toUpperCase());
+          if (p) p.LISTAS = { depaIds: listaDepas, servIds: listaServs };
+          updateTipoMovimiento();
+        }).getListasIdBanco();
+      }
+
+      runner.withSuccessHandler(meta => {
+        if (meta && meta.email) renderMetaUsuario(meta.email);
+      }).getCuentaUsuario();
     }
 
-    if (p && typeof p.netRun === 'function') {
-      p.netRun()
-        .withSuccessHandler(meta => {
-          correoUsuario = meta?.email || AUTH_USER || 'Sistema Local';
-          renderMetaUsuario();
-        })
-        .withFailureHandler(() => {
-          correoUsuario = AUTH_USER || '—';
-          renderMetaUsuario();
-        })
-        .getCuentaUsuario();
-    } else {
-      correoUsuario = AUTH_USER || '—';
-      renderMetaUsuario();
-    }
-
-    // Cierre local
     document.getElementById('btnSalir')?.addEventListener('click', () => {
-      try { 
-        if (window.parent && typeof window.parent.closeBancoForm === 'function') {
-          window.parent.closeBancoForm();
-        } else if (window.parent && typeof window.parent.closeForm === 'function') {
-          window.parent.closeForm('banco');
-        }
-      } catch(e){}
+      try { parent.closeBancoForm(); } catch(e){}
     });
 
     document.getElementById('btnLimpiar')?.addEventListener('click', () => limpiarFormulario());
@@ -319,112 +294,109 @@
       }
     }
 
-// Submit del Formulario corregido con netRun directo
-f.addEventListener('submit', (e) => {
-  e.preventDefault();
-  fbMsg.textContent = ''; 
-  fbWrap.className = 'feedback';
-  resetErrors();
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      fbMsg.textContent = ''; 
+      fbWrap.className = 'feedback';
+      resetErrors();
 
-  const fecha = limpiarFecha(inputFecha.value);
-  const desc = (inputDesc.value || '').trim();
-  const monto = limpiarMonto(inputMonto.value);
-  const datos = (inputDatos.value || '').trim();
-  const idUpper = datos.toUpperCase();
-  const montoClean = (monto || '').replace(/^S\//, '');
-  const montoSign = montoClean.startsWith('-') ? -1 : 1;
+      const fecha = limpiarFecha(inputFecha.value);
+      const desc = (inputDesc.value || '').trim();
+      const monto = limpiarMonto(inputMonto.value);
+      const datos = (inputDatos.value || '').trim();
+      const idUpper = datos.toUpperCase();
+      const montoClean = (monto || '').replace(/[^0-9.-]/g, '');
+      const montoSign = Number(montoClean) < 0 ? -1 : 1;
 
-  const erroresInputs = [];
+      const erroresInputs = [];
 
-  if (!fecha) addError(inputFecha,'⛔ Fecha obligatoria');
-  else if(!REG_FECHA.test(fecha)) addError(inputFecha,'⛔ Formato fecha debe ser: DD/MM/AAAA');
-  else if(!fechaValida(fecha)) addError(inputFecha,'⛔ Fecha inválida');
-  else if(!fechaEnPeriodoActual(fecha)) addError(inputFecha,'⛔ La fecha introducida no corresponde al periodo actual');
+      if (!fecha) addError(inputFecha,'⛔ Fecha obligatoria');
+      else if(!REG_FECHA.test(fecha)) addError(inputFecha,'⛔ Formato fecha debe ser: DD/MM/AAAA');
+      else if(!fechaValida(fecha)) addError(inputFecha,'⛔ Fecha inválida');
+      else if(!fechaEnPeriodoActual(fecha)) addError(inputFecha,'⛔ La fecha introducida no corresponde al periodo actual');
 
-  if(!desc) addError(inputDesc,'⛔ Descripción obligatoria');
-  else if(desc.length < 4) addError(inputDesc,'⛔ La descripción debe ser mínimo 4 caracteres');
+      if(!desc) addError(inputDesc,'⛔ Descripción obligatoria');
+      else if(desc.length < 4) addError(inputDesc,'⛔ La descripción debe ser mínimo 4 caracteres');
 
-  if (monto && REG_MONTO.test(monto) && datos && datos.length >= 4) {
-    if (listaDepas.includes(idUpper) && montoSign === -1) {
-      addError(inputMonto, '⛔ El monto de PAGO por un Recibo NO puede ser Negativo');
-    }
-    if (listaServs.includes(idUpper) && montoSign === 1) {
-      addError(inputMonto, '⛔ El monto de PAGO por un Servicio NO puede ser Positivo');
-    }
-  }
-
-  if(!monto) addError(inputMonto,'⛔ Monto obligatorio');
-  else if(!REG_MONTO.test(monto)) addError(inputMonto,'⛔ Copie el monto desde el extracto bancario');
-
-  if(!datos) addError(inputDatos,'⛔ ID obligatorio');
-  else if(datos.length < 4) addError(inputDatos,'⛔ ID debe ser mínimo 4 caracteres');
-
-  Array.from(document.querySelectorAll('input.error')).forEach(el => {
-    if(el.dataset.err) erroresInputs.push(el.dataset.err);
-  });
-
-  if(!idFijo || idFijo.length < 4) erroresInputs.push('⚠️ ID inválido (autogeneración falló)');
-
-  const allErrors = [...new Set(erroresInputs)];
-
-  if (allErrors.length) {
-    fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + allErrors.map(e => '<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
-    fbWrap.className = 'feedback err';
-    fbMsg.style.color = 'red'; 
-    return;
-  }
-
-  const payload = {
-    fechaMov: fecha,
-    descripMov: desc,
-    montoMov: monto.replace(/^S\//,''),
-    cuentaUser: typeof AUTH_USER !== 'undefined' ? AUTH_USER : '',
-    iDmov: datos,
-    authToken: typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : ''
-  };
-
-  fbMsg.textContent = ' ⤴️🖥️ Enviando datos al servidor…';
-  fbMsg.style.color = 'blue'; 
-  loader.classList.remove('hidden');
-  const btn = document.getElementById('btnRegistrar');
-  btn.disabled = true;
-
-  if (!p || typeof p.netRun !== 'function') {
-    alert('No se pudo conectar con el servidor principal');
-    loader.classList.add('hidden');
-    btn.disabled = false;
-    return;
-  }
-
-  // 1. Primera llamada directa mediante netRun
-  p.netRun()
-    .withSuccessHandler(res => {
-      loader.classList.add('hidden');
-      btn.disabled = false;
-
-      if (res && res.needCode) {
-        const ok = pedirCodigoCliente(res.mensaje, res.code, res.maxAttempts || 3);
-        if (!ok) {
-          fbMsg.textContent = '🚨 OPERACIÓN CANCELADA POR EL USUARIO';
-          fbMsg.style.color = 'red';
-          fbWrap.className = 'feedback err';
-          return;
+      if (monto && REG_MONTO.test(monto) && datos && datos.length >= 4) {
+        if (listaDepas.includes(idUpper) && montoSign === -1) {
+          addError(inputMonto, '⛔ El monto de PAGO por un Recibo NO puede ser Negativo');
         }
-        fbMsg.textContent = 'Validación correcta! ✔️ Registrando…';
-        fbWrap.className = 'feedback ok';
-        loader.classList.remove('hidden');
-        btn.disabled = true;
+        if (listaServs.includes(idUpper) && montoSign === 1) {
+          addError(inputMonto, '⛔ El monto de PAGO por un Servicio NO puede ser Positivo');
+        }
+      }
 
-        // 2. Segunda llamada de confirmación directa mediante netRun
-        const payloadConfirm = Object.assign({}, payload, { skipConfirm: true });
-        p.netRun()
-          .withSuccessHandler(r2 => {
+      if(!monto) addError(inputMonto,'⛔ Monto obligatorio');
+      else if(!REG_MONTO.test(monto)) addError(inputMonto,'⛔ Copie el monto desde el extracto bancario');
+
+      if(!datos) addError(inputDatos,'⛔ ID obligatorio');
+      else if(datos.length < 4) addError(inputDatos,'⛔ ID debe ser mínimo 4 caracteres');
+
+      Array.from(document.querySelectorAll('input.error')).forEach(el => {
+        if(el.dataset.err) erroresInputs.push(el.dataset.err);
+      });
+
+      if(!idFijo || idFijo.length < 4) erroresInputs.push('⚠️ ID inválido (autogeneración falló)');
+
+      const allErrors = [...new Set(erroresInputs)];
+
+      if (allErrors.length) {
+        fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + allErrors.map(e => '<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
+        fbWrap.className = 'feedback err';
+        fbMsg.style.color = 'red'; 
+        return;
+      }
+
+      const payload = {
+        fechaMov: fecha,
+        descripMov: desc,
+        montoMov: parseFloat(montoClean) || 0,
+        cuentaUser: AUTH_USER || 'ADMIN',
+        iDmov: datos,
+        authToken: AUTH_TOKEN || ''
+      };
+
+      fbMsg.textContent = ' ⤴️🖥️ Enviando datos al servidor…';
+      fbMsg.style.color = 'blue'; 
+      loader.classList.remove('hidden');
+      const btn = document.getElementById('btnRegistrar');
+      btn.disabled = true;
+
+      const r = getRunner();
+      if (!r) {
+        alert('No se pudo conectar con el servidor principal');
+        loader.classList.add('hidden');
+        btn.disabled = false;
+        return;
+      }
+
+      r.withSuccessHandler(res => {
+        loader.classList.add('hidden');
+        btn.disabled = false;
+
+        if (res && res.needCode) {
+          const ok = pedirCodigoCliente(res.mensaje, res.code, res.maxAttempts || 3);
+          if (!ok) {
+            fbMsg.textContent = '🚨 OPERACIÓN CANCELADA POR EL USUARIO';
+            fbMsg.style.color = 'red';
+            fbWrap.className = 'feedback err';
+            return;
+          }
+          fbMsg.textContent = 'Validación correcta! ✔️ Registrando…';
+          fbWrap.className = 'feedback ok';
+          loader.classList.remove('hidden');
+          btn.disabled = true;
+
+          const payloadConfirm = Object.assign({}, payload, { skipConfirm: true });
+          r.withSuccessHandler(r2 => {
             loader.classList.add('hidden');
             btn.disabled = false;
             if (r2 && r2.ok){
               fbMsg.textContent = r2.mensaje || '✅ REGISTRO COMPLETADO ✅';
               fbWrap.className = 'feedback ok';
               limpiarFormulario(true, { silent:true });
+              try { parent.closeBancoForm(); } catch(e){}
             } else {
               fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + ((r2 && r2.errores)||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
               fbWrap.className = 'feedback err';
@@ -435,27 +407,28 @@ f.addEventListener('submit', (e) => {
             loader.classList.add('hidden');
             btn.disabled = false;
           })
-          .registrarHtml_bridge(payloadConfirm, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
-        return;
-      }
+          .registrarHtml_bridge(payloadConfirm, AUTH_TOKEN);
+          return;
+        }
 
-      if (res && res.ok){
-        fbMsg.textContent = res.mensaje || '✅ REGISTRO COMPLETADO ✅';
-        fbWrap.className = 'feedback ok';
-        limpiarFormulario(true, { silent:true });
-      } else {
-        fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + ((res && res.errores)||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
-        fbWrap.className = 'feedback err';
-      }
-    })
-    .withFailureHandler(err => {
-      console.error('Error', err);
-      alert(err?.message || String(err));
-      loader.classList.add('hidden');
-      btn.disabled = false;
-    })
-    .registrarHtml_bridge(payload, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
-});
+        if (res && res.ok){
+          fbMsg.textContent = res.mensaje || '✅ REGISTRO COMPLETADO ✅';
+          fbWrap.className = 'feedback ok';
+          limpiarFormulario(true, { silent:true });
+          try { parent.closeBancoForm(); } catch(e){}
+        } else {
+          fbMsg.innerHTML = '<ul style="margin:4px 0 0 18px;padding:0;">' + ((res && res.errores)||[]).map(e=>'<li>'+escapeHtml(e)+'</li>').join('') + '</ul>';
+          fbWrap.className = 'feedback err';
+        }
+      })
+      .withFailureHandler(err => {
+        console.error('Error', err);
+        alert(err?.message || String(err));
+        loader.classList.add('hidden');
+        btn.disabled = false;
+      })
+      .registrarHtml_bridge(payload, AUTH_TOKEN);
+    });
 
     function addError(el,msg){ el.classList.add('error'); el.dataset.err = msg; }
     function resetErrors(){

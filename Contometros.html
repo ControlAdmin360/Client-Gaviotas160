@@ -112,8 +112,6 @@
     <div class="row" style="margin-top:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
       <span class="badge">Completados: <span id="hechos">0</span>/<span id="total">0</span></span>
       <span class="badge">Fecha: <span id="fecha">—</span></span>
-      <button type="button" id="btnEditarFechaActiva" title="Corregir Fecha" 
-      style="background:none;border:none;cursor:pointer;padding:0;font-size:0.95rem;display:none;">✏️</button>
       <span class="badge" id="userLogg">User: —</span>
     </div>
 
@@ -139,27 +137,6 @@
       <div id="msg" class="muted"></div>
       <button class="btn close" id="btnClose" type="button">Salir</button>
     </div>
-    <!-- Mini Modal Diálogo para Editar Fecha Activa -->
-    <dialog id="dlgEditarFecha" style="border:1px solid var(--bd);border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.3);max-width:340px;background:#fff;z-index:10000;">
-      <div style="display:flex;flex-direction:column;gap:12px;">
-        <h3 style="margin:0;font-size:1.05rem;color:var(--acc);">✏️ Corregir Fecha Activa</h3>
-        <p id="lblFechaRef" style="margin:0;font-size:0.8rem;color:#64748b;">Fecha anterior registrada: —</p>
-        
-        <div>
-          <label for="inpEditarFecha" style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;">Nueva Fecha:</label>
-          <input type="date" id="inpEditarFecha" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--bd);border-radius:6px;font-size:0.95rem;">
-        </div>
-
-        <div style="font-size:0.75rem;color:#b45309;background:#fef3c7;padding:8px;border-radius:6px;line-height:1.35;">
-          ⚠️ <strong>Atención:</strong> Las lecturas registradas en este ciclo, migrarán a la nueva fecha.
-        </div>
-
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px;">
-          <button type="button" class="btn close" id="btnCancelarEditarFecha" style="padding:6px 12px;font-size:0.85rem;">Cancelar</button>
-          <button type="button" class="btn primary" id="btnConfirmarEditarFecha" style="padding:6px 14px;font-size:0.85rem;background:#0284c7;">💾 Actualizar</button>
-        </div>
-      </div>
-    </dialog>
   </div>
 </div>
 
@@ -172,17 +149,11 @@
   const show = (el, on, display='') => { if (el) el.style.display = on ? (display || '') : 'none'; };
   const enable = (el, on) => { if (el) el.disabled = !on; };
 
-  const getRangoAlerta = () => {
-    return window.parent?.ALERTAS_LEC || 6000;
-  };
-
   // Parámetros URL y Sesión
   const params = new URLSearchParams(location.search);
   const AUTH_USER_PARAM = params.get('user') || '';
   const AUTH_USER = AUTH_USER_PARAM || sessionStorage.getItem('AUTH_USER') || '';
   const AUTH_TOKEN = params.get('token') || sessionStorage.getItem('AUTH_TOKEN') || '';
-
-  //const toast = window.toast || window.parent?.toast;
 
   function setUserLogg(){
     const el = $('userLogg');
@@ -211,21 +182,13 @@
     document.querySelectorAll('.idbtn.sel').forEach(n => n.classList.remove('sel'));
   }
 
- function pintar(res){
+  function pintar(res){
     EST = res;
     // Top info
     text($('estado'), res.mensaje ?? '');
     text($('total'),  res.total ?? 0);
     text($('hechos'), res.total && typeof res.vacias === 'number' ? (res.total - res.vacias) : 0);
     text($('fecha'),  res.fechaForm || '—');
-
-    // 🎯 GESTIÓN DEL LÁPIZ: Colocarlo aquí para que SIEMPRE se evalúe antes de cualquier return
-    const btnEditFecha = $('btnEditarFechaActiva');
-    if (btnEditFecha) {
-      const tieneFechaValida = res.fechaForm && res.fechaForm !== '—';
-      const esFechaEditable = !res.viewOnly;
-      show(btnEditFecha, (tieneFechaValida && esFechaEditable), 'inline-block');
-    }
 
     // Estados
     const pedirFecha       = (res.needDate === true && res.nextCol);
@@ -264,7 +227,7 @@
         if (grid) grid.innerHTML = '';
         enable(inpValor, false);
         show(btnGuardar, false); enable(btnGuardar, false);
-        return; // Ahora este return ya no oculta el lápiz
+        return;
       }
     } else if (esRevision) {
       show(bloque, true, 'flex');
@@ -291,6 +254,7 @@
       enable(btnGuardar, false);
       return;
     }
+
     renderGrid(res);
   }
 
@@ -510,255 +474,127 @@
         .guardarFechaNueva(s, typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '', typeof AUTH_USER !== 'undefined' ? AUTH_USER : '');
     });
 
-  $('btnEditarFechaActiva')?.addEventListener('click', () => {
-    const dlg = $('dlgEditarFecha');
-    const inp = $('inpEditarFecha');
-    const lbl = $('lblFechaRef');
-    if (!dlg || !inp) return;
-
-    // Precargar la fecha activa actual en formato YYYY-MM-DD
-    if (EST?.fechaForm && EST.fechaForm !== '—') {
-      const partes = EST.fechaForm.split('/');
-      if (partes.length === 3) {
-        inp.value = `${partes[2]}-${partes[1].padStart(2,'0')}-${partes[0].padStart(2,'0')}`;
-      }
-    }
-
-    // Mostrar fecha previa de referencia si existe
-    if (EST?.fechas && EST.fechas.length > 0) {
-      const ultima = EST.fechas[EST.fechas.length - 1];
-      lbl.textContent = `La fecha anterior registrada fue: ${String(ultima).replace(/-/g, '/')}`;
-    } else {
-      lbl.textContent = 'Ingrese la fecha corregida:';
-    }
-
-    dlg.showModal();
-  });
-
-  $('btnCancelarEditarFecha')?.addEventListener('click', () => {
-    $('dlgEditarFecha')?.close();
-  });
-
-  $('btnConfirmarEditarFecha')?.addEventListener('click', () => {
-    const dlg = $('dlgEditarFecha');
-    const inp = $('inpEditarFecha');
-    const val = String(inp?.value || '').trim();
-    if (!val) { alert("Seleccione una fecha válida."); return; }
-
-    const [yyyy, mm, dd] = val.split('-');
-    const fechaLegible = `${dd}/${mm}/${yyyy}`;
-
-    const confirma = confirm(`⚠️ ADVERTENCIA:\n\nVa a modificar la fecha activa del ciclo a: (${fechaLegible}).\n\nLas lecturas registradas hasta el momento se conservarán.\n\n¿Desea continuar?`);
-    if (!confirma) return;
-
-    const p = window.parent;
-    if (!p || typeof p.netRun !== 'function') {
-      alert("Error: Sin conexión con el servidor principal.");
-      return;
-    }
-
-    const btnSubmit = $('btnConfirmarEditarFecha');
-    if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.textContent = 'Guardando...'; }
-
-    const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
-    const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
-
-    p.netRun()
-      .withSuccessHandler(res => {
-        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
-
-        if (res && res.ok) {
-          if (dlg) dlg.close();
-          alert(res.mensaje);
-          cargarEstado(); // Recarga la vista de Contómetros con la nueva fecha
-        } else {
-          alert("❌ Error: " + (res?.error || 'No se pudo actualizar la fecha.'));
-        }
-      })
-      .withFailureHandler(err => {
-        if (btnSubmit) { btnSubmit.disabled = false; btnSubmit.textContent = '💾 Actualizar'; }
-        alert("❌ Error de comunicación: " + (err?.message || String(err)));
-      })
-      .api_editarFechaActivaContometros(val, token, user);
-  });
-
   $('btnGuardar')?.addEventListener('click', () => {
-    const msg = $('msg');
-    const btnGuardar = $('btnGuardar');
-    const inpValor = $('inpValor');
-    const rango = getRangoAlerta();
+      const msg = $('msg');
+      if (!EST || (EST.doneAll && !EST.viewOnly)) return; // permite editar si viewOnly está activo
+      if (!seleccionado){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Elija un Dpto.'); return; }
 
-    if (!EST || (EST.doneAll && !EST.viewOnly)) return;
-    if (!seleccionado) { msg.className = 'warn'; text(msg, 'Elija un Dpto.'); return; }
+      const valStr = String($('inpValor').value || '').trim();
+      if (!/^-?\d+$/.test(valStr)){ msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Ingrese una lectura válida.'); return; }
+      const valNum = parseInt(valStr, 10);
 
-    const valStr = String(inpValor.value || '').trim();
-    if (!/^-?\d+$/.test(valStr)) { msg.className = 'warn'; text(msg, 'Ingrese una lectura válida.'); return; }
-    const valNum = parseInt(valStr, 10);
+      const idx = seleccionado.idx, grid = $('gridIds');
+      const btnId = (grid && Number.isInteger(idx)) ? grid.children[idx] : null;
+      const yaEstabaVacio = EST?.currVals && (EST.currVals[idx] === '' || EST.currVals[idx] == null);
 
-    // 🎯 Validación de Consumo Elevado (Usando ALERTAS_LEC unificado con el Login)
-    if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
-      const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-      if (consumoLts > rango) {
-        const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→ Si la lectura es correcta, proceda con el registro.`);
-        if (!confirma) return;
+      let prevStyle = null;
+      if (btnId){
+        prevStyle = { bg:btnId.style.backgroundColor, border:btnId.style.borderColor, color:btnId.style.color, disabled:btnId.disabled, sel:btnId.classList.contains('sel') };
+        btnId.style.backgroundColor='var(--donebg)';
+        btnId.style.borderColor='var(--doneborder)';
+        btnId.style.color='var(--donecolor)';
+        btnId.classList.remove('sel'); btnId.disabled = true;
       }
-    }
+      if (EST){ if (EST.currVals) EST.currVals[idx] = valNum; if (EST.doneFlags) EST.doneFlags[idx] = true; }
+      if (yaEstabaVacio){ const h=$('hechos'); if (h) h.textContent = String((parseInt(h.textContent||'0',10)+1)); }
 
-    const idx = seleccionado.idx, grid = $('gridIds');
-    const btnId = (grid && Number.isInteger(idx)) ? grid.children[idx] : null;
-    const yaEstabaVacio = EST?.currVals && (EST.currVals[idx] === '' || EST.currVals[idx] == null);
+      msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Enviando…');
+      $('btnGuardar').disabled = true;
 
-    let prevStyle = null;
-    if (btnId) {
-      prevStyle = { bg: btnId.style.backgroundColor, border: btnId.style.borderColor, color: btnId.style.color, disabled: btnId.disabled, sel: btnId.classList.contains('sel') };
-      Object.assign(btnId.style, { backgroundColor: 'var(--donebg)', borderColor: 'var(--doneborder)', color: 'var(--donecolor)' });
-      btnId.classList.remove('sel'); 
-      btnId.disabled = true;
-    }
-    
-    if (EST) {
-      if (EST.currVals) EST.currVals[idx] = valNum;
-      if (EST.doneFlags) EST.doneFlags[idx] = true;
-    }
-    if (yaEstabaVacio) {
-      const h = $('hechos');
-      if (h) h.textContent = String((parseInt(h.textContent || '0', 10) + 1));
-    }
-
-    msg.className = 'flat'; 
-    text(msg, 'Enviando…');
-    btnGuardar.disabled = true;
-
-    // 🔄 Función única para revertir cambios en UI si algo falla
-    const revertUI = () => {
-      if (btnId && prevStyle) {
-        Object.assign(btnId.style, { backgroundColor: prevStyle.bg, borderColor: prevStyle.border, color: prevStyle.color });
-        btnId.disabled = prevStyle.disabled;
+      function revertUI(){
+        if (!btnId || !prevStyle) return;
+        btnId.style.backgroundColor = prevStyle.bg;
+        btnId.style.borderColor     = prevStyle.border;
+        btnId.style.color           = prevStyle.color;
+        btnId.disabled              = prevStyle.disabled;
         if (prevStyle.sel) btnId.classList.add('sel');
+
+        if (EST && yaEstabaVacio){
+          if (EST.currVals) EST.currVals[idx] = '';
+          if (EST.doneFlags) EST.doneFlags[idx] = false;
+          const h=$('hechos'); if (h) h.textContent = String(Math.max(0, parseInt(h.textContent||'0',10)-1));
+        }
       }
-      if (EST && yaEstabaVacio) {
-        if (EST.currVals) EST.currVals[idx] = '';
-        if (EST.doneFlags) EST.doneFlags[idx] = false;
-        const h = $('hechos');
-        if (h) h.textContent = String(Math.max(0, parseInt(h.textContent || '0', 10) - 1));
+
+      const p = window.parent;
+      if (!p || typeof p.netRun !== 'function') {
+        $('btnGuardar').disabled = false;
+        revertUI();
+        msg.classList.remove('flat'); msg.classList.add('warn');
+        text(msg, 'Error: Sin conexión con el servidor principal.');
+        return;
       }
-    };
 
-    // 🧹 Función única para finalizar (Limpiar input, habilitar botón y recargar estado)
-    const finalizarExito = (nuevoLímite) => {
-      btnGuardar.disabled = false;
-      inpValor.value = "";
-      inpValor.focus();
-      if (nuevoLímite) window.parent.ALERTAS_LEC = nuevoLímite;
-      msg.className = 'flat'; 
-      text(msg, 'Guardado ✔️'); 
-      setTimeout(() => cargarEstado(), 0);
-    };
+      const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
+      const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
+      const payload = { row: seleccionado.row, value: valNum, col: EST.lastCol, fechaSel: EST?.fechaSel || EST?.fechaForm || '',  authToken: token, seleccionado: seleccionado };
 
-    const finalizarError = (mensajeError) => {
-      btnGuardar.disabled = false;
-      revertUI(); 
-      msg.className = 'warn'; 
-      text(msg, 'Error: ' + mensajeError);
-    };
+      p.netRun()
+        .withSuccessHandler(res => {
+          $('btnGuardar').disabled = false;
+          if (res && !res.ok && res.requiereConfirmacion) {
+            const acepta = confirm(res.mensajeConfirmacion);
+            if (acepta) {
+              $('btnGuardar').disabled = true;
+              payload.confirmado = true;
 
-    const p = window.parent;
-    if (!p || typeof p.netRun !== 'function') {
-      finalizarError('Sin conexión con el servidor principal.');
-      return;
-    }
-    const token = typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '';
-    const user = typeof AUTH_USER !== 'undefined' ? AUTH_USER : '';
-    const payload = { row: seleccionado.row, value: valNum, col: EST.lastCol, fechaSel: EST?.fechaSel || EST?.fechaForm || '', authToken: token, seleccionado: seleccionado };
-
-    // 📡 Envío principal al servidor
-    p.netRun()
-      .withSuccessHandler(res => {
-        if (res && !res.ok && res.requiereConfirmacion) {
-          if (confirm(res.mensajeConfirmacion)) {
-            payload.confirmado = true;
-            // Segunda llamada si requiere confirmación del operador
-            p.netRun()
-              .withSuccessHandler(res2 => {
-                if (!res2 || typeof res2 !== 'object' || !res2.ok) {
-                  finalizarError(res2?.error || 'respuesta inválida.');
-                  return;
-                }
-                finalizarExito(res2.alertaLect);
-              })
-              .withFailureHandler(err2 => finalizarError(err2?.message || String(err2)))
-              .guardarLecturaContometros(payload, user);
-            return;
-          } else {
-            revertUI();
-            msg.className = 'flat';
-            text(msg, 'Operación cancelada.');
-            btnGuardar.disabled = false;
-            return;
+              p.netRun()
+                .withSuccessHandler(res2 => {
+                  $('btnGuardar').disabled = false;
+                  if (!res2 || typeof res2 !== 'object' || !res2.ok) {
+                    revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
+                    text(msg, 'Error: ' + (res2 && res2.error ? res2.error : 'respuesta inválida.'));
+                    return;
+                  }
+                  msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Guardado ✔️'); setTimeout(()=>cargarEstado(),0);
+                })
+                .withFailureHandler(err2 => {
+                  $('btnGuardar').disabled = false;
+                  revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err2?.message || String(err2)));
+                })
+                .guardarLecturaContometros(payload, user);
+              return;
+            } else {
+              revertUI();
+              text(msg, 'Operación cancelada.');
+              return;
+            }
           }
-        }
-        if (!res || typeof res !== 'object' || !res.ok) {
-          finalizarError(res?.error || 'respuesta inválida.');
-          return;
-        }
-        finalizarExito(res.alertaLect);
-      })
-      .withFailureHandler(err => finalizarError(err?.message || String(err)))
-      .guardarLecturaContometros(payload, user);
-  });
-  
+          if (!res || typeof res !== 'object' || !res.ok){
+            revertUI(); msg.classList.remove('flat'); msg.classList.add('warn');
+            text(msg, 'Error: ' + (res && res.error ? res.error : 'respuesta inválida.')); return;
+          }
+          msg.classList.remove('warn'); msg.classList.add('flat'); text(msg,'Guardado ✔️'); setTimeout(()=>cargarEstado(),0);
+        })
+        .withFailureHandler(err => {
+          $('btnGuardar').disabled = false;
+          revertUI(); msg.classList.remove('flat'); msg.classList.add('warn'); text(msg,'Error: ' + (err?.message || String(err)));
+        })
+        .guardarLecturaContometros(payload, user);
+    });
+
   // Validación de lectura en tiempo real
   $('inpValor')?.addEventListener('input', function(){
-    const msg = $('msg'), btn = $('btnGuardar'), s = this.value.trim();
-    if (s === '' || isNaN(s) || prevDeSeleccionado == null) {
-      this.style.borderColor = ''; 
-      msg.textContent = ''; 
-      this.classList.remove('input-error'); 
-      if (btn) btn.disabled = true; 
-      return;
+    const msg=$('msg'), btn=$('btnGuardar'), s=this.value.trim();
+    if (s==='' || isNaN(s) || prevDeSeleccionado==null){
+      this.style.borderColor=''; msg.textContent=''; this.classList.remove('input-error'); if(btn) btn.disabled=true; return;
     }
-
-    const n = parseInt(s, 10);
-    const prevNum = parseInt(prevDeSeleccionado, 10) || 0;
-    // 1. Error bloqueante si es menor a la anterior
-    if (n < prevNum) {
-      this.classList.add('input-error'); 
-      this.style.borderColor = '';
-      msg.classList.remove('flat'); 
-      msg.classList.add('warn');
-      text(msg, `🚫 La lectura actual no puede ser menor que la anterior (${prevNum}).`); 
-      if (btn) btn.disabled = true; 
-      return;
+    const n=parseInt(s,10);
+    if (n < prevDeSeleccionado){
+      this.classList.add('input-error'); msg.classList.remove('flat'); msg.classList.add('warn');
+      text(msg,'🚫 La lectura actual no puede ser menor que la anterior ('+prevDeSeleccionado+').'); if(btn) btn.disabled=true; return;
     }
-
-    // 2. Advertencia si supera rango Lts (alerta ámbar, pero permite guardar)
-    const consumoLts = n - prevNum;
-    const rango = getRangoAlerta();
-    if (consumoLts > rango) {
-      this.style.borderColor = '#f59e0b';
-      this.classList.remove('input-error');
-      msg.classList.remove('flat');
-      msg.classList.add('warn');
-      text(msg, `⚠️ Consumo elevado (+${consumoLts} Lts). Revise bien la lectura antes de guardar.`);
-      if (btn) btn.disabled = false;
-      return;
+    const ps=String(Math.abs(parseInt(prevDeSeleccionado,10))), cs=String(Math.abs(n));
+    if (cs.length > ps.length){
+      const ok = (ps.charAt(0)==='9' && cs.charAt(0)==='1' && cs.length===ps.length+1);
+      if (!ok){
+        this.classList.add('input-error'); msg.classList.remove('flat'); msg.classList.add('warn');
+        text(msg,'⚠️ La lectura ingresada tiene valor muy alto, favor corregir'); if(btn) btn.disabled=true; return;
+      }
     }
-
-    // 🎯 3. Estado Válido Normal (Limpia errores y activa el botón Guardar)
-    this.classList.remove('input-error');
-    this.style.borderColor = '';
-    msg.classList.remove('warn');
-    msg.classList.add('flat');
-    msg.textContent = '';
-    if (btn) btn.disabled = false;
+    this.classList.remove('input-error'); this.style.borderColor=''; msg.classList.remove('warn'); msg.classList.add('flat'); msg.textContent=''; if(btn) btn.disabled=false;
   });
- 
-  $('inpValor')?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault(); // Evita que el Enter haga un salto de línea o envíe un formulario
-      $('btnGuardar')?.click(); // Simula el clic en el botón Guardar
-    }
-});
+
   // Validación de seguridad inicial
   if (!AUTH_TOKEN){
     try { parent.postMessage({ type:'contometros-auth-expired' }, '*'); } catch(e){}
@@ -781,7 +617,6 @@
 
   cargarEstado();
 })();
-
 </script>
 </body>
 </html>
