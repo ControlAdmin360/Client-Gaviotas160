@@ -165,6 +165,26 @@ function validarIngreso(event) {
 }
     
 // 3. Control de Vistas
+// 🎯 Se ejecuta justo al iniciar sesión con éxito (llamada desde mostrarAplicacion),
+// y también en la carga inicial de la página si la sesión ya era válida.
+// El flag evita que se dispare dos veces (ej: login + refresh casi simultáneos).
+function initApp() {
+  if (window.__appInitialized) return;
+  window.__appInitialized = true;
+
+  iniServicesDepas();
+  setupRouter();
+  setupDeudas?.();
+  setupComuna?.();
+  contometros_loadStyled({}, contometros_renderStyled);
+  setupContometros();
+  setupSync();
+  setupBancoFormModal?.();
+  setupRecibos?.();
+  cargarModuloServicios?.();
+  netRun().calSaldosNew();
+}
+
 function mostrarAplicacion() {
   const loginScreen = document.getElementById("login-screen");
   const appContainer = document.getElementById("app-container");
@@ -4617,21 +4637,10 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSearch();
 
   // 🔒 Todo lo que sigue llama a funciones protegidas del backend — solo
-  // tiene sentido ejecutarlo si hay una sesión real. Si no, se saltan y
-  // quedarán listas para correr justo después de un login exitoso
-  // (ver mostrarAplicacion / validarIngreso).
+  // tiene sentido ejecutarlo si hay una sesión real. Si no hay sesión ahora,
+  // initApp() se disparará solo al loguearte (ver mostrarAplicacion()).
   if (sesionValida) {
-    iniServicesDepas();
-    setupRouter();
-    setupDeudas?.();
-    setupComuna?.();
-    contometros_loadStyled({}, contometros_renderStyled);
-    setupContometros();
-    setupSync();
-    setupBancoFormModal?.();
-    setupRecibos?.();
-    cargarModuloServicios?.();
-    netRun().calSaldosNew();
+    initApp();
   }
 
 
