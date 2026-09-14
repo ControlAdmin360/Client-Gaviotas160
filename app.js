@@ -3,7 +3,7 @@
  * 0. NÚCLEO GLOBAL (Variables, Autenticación y Utilidades) vsc
  * =============================================================================
  */
-const DEBUG = true;
+const DEBUG = false;
 if (DEBUG) {
   window.addEventListener('error', (e) => {
     console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno + ':' + e.colno, e.error?.stack || '');
@@ -361,6 +361,8 @@ function ensureAuthTokenBanco(){
 // --- Utilidades Generales de Interfaz ---
 const $$  = s => document.querySelector(s);
 const $$$ = s => Array.from(document.querySelectorAll(s));
+window.$$ = $$;
+window.$$$ = $$$;
 
 function escapeHTML(x){
     return String(x)
@@ -552,24 +554,6 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
 });
       
 // ABRE FORMULARIO LECTURAS DESDE CONTOMETROS
-function abrirContometrosForm() {
-  try {
-    // 1. Obtener usuario de la sesión
-    const user = sessionStorage.getItem('AUTH_USER') || '';
-    // 2. Obtener elementos del DOM
-    const dlg = document.getElementById('dlgContometros');
-    const ifr = document.getElementById('frmContometros');
-    // 3. Construir la URL sin el parámetro token
-    const baseUrl = window.FORM_CONTOMETROS_URL;
-    const url = baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'user=' + encodeURIComponent(user);
-    // 4. Asignar URL al iframe y abrir el modal
-    ifr.src = url;
-    dlg.showModal();
-  } catch(e) { 
-    console.error('No se abrió Contómetros:', e); 
-  }
-}
-
 // CARGA PERIODO EN BANCO
 // =========================================================================
 // 1. CONSULTA DE PERIODO ESPECÍFICO
@@ -690,26 +674,6 @@ function reloadPage() {
 }
 
 // Rellenar combos e iniciar carga del mes en curso
-function initBancoCombosFromSheet(){
-    const mSel = document.getElementById('banco-month');
-    const ySel = document.getElementById('banco-year');
-    if (!mSel || !ySel) return;
-
-    netRun()
-      .withSuccessHandler(({ months, years, current }) => {
-        // 1. Inyectamos las opciones dinámicas
-        mSel.innerHTML = months.map(m => `<option value="${m.n}">${m.name}</option>`).join('');
-        ySel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
-
-        // 2. Seleccionamos el mes y año actual
-        mSel.value = current.month;
-        ySel.value = current.year;
-        reloadPage(); 
-      })
-      .withFailureHandler(err => console.error('api_banco_getOptions error:', err))
-      .api_banco_getOptions();
-}
-
 // RECARGA RECIBOS  
 function reloadRecibos() {
   const btn = document.getElementById('recibos-refresh');
@@ -772,8 +736,6 @@ function setupRouter(){
     try {  /*carga de modulos al ingresar por primera vez*/
       if (view === 'banco' && !loaded.banco) { loaded.banco = true; setupBanco?.(); }
       if (view === 'consultas') { setupConsultasSelect(); }
-      //if (view === 'servicios' && !loaded.servicios) { loaded.servicios = true; cargarModuloServicios?.(); }
-      //if (view === 'comunal' && !loaded.comunal) { loaded.comunal = true; setupComuna?.(); }
       
       // ✅ Cierre de llaves corregido
       if (view === 'eventos') { cargarEventosLogger(); }
@@ -977,22 +939,6 @@ document.addEventListener('NET_STATE_CHANGED', (e) => {
     if (!btn) return;
     btn?.addEventListener('click', cargarTabla);
   }
-
-  window.$$ = s => document.querySelector(s);
-  window.$$$ = s => Array.from(document.querySelectorAll(s));
-  window.escapeHTML = function(x){
-  return String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-};
-
-window.toast = function(msg) {
-  const t = document.getElementById('toast');
-  if (!t) {  
-    return; 
-  }
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 4000);
-};
 
 /* =========================
   BANCO
@@ -2094,14 +2040,6 @@ function cons_render(data) {
   }
 }
 
-function cons_irARecibo(ref, mesTexto) {
-  netRun()
-    .withSuccessHandler(() => {
-      if (window.toast) toast("Recibo Encontrado");
-    })
-    .seleccionarRecibo(ref, mesTexto);
-}
-
 function cons_resetTotales(placeholder = '—') {
   const put = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   put('cons-totB', placeholder);
@@ -2288,7 +2226,7 @@ async function cons_abrirReciboPDF() {
         btn.setAttribute('data-estado', 'link'); 
         btn.classList.add('btn-pdf-success');
         // Transforma el botón en un enlace directo al PDF en Drive
-        btn.innerHTML = `<a href="${res.url}" target="_blank" style="color:#fff; text-decoration:none;">📥 Ver Recibo</a>`;
+        btn.innerHTML = `<a href="${escapeHTML(res.url)}" target="_blank" style="color:#fff; text-decoration:none;">📥 Ver Recibo</a>`;
         if (window.toast) toast("Recibo Encontrado 📝");
       } else {
         btn.innerHTML = '📂 Buscar';
@@ -2447,8 +2385,6 @@ function abrirModalExon() {
 
   const select = document.getElementById('exon-depa');
   if (select && select.options.length <= 1) {
-    //const chkElim = document.getElementById('exon-eliminar-check');
-    //chkElim.disabled = true;
     const depas = (window.LISTAS?.depaIds) ? window.LISTAS.depaIds : [];
     select.innerHTML = '<option value="">Seleccione Departamento...</option>';
     depas.forEach(id => {
@@ -2924,10 +2860,7 @@ function verificarMultaPreviaExistente() {
 
   netRun()
     .withSuccessHandler(res => {
-      //console.log("📥 [BACKEND RESPONDE]:", res);
-
       if (!res || !res.ok) {
-        //console.warn("⚠️ La respuesta del backend vino con ok: false");
         cerrarPanelMultaExistente();
         return;
       }
@@ -2938,8 +2871,6 @@ function verificarMultaPreviaExistente() {
       const valorActual = (tipo === "MULTA_INASISTENC") 
         ? multasPreviasDepa.multaInasist 
         : multasPreviasDepa.multaNormas;
-
-      //console.log(`📊 Dpto: ${idDepa} | Tipo: ${tipo} | Multa previa: S/ ${valorActual}`);
 
       if (valorActual > 0) {
         document.getElementById('lbl-multa-previa-valor').textContent = `S/ ${valorActual.toFixed(2)}`;
@@ -3220,7 +3151,7 @@ function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCach
     if (!confirm("❓ ¿Desea aplicar los cambios a la configuración contable y cuotas extras?")) return;
   }
 
-  const AUTH_TOKEN = sessionStorage.getItem('AUTH_USER') || 'ADMIN';
+  const userLabel = sessionStorage.getItem('AUTH_USER') || 'ADMIN';
   if (cuota <= 0) cuotaDescrip = "";
 
   if (btn) {
@@ -3280,7 +3211,7 @@ function guardarConfiguraciones(esConfirmacion = false, userCache = "", passCach
     .superUsuario(
       userCache, passCache, dia, Math.abs(fondo), Math.abs(cuota), 
       cuotaDescrip.toUpperCase(), todos, depa, sinMoras, 
-      porton, percent, exonerados, AUTH_TOKEN, esConfirmacion
+      porton, percent, exonerados, userLabel, esConfirmacion
     );
 }
 
@@ -3303,54 +3234,6 @@ function formatPhones(raw){
   const parts = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean).slice(0,2);
   const cleaned = parts.map(normPhone).filter(p => p.length >= 11); // 999-999-999 => len 11
   return cleaned.join('\n');
-}
-function shortenEmail(email, maxLocal = 25, domainPrefix = 3){
-  email = String(email || '').trim();
-  if (!email) return '';
-  const [local, domain = ''] = email.split('@');
-  const l = local.length > maxLocal ? local.slice(0, maxLocal - 1) + '…' : local;
-  const d = domain ? domain.slice(0, domainPrefix) + '..' : '';
-  return domain ? `${l}@${d}` : l;
-}
-// --- Staging de cambios por (sheetRow, colIndex) -> value ---
-const edits = new Map(); // key: `${row}:${col}` -> value
-function stageEdit(sheetRow, colIndex, value){
-  edits.set(`${sheetRow}:${colIndex}`, value);
-}
-// --- Guardar cambios (ejemplo): usa A como ID único ---
-async function saveEdits(){
-  // Agrupar cambios por fila
-  const byRow = {};
-  for (const [key, val] of edits.entries()){
-    const [rowStr, colStr] = key.split(':');
-    const r = Number(rowStr), c = Number(colStr);
-    (byRow[r] ||= {})[c] = val;
-  }
-  // Construir payload por fila con ID (col A)
-  const updates = Object.entries(byRow).map(([sheetRow, cells]) => {
-    sheetRow = Number(sheetRow);
-    // leer valor actual de A en la UI (input de la col A de esa fila)
-    const tr = [...document.querySelectorAll('#tbl-clientes tbody tr')]
-      .find(tr => (Number(tr.dataset.sheetRow) === sheetRow));
-    // Si no guardas dataset, puedes reconstruir desde tus datos en memoria
-    const id = getValueFromUI(sheetRow, COL.A); // implementa según tu estado
-
-    return { sheetRow, id, cells }; // cells: {colIndex:value}
-  });
-  edits.clear();
-}
-
-// Si quieres marcar el dataset en cada fila para resolver fácil sheetRow:
-function tagSheetRows(){
-  const tbody = document.querySelector('#tbl-clientes tbody');
-  if (!tbody) return;
-  let i = 0;
-  for (const tr of tbody.rows){
-    const sheetRow = i + 2; // A2 => 2
-    if (sheetRow === 44) { i++; continue; }
-    tr.dataset.sheetRow = String(sheetRow);
-    i++;
-  }
 }
 
 function setupComuna(){
@@ -4182,7 +4065,7 @@ function logTerminal(msg) {
   const term = document.getElementById('cierre-terminal');
   if (!term) return;
   const time = new Date().toTimeString().split(' ')[0];
-  term.innerHTML += `<br>> [${time}] ${msg}`;
+  term.innerHTML += `<br>> [${time}] ${escapeHTML(msg)}`;
   term.scrollTop = term.scrollHeight;
 }
 
@@ -4428,7 +4311,7 @@ function cargarEventosLogger() {
       renderTablaEventos(window.eventosCache);
     })
     .withFailureHandler((err) => {
-      tbl.innerHTML = `<tbody><tr><td colspan="5" style="text-align:center; color:#fca5a5; padding:15px;">❌ Error al cargar logs: ${err.message || err}</td></tr></tbody>`;
+      tbl.innerHTML = `<tbody><tr><td colspan="5" style="text-align:center; color:#fca5a5; padding:15px;">❌ Error al cargar logs: ${escapeHTML(String(err.message || err))}</td></tr></tbody>`;
     })
     .api_LOGGER_LOG_Firebase();
 }
@@ -4505,62 +4388,6 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ====================================================================
    Helpers UI genéricos (añaden estilo sin re-render de tu tabla actual)
    ==================================================================== */
-function uiAddBanner(opt){
-  const {
-    tableId='tabla-banco', section='tbody', beforeRow=null, startCol=1, colSpan=null,
-    text='', bg='#0E3A5A', color='#FFFFFF', align='center', bold=true,
-    border='1px solid #1f2937', radius=5, padding='0px 0px', gapLeft=0
-  } = opt || {};
-  const tbl = document.getElementById(tableId);
-  if (!tbl) return;
-
-  const sec = section==='thead' ? tbl.tHead :
-              section==='tfoot' ? tbl.tFoot  :
-              (tbl.tBodies && tbl.tBodies[0]) || null;
-  if (!sec) return;
-
-  const sampleRow = sec.rows[0] || (tbl.tBodies[0] && tbl.tBodies[0].rows[0]) || null;
-  const totalCols = sampleRow ? sampleRow.cells.length : 0;
-  if (!totalCols) return;
-
-  const row = document.createElement('tr');
-
-  for (let c=1; c<startCol; c++){
-    row.appendChild(document.createElement('td'));
-  }
-
-  const td = document.createElement('td');
-  td.colSpan = colSpan == null ? (totalCols - startCol + 1)
-                              : Math.max(1, Math.min(colSpan, totalCols - startCol + 1));
-  td.textContent = text;
-  td.style.background = bg;
-  td.style.color = color;
-  td.style.textAlign = ['left','center','right'].includes(align) ? align : 'center';
-  td.style.fontWeight = bold ? '700' : '400';
-  td.style.border = border;
-  td.style.borderRadius = (radius|0)+'px';
-  td.style.padding = padding;
-  if (gapLeft > 0){
-    td.style.borderLeft = `${gapLeft}px solid transparent`;
-    td.style.boxShadow  = `-${gapLeft}px 0 0 rgba(11,16,32,1) inset`;
-  }
-  row.appendChild(td);
-
-  if (beforeRow == null || beforeRow > sec.rows.length) {
-    sec.appendChild(row);
-  } else {
-    sec.insertBefore(row, sec.rows[beforeRow-1]);
-  }
-}
-
-function _visColsInSection(sectionEl){
-    const firstRow = sectionEl && sectionEl.querySelector('tr');
-    if (!firstRow) return 0;
-    let total = 0;
-    for (const td of firstRow.cells) total += (td.colSpan || 1);
-    return total;
-}
-
 // =========================================================================
 // BLOQUE ÚNICO DE INICIALIZACIÓN DE LA APLICACIÓN
 // =========================================================================
