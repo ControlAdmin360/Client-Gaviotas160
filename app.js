@@ -2215,7 +2215,7 @@ async function cons_consultar() {
       }
       resetBtn();
     })
-    .getRecibosMovimientos(val, userActivo);
+    .getRecibosMovimientos(val, getAuthToken());
 
   // 4. Petición 2: Saldos del Departamento
   netRun()
@@ -2226,7 +2226,7 @@ async function cons_consultar() {
       console.error("Error api_Saldos_Para_Modal:", err);
       document.getElementById("s-loader")?.classList.add("hidden");
     })
-    .api_Saldos_Para_Modal(val);
+    .api_Saldos_Para_Modal(val, getAuthToken());
 }
 
 async function cons_abrirReciboPDF() {
@@ -2325,7 +2325,7 @@ async function cons_ReciboActualPDF() {
       btn.textContent = '📝 Recibo en Curso';
       alert('Error: ' + (err?.message || err));
     })
-    .generadorPDFreciboDepa(dpto);
+    .generadorPDFreciboDepa(dpto, getAuthToken());
 }
 
 
@@ -2398,7 +2398,7 @@ function setupRecibos(callbackFinal) {
       toast?.('Error Sección Recibos: ' + (err?.message || err));
       if (typeof callbackFinal === 'function') callbackFinal();
     })
-    .api_recibos_getData({});
+    .api_recibos_getData({ authToken: getAuthToken() });
 }
 
 uiPaintCell({tableId: 'tabla-recibos',section: 'thead', row: 1,col: 1,bg:'#228447',align: 'center', radius:8});
@@ -2592,7 +2592,7 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       if (btnSave) { btnSave.disabled = false; btnSave.textContent = "💾 Registrar Evento"; }
       console.error("Error saldos:", err);
     })
-    .api_Saldos_Para_Modal(idDepa);
+    .api_Saldos_Para_Modal(idDepa, getAuthToken());
 
   // 2. Verificar si tiene exoneraciones vigentes
   netRun()
@@ -2938,7 +2938,7 @@ function verificarMultaPreviaExistente() {
       console.error("❌ Error de red:", err);
       cerrarPanelMultaExistente();
     })
-    .api_consultarMultasDepa(idDepa);
+    .api_consultarMultasDepa(idDepa, getAuthToken());
 }
 
 // 🎯 CÁLCULO DINÁMICO EN VIVO MIENTRAS EL OPERADOR ESCRIBE
@@ -4603,27 +4603,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 2. Verificación de Sesión al cargar
   const token = typeof getAuthToken === 'function' ? getAuthToken() : null;
-  if (token && typeof isSessionExpired === 'function' && !isSessionExpired()) {
+  const sesionValida = !!(token && typeof isSessionExpired === 'function' && !isSessionExpired());
+
+  if (sesionValida) {
     if (typeof mostrarAplicacion === 'function') mostrarAplicacion();
   } else {
     if (typeof clearAuth === 'function') clearAuth();
   }
 
   // 3. Modales y Vistas Iniciales
-  verificarModoMantenimiento();
-  iniServicesDepas();
-  setupRouter();
-  setupDeudas?.();
-  setupComuna?.();
+  verificarModoMantenimiento(); // Pública: no requiere sesión, se puede mostrar siempre
   setupFullscreen();
   setupSearch();
-  contometros_loadStyled({}, contometros_renderStyled);
-  setupContometros();
-  setupSync();
-  setupBancoFormModal?.();
-  setupRecibos?.();
-  cargarModuloServicios?.();
-  netRun().calSaldosNew();
+
+  // 🔒 Todo lo que sigue llama a funciones protegidas del backend — solo
+  // tiene sentido ejecutarlo si hay una sesión real. Si no, se saltan y
+  // quedarán listas para correr justo después de un login exitoso
+  // (ver mostrarAplicacion / validarIngreso).
+  if (sesionValida) {
+    iniServicesDepas();
+    setupRouter();
+    setupDeudas?.();
+    setupComuna?.();
+    contometros_loadStyled({}, contometros_renderStyled);
+    setupContometros();
+    setupSync();
+    setupBancoFormModal?.();
+    setupRecibos?.();
+    cargarModuloServicios?.();
+    netRun().calSaldosNew();
+  }
 
 
   // 4. Modales y Navegación (Corregidas las llamadas de cierre)
@@ -4712,7 +4721,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = 'Error: ' + (err?.message || String(err));
       })
-      .reporteGeneral(window.usuarioActivo());
+      .reporteGeneral(getAuthToken());
   });
 
   document.getElementById('btnDeudas')?.addEventListener('click', () => {
@@ -4741,7 +4750,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
       })
-      .reporteDeudas(window.usuarioActivo(), valorMin);
+      .reporteDeudas(getAuthToken(), valorMin);
   });
 
   document.getElementById('btnRecExel')?.addEventListener('click', () => {
@@ -4766,7 +4775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.textContent = btn.dataset._old;
         linksDiv.textContent = "Error: " + (err.message || err);
       })
-      .obtenerRecibosXlsx(window.usuarioActivo());
+      .obtenerRecibosXlsx(getAuthToken());
   });
 
   document.getElementById('btnRepAguas')?.addEventListener('click', () => {
@@ -4807,10 +4816,10 @@ document.addEventListener('DOMContentLoaded', () => {
             linksDiv.innerHTML = parts.join('');
           })
           .withFailureHandler(setError)
-          .reporteAguasPDF(window.usuarioActivo());
+          .reporteAguasPDF(getAuthToken());
       })
       .withFailureHandler(setError)
-      .obtenerContometrosXlsx();
+      .obtenerContometrosXlsx(getAuthToken());
   });
 
   // 7. Listener Unificado de Mensajes
