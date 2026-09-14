@@ -152,10 +152,8 @@
     let listaServs = [];
 
     const params = new URLSearchParams(location.search);
-    const AUTH_TOKEN = params.get('token') || sessionStorage.getItem('AUTH_TOKEN') || '';
-    if (params.get('token')) sessionStorage.setItem('AUTH_TOKEN', params.get('token'));
-    const AUTH_USER_PARAM = params.get('user') || '';
-    const AUTH_USER = AUTH_USER_PARAM || sessionStorage.getItem('AUTH_USER') || '';
+    const AUTH_TOKEN = sessionStorage.getItem('AUTH_TOKEN') || '';
+    const AUTH_USER = params.get('user') || sessionStorage.getItem('AUTH_USER') || '';
     const LOCK_MSG = 'Debes Autenticarte Para Registrar Movimientos.';
     const p = window.parent;
 
@@ -177,7 +175,8 @@
       if ((!correoUsuario || correoUsuario === '—' || correoUsuario === '-') && sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL')) {
         correoUsuario = sessionStorage.getItem('ADMIN_ACCOUNT_EMAIL');
       }
-      mu.innerHTML = `<strong>Admin Account:</strong> ${correoUsuario || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${AUTH_USER || '—'}`;
+      const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      mu.innerHTML = `<strong>Admin Account:</strong> ${esc(correoUsuario) || '—'} <span style="margin:0 8px; opacity:.6">|</span> <strong>User:</strong> ${esc(AUTH_USER) || '—'}`;
     }
 
     function setMensajeAuth(texto, color, esError = false) {

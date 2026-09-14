@@ -178,9 +178,8 @@
 
   // Parámetros URL y Sesión
   const params = new URLSearchParams(location.search);
-  const AUTH_USER_PARAM = params.get('user') || '';
-  const AUTH_USER = AUTH_USER_PARAM || sessionStorage.getItem('AUTH_USER') || '';
-  const AUTH_TOKEN = params.get('token') || sessionStorage.getItem('AUTH_TOKEN') || '';
+  const AUTH_USER = params.get('user') || sessionStorage.getItem('AUTH_USER') || '';
+  const AUTH_TOKEN = sessionStorage.getItem('AUTH_TOKEN') || '';
 
   //const toast = window.toast || window.parent?.toast;
 
