@@ -2493,10 +2493,10 @@ function sincronizarEstadoControlesExon() {
     return;
   }
 
-  // CASO 5: CONGELAR DEFINITIVO (🚩)
+  // CASO 5: CONGELAR DEFINITIVO (🚩) — también liquida la mora del periodo actual si existe
   if (chkCong?.checked) {
     if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
-    if (inpMonto) { inpMonto.value = 0.00; inpMonto.disabled = true; }
+    if (inpMonto) { inpMonto.value = Number(morasDelPeriodo).toFixed(2); inpMonto.disabled = true; }
     return;
   }
 
@@ -2623,23 +2623,21 @@ document.getElementById('exon-multas-totales-check')?.addEventListener('change',
   sincronizarEstadoControlesExon();
 });
 
-// Check 3: 📆 Eliminar Moras P. Actual
+// Check 3: 📆 Eliminar Moras P. Actual — se puede combinar con 🚩 (no lo desmarca)
 document.getElementById('exon-actual-moras-check')?.addEventListener('change', function() {
   if (this.checked) {
     document.getElementById('exon-moras-totales-check').checked = false;
     document.getElementById('exon-multas-totales-check').checked = false;
-    document.getElementById('exon-moras-check').checked = false;
     document.getElementById('exon-eliminar-check').checked = false;
   }
   sincronizarEstadoControlesExon();
 });
 
-// Check 4: 🚩 Congelar Moras Definitivo
+// Check 4: 🚩 Congelar Moras Definitivo — se puede combinar con 📆 (no lo desmarca)
 document.getElementById('exon-moras-check')?.addEventListener('change', function() {
   if (this.checked) {
     document.getElementById('exon-moras-totales-check').checked = false;
     document.getElementById('exon-multas-totales-check').checked = false;
-    document.getElementById('exon-actual-moras-check').checked = false;
     document.getElementById('exon-eliminar-check').checked = false;
   }
   sincronizarEstadoControlesExon();
@@ -2749,6 +2747,8 @@ async function validarYGuardarExon() {
     mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Moras por S/ ${deudasDepaModal.morNum.toFixed(2)} al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (chkMulTot) {
     mensajeConfirm = `Confirma la CONDONACIÓN TOTAL de Multas por S/ ${deudasDepaModal.mulNum.toFixed(2)} al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
+  } else if (chkPer && chkCong) {
+    mensajeConfirm = `Confirma el CONGELAMIENTO PERMANENTE de moras y la LIQUIDACIÓN de la mora del período actual (S/ ${Number(morasDelPeriodo).toFixed(2)}) para el Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (chkPer) {
     mensajeConfirm = `Confirma exonerar la mora generada en el período actual al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (chkCong) {
