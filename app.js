@@ -4308,12 +4308,88 @@ function cargarEventosLogger() {
   .withSuccessHandler((data) => {
       // Guardar en caché y renderizar de más reciente a más antiguo
       window.eventosCache = Array.isArray(data) ? data.reverse() : [];
-      renderTablaEventos(window.eventosCache);
+      aplicarFiltrosEventos();
     })
     .withFailureHandler((err) => {
       tbl.innerHTML = `<tbody><tr><td colspan="5" style="text-align:center; color:#fca5a5; padding:15px;">❌ Error al cargar logs: ${escapeHTML(String(err.message || err))}</td></tr></tbody>`;
     })
     .api_LOGGER_LOG_Firebase();
+}
+
+/**
+ * Extrae el módulo base (ej. "DATABANK") del campo "3-MODULO" (ej. "DATABANK - api_banco_setM3()")
+ */
+function obtenerModuloBaseEvento(item) {
+  return String(item["3-MODULO"] || '').split(' - ')[0].trim();
+}
+
+/**
+ * Aplica los checkbox de filtro por módulo + la búsqueda de texto sobre window.eventosCache
+ * y renderiza el resultado.
+ */
+function aplicarFiltrosEventos() {
+  const chkAguas     = document.getElementById('chk-eventos-aguas');
+  const chkDatabank  = document.getElementById('chk-eventos-databank');
+  const chkControlOp = document.getElementById('chk-eventos-controlop');
+  const chkTodos     = document.getElementById('chk-eventos-todos');
+  const cache = window.eventosCache || [];
+
+  let resultado;
+  if (!chkAguas || !chkDatabank || !chkControlOp || !chkTodos || chkTodos.checked) {
+    resultado = cache;
+  } else {
+    resultado = cache.filter(item => {
+      const modulo = obtenerModuloBaseEvento(item);
+      if (chkAguas.checked && modulo === 'AGUAS') return true;
+      if (chkControlOp.checked && modulo === 'CONTROL&OP') return true;
+      if (chkDatabank.checked && modulo === 'DATABANK') {
+        const esConsultaAutomatica = String(item["3-MODULO"] || '').includes('api_banco_getDashboardData()');
+        return !esConsultaAutomatica;
+      }
+      return false;
+    });
+  }
+
+  const term = (document.getElementById('eventos-search')?.value || '').trim().toLowerCase();
+  if (term) {
+    resultado = resultado.filter(item => {
+      const txtFecha  = String(item["1-FECHA"] || '').toLowerCase();
+      const txtUser   = String(item["2-USER"] || '').toLowerCase();
+      const txtModulo = String(item["3-MODULO"] || '').toLowerCase();
+      const txtEvento = String(item["4-EVENTO"] || '').toLowerCase();
+      return txtFecha.includes(term) || txtUser.includes(term) || txtModulo.includes(term) || txtEvento.includes(term);
+    });
+  }
+
+  renderTablaEventos(resultado);
+}
+
+/**
+ * Engancha los checkbox de filtro: TODOS es excluyente respecto a los otros 3,
+ * que a su vez se pueden combinar libremente entre sí.
+ */
+function inicializarFiltrosEventos() {
+  const chkAguas     = document.getElementById('chk-eventos-aguas');
+  const chkDatabank  = document.getElementById('chk-eventos-databank');
+  const chkControlOp = document.getElementById('chk-eventos-controlop');
+  const chkTodos     = document.getElementById('chk-eventos-todos');
+  if (!chkAguas || !chkDatabank || !chkControlOp || !chkTodos) return;
+
+  const chksModulo = [chkAguas, chkDatabank, chkControlOp];
+
+  chksModulo.forEach(chk => {
+    chk.addEventListener('change', () => {
+      if (chk.checked) chkTodos.checked = false;
+      aplicarFiltrosEventos();
+    });
+  });
+
+  chkTodos.addEventListener('change', () => {
+    if (chkTodos.checked) {
+      chksModulo.forEach(c => c.checked = false);
+    }
+    aplicarFiltrosEventos();
+  });
 }
 
 /**
@@ -4363,25 +4439,11 @@ function renderTablaEventos(lista) {
 document.addEventListener('DOMContentLoaded', () => {
   const inputSearch = document.getElementById('eventos-search');
   if (inputSearch) {
-    inputSearch.addEventListener('input', (e) => {
-      const term = (e.target.value || '').trim().toLowerCase();
-      if (!term) {
-        renderTablaEventos(window.eventosCache);
-        return;
-      }
-      // Filtrar por cualquier coincidencia en fecha, usuario, módulo o evento
-      const filtrados = window.eventosCache.filter(item => {
-        const txtFecha  = String(item["1-FECHA"] || '').toLowerCase();
-        const txtUser   = String(item["2-USER"] || '').toLowerCase();
-        const txtModulo = String(item["3-MODULO"] || '').toLowerCase();
-        const txtEvento = String(item["4-EVENTO"] || '').toLowerCase();
-        return txtFecha.includes(term) || txtUser.includes(term) || txtModulo.includes(term) || txtEvento.includes(term);
-      });
-      renderTablaEventos(filtrados);
-    });
+    inputSearch.addEventListener('input', () => aplicarFiltrosEventos());
   }
+  inicializarFiltrosEventos();
   // 🚀 Carga los eventos de Firebase en segundo plano al abrir la app
-  cargarEventosLogger(); 
+  cargarEventosLogger();
 });
 
 
