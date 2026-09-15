@@ -2493,10 +2493,10 @@ function sincronizarEstadoControlesExon() {
     return;
   }
 
-  // CASO 5: CONGELAR DEFINITIVO (🚩) — también liquida la mora del periodo actual si existe
+  // CASO 5: CONGELAR DEFINITIVO (🚩 solo) — no liquida lo ya acumulado
   if (chkCong?.checked) {
     if (cboConcepto) { cboConcepto.value = "MORAS"; cboConcepto.disabled = true; }
-    if (inpMonto) { inpMonto.value = Number(morasDelPeriodo).toFixed(2); inpMonto.disabled = true; }
+    if (inpMonto) { inpMonto.value = 0.00; inpMonto.disabled = true; }
     return;
   }
 
