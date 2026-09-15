@@ -2575,7 +2575,8 @@ document.getElementById('exon-depa')?.addEventListener('change', function() {
       } else {
         if (chkElim) { chkElim.checked = false; chkElim.disabled = true;}
         if (chkCongelar) { chkCongelar.disabled = false; }
-        if (chkPeriodo) { chkPeriodo.disabled = false; }
+        // 📆 solo se habilita si el depa tiene mora acumulada en el periodo actual
+        if (chkPeriodo) { chkPeriodo.disabled = !(morasdePeriod > 0); }
         if (inputDescrip) {inputDescrip.value = "";} 
         if (inpMonto){inpMonto.disabled = false;  inpMonto.value = 0;}
         if (cboConcepto){cboConcepto.disabled = false; cboConcepto.value = "Select";} 
