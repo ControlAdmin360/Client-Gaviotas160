@@ -2751,7 +2751,7 @@ async function validarYGuardarExon() {
   } else if (chkPer) {
     mensajeConfirm = `Confirma exonerar la mora generada en el período actual al Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
   } else if (chkCong) {
-    mensajeConfirm = `Confirma el CONGELAMIENTO PERMANENTE de moras para el Dpto: ${depa}❓\n\n${mensajeAdvertencia}`;
+    mensajeConfirm = `Confirma el CONGELAMIENTO PERMANENTE de moras para el Dpto: ${depa}❓\n\n${"ℹ️→ Ud como operador asume la responsabilidad de ejecutar esta acción de no contar con una autorización previa para tal fin."}`;
   } else if (concepto === "RECIBOS") {
     mensajeConfirm = `⚠️ ADVERTENCIA: ℹ️ Tenga en cuenta que esta opción generará una ORDEN DE ACREDITACIÓN DE SALDO POR S/ ${monto.toFixed(2)} A FAVOR en el RECIBO del Dpto: ${depa}.\n\nConfirma que desea registrar la operación❓\n${mensajeAdvertencia}`;
   } else if (concepto === "REINTEGRO") {
