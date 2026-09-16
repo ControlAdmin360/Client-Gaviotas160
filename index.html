@@ -90,8 +90,9 @@
   <div class="app">
     <!-- Topbar -->
     <header class="topbar" role="banner">
+      <button id="btnMenu" class="btn btn-menu" type="button" aria-controls="sidebar" aria-expanded="false" title="Menú">☰</button>
       <div class="brand" aria-label="Nombre de la aplicación">🕊️ Gaviotas 160</div>
-      
+
       <div id="srvStatus" class="srv-badge srv-idle" title="Disponible" style="margin:6px 0 10px 0;">
         <span class="dot"></span>
         <span class="txt">IDLE -> OnLine</span>
@@ -107,10 +108,9 @@
           </svg>
           <span>Cerrar Sessión</span>
         </button>
-        <button id="btnMenu" class="btn btn-menu" type="button" aria-controls="sidebar" aria-expanded="false" title="Menú">☰</button>
         <button id="btnFull" class="btn" type="button" title="Pantalla completa">Pantalla completa</button>
       </div>
-    </header> 
+    </header>
     
     <!-- Sidebar -->
     <aside id="sidebar" class="sidebar" role="navigation" aria-label="Menú principal">
@@ -134,10 +134,10 @@
           <h1 id="h-banco" style="margin:0;">Registros & Movimientos Bancarios</h1>
           <span class="clock-24h" style="justify-self:start; white-space:nowrap; font-weight:600; color:#A4E3FF;"></span>
 
-          <div style="display:flex; align-items:center; gap:8px; justify-content:flex-start; margin:8px 0;"> 
-            <button id="btnRepGen" style="padding:10px 14px; background:#647AEB; color:#fff; border:none; border-radius:7px; font-size:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2);"> 
+          <div class="toolbar" style="display:flex; align-items:center; gap:8px; justify-content:flex-start; margin:8px 0;">
+            <button id="btnRepGen" style="padding:10px 14px; background:#647AEB; color:#fff; border:none; border-radius:7px; font-size:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
               📤 Reporte General
-            </button> 
+            </button>
             <div id="reportLinks" style="display:flex; gap:8px;"></div>
           </div>
         </div>
@@ -174,12 +174,12 @@
           <h1 id="h-lecturas" style="margin:0;">Lecturas & Registros & Reportes</h1>
           <span class="clock-24h" style="white-space:nowrap; font-weight:600; color:#A4E3FF;"></span>
          
-          <div style="display:flex; align-items:center; gap:8px; justify-content:flex-start; margin:8px 0;">
+          <div class="toolbar" style="display:flex; align-items:center; gap:8px; justify-content:flex-start; margin:8px 0;">
             <button id="btnRepAguas" style="padding:10px 14px; background:#647AEB; color:#fff; border:none; border-radius:7px; font-size:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
                 📤 Generar Reportes
             </button>
             <div id="aguasLinks" style="display:flex; gap:8px;"></div>
-          </div>        
+          </div>
         </div> 
         <div class="toolbar">
           <input type="text" id="buscar" placeholder="🔍 Busca aqui..." aria-label="Buscar en la tabla" style="margin-left: 25px; padding: 6px 12px; border-radius: 4px; border: 2px solid #ccc; width: 160px;">
@@ -197,7 +197,7 @@
           <h1 id="h-deudas" style="margin:0;">Deudas & Morosidad</h1>
           <span class="clock-24h" style="white-space:nowrap; font-weight:600; color:#A4E3FF;"></span>
 
-          <div style="display:flex; align-items:center; gap:8px; justify-content:flex-start; margin:8px 0;">
+          <div class="toolbar" style="display:flex; align-items:center; gap:8px; justify-content:flex-start; margin:8px 0;">
             <button id="btnDeudas" style="padding:10px 14px; background:#647AEB; color:#fff; border:none; border-radius:7px; font-size:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
               📤 Generar Listado
             </button>
@@ -461,15 +461,15 @@
           <h1 id="h-recibo" style="margin:0;">Resumen De Recibos En Desarollo</h1>
           <span class="clock-24h" style="white-space:nowrap; font-weight:600; color:#A4E3FF;"></span>
 
-          <div style="display:flex; align-items:center; justify-content: space-between; margin:8px 0; width: 100%;">
-            <div style="display:flex; align-items:center; gap:8px;">
+          <div class="toolbar" style="display:flex; align-items:center; justify-content: space-between; margin:8px 0; width: 100%;">
+            <div style="display:flex; align-items:center; gap:8px; flex:0 0 auto;">
               <button id="btnRecExel" style="padding:10px 14px; background:#647AEB; color:#fff; border:none; border-radius:7px; font-size:15px; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,0.2);">
                 📤 Recibos en Excel
               </button>
               <button id="recibos-refresh" class="btn-blue">🔄 Actualizar</button>
             </div>
-            <div id="exportLinks" style="display:flex; gap:8px; padding:10px 14px;"></div>
-            <div style="display:flex; gap:8px; justify-content: flex-end; align-items: center;">
+            <div id="exportLinks" style="display:flex; gap:8px; padding:10px 14px; flex:0 0 auto;"></div>
+            <div style="display:flex; gap:8px; justify-content: flex-end; align-items: center; flex:0 0 auto;">
               <button id="recibos-consolidados" class="btn-blue" onclick="window.open('https://drive.google.com/drive/folders/1a2-ApIJ63jFeyRZR2OyDw5bXm6AcgEVA', '_blank')">🗂️ Recibos Consolidados</button> 
               <button id="exon-desc" class="btn-orange" style="padding: 5px 14px;" onclick="abrirModalExon()">💸 Exoneraciones <br> Reintegros</button> 
               <button id="multas-btn" class="btn-redd" style="padding: 5px 14px;" onclick="abrirModalMultas()">🚨 Multas <br> Sanciones</button>
