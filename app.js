@@ -186,9 +186,7 @@ function initApp() {
 
 function mostrarAplicacion() {
   const loginScreen = document.getElementById("login-screen");
-  const appContainer = document.getElementById("app-container");
   if (loginScreen) loginScreen.style.display = "none";
-  if (appContainer) appContainer.style.display = "block";
   if (typeof initApp === "function") {
     initApp();}
 }
@@ -196,8 +194,6 @@ function mostrarAplicacion() {
 function cerrarSesion(forceReload = false) {
   clearAuth();
   const loginScreen = document.getElementById("login-screen");
-  const appContainer = document.getElementById("app-container");
-  if (appContainer) appContainer.style.display = "none";
   if (loginScreen) loginScreen.style.display = "flex";
   if (forceReload) {window.location.reload();}
 }
@@ -331,9 +327,7 @@ function ensureAuthTokenBanco(){
     const promptLogin = () => {
       clearAuth();
       const loginScreen = document.getElementById("login-screen");
-      const appContainer = document.getElementById("app-container");
       // Transición de interfaz hacia la pantalla de acceso
-      if (appContainer) appContainer.style.display = "none";
       if (loginScreen) loginScreen.style.display = "flex";
       return reject(new Error('session_required'));
     };
@@ -773,6 +767,41 @@ function setupFullscreen(){
         await document.exitFullscreen();
       }
     }catch(e){}
+  });
+}
+
+// Sidebar en móvil/touch: no hay :hover, así que el botón ☰ despliega/oculta
+// el panel (mismo mecanismo de grid que usa el hover en desktop).
+function setupMobileSidebar(){
+  const btn = $$('#btnMenu');
+  const appEl = $$('.app');
+  const side = $$('.sidebar');
+  if (!btn || !appEl || !side) return;
+
+  function closeSidebar(){
+    appEl.classList.remove('sidebar-open');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+  function toggleSidebar(){
+    const open = appEl.classList.toggle('sidebar-open');
+    btn.setAttribute('aria-expanded', String(open));
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSidebar();
+  });
+
+  // Al elegir una vista del menú, se cierra para liberar el área de trabajo.
+  side.addEventListener('click', (e) => {
+    if (e.target.closest('a[data-view]')) closeSidebar();
+  });
+
+  // Tocar fuera del sidebar/botón también lo cierra.
+  document.addEventListener('click', (e) => {
+    if (!appEl.classList.contains('sidebar-open')) return;
+    if (side.contains(e.target) || btn.contains(e.target)) return;
+    closeSidebar();
   });
 }
 // ====== Badge de estado servidor y User Logg ======
@@ -4475,8 +4504,6 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         clearAuth();
         const loginScreen = document.getElementById("login-screen");
-        const appContainer = document.getElementById("app-container");
-        if (appContainer) appContainer.style.display = "none";
         if (loginScreen) loginScreen.style.display = "flex";
       }
       return;
@@ -4523,6 +4550,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Modales y Vistas Iniciales
   verificarModoMantenimiento(); // Pública: no requiere sesión, se puede mostrar siempre
   setupFullscreen();
+  setupMobileSidebar();
   setupSearch();
 
   // 🔒 Todo lo que sigue llama a funciones protegidas del backend — solo
@@ -4746,8 +4774,6 @@ document.addEventListener('DOMContentLoaded', () => {
             sessionStorage.removeItem('AUTH_EXPIRE');
           }
           const loginScreen = document.getElementById("login-screen");
-          const appContainer = document.getElementById("app-container");
-          if (appContainer) appContainer.style.display = "none";
           if (loginScreen) loginScreen.style.display = "flex";
         }
       }
