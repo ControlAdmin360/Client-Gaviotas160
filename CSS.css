@@ -455,6 +455,26 @@ body {
   .app.sidebar-open {
     grid-template-columns: var(--sidebar) 1fr !important;
   }
+
+  /* Filas de controles (selects, combobox, botones) arriba de cada tabla:
+     en vez de recortarse o forzar el layout, se deslizan de lado igual
+     que las tablas de abajo — así ningún control queda inalcanzable. */
+  .toolbar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+  .toolbar > * {
+    flex: 0 0 auto;
+  }
+
+  /* El botón Consolidar (Recibos) trae un margin-right:190px fijo pensado
+     para pantallas anchas; en móvil solo deja espacio vacío tras hacer
+     scroll hasta el final. */
+  #btn-consolidar-periodo {
+    margin-right: 0 !important;
+  }
 }
 
 /* ==========================================================================
