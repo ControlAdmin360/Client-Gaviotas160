@@ -4,6 +4,14 @@
  * =============================================================================
  */
 const DEBUG = false;
+
+// Registro del service worker (permite instalar la app en el celular).
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((e) => console.error('[SW] registro falló:', e));
+  });
+}
+
 if (DEBUG) {
   window.addEventListener('error', (e) => {
     console.error('[GLOBAL ERROR]', e.message, e.filename, e.lineno + ':' + e.colno, e.error?.stack || '');
