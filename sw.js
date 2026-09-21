@@ -1,7 +1,7 @@
 // Service worker mínimo: solo habilita la instalación como app y da un
 // respaldo offline para el "cascarón" estático. Los datos (RPC al backend)
 // SIEMPRE van a la red — nunca se cachean, para no mostrar cifras viejas.
-const CACHE_NAME = 'gaviotas160-shell-v1';
+const CACHE_NAME = 'gaviotas160-shell-v2';
 const SHELL_FILES = [
   './index.html',
   './CSS.css',
@@ -38,7 +38,10 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    fetch(req)
+    // cache: 'reload' evita que el navegador conteste con su propia caché
+    // HTTP (Cache-Control) antes de llegar a la red — así una actualización
+    // publicada se ve de inmediato, sin depender de que el usuario borre caché.
+    fetch(req, { cache: 'reload' })
       .then((res) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
