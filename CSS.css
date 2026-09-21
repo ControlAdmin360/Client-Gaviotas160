@@ -447,13 +447,18 @@ body {
 .srv-error { background: #3b0e10; color: #ffc0c4; }
 .srv-error .dot { background: #ff4d4f; }
 
-/* 📱 Móvil / táctil: no existe :hover, así que el sidebar arranca colapsado
-   (igual que en desktop) y el botón ☰ lo despliega/oculta por toque. */
+/* 📱 Móvil / táctil: no existe :hover, así que el sidebar arranca
+   completamente oculto y el botón ☰ muestra/oculta solo los íconos
+   (el mismo ancho "peek" que antes era el estado fijo por defecto). */
 @media (max-width: 900px) {
   .btn-menu { display: inline-flex !important; }
 
+  .app {
+    grid-template-columns: 0px 1fr;
+  }
+
   .app.sidebar-open {
-    grid-template-columns: var(--sidebar) 1fr !important;
+    grid-template-columns: calc(var(--sidebar) * var(--sidebar-peek)) 1fr !important;
   }
 
   /* Filas de controles (selects, combobox, botones) arriba de cada tabla:
