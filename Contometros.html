@@ -393,8 +393,9 @@
             p.netRun()
               .withSuccessHandler(resConsolidado => {
                 if (resConsolidado && resConsolidado.ok) {
-                  alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
-                  res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';
+                  //alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
+                  res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';  //EN TOAST
+                  text(msg, res.mensaje);
                   if ($('gridIds')) $('gridIds').innerHTML = '';
                   pintar(res);
                   text(msg, '');
