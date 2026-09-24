@@ -91,6 +91,7 @@
     <div class="topbar"><h1>Captura de Contómetros</h1></div>
 
     <div id="estado" class="muted">Cargando Estado…</div>
+    <button class="btn warn" id="btnConsolidarLecturas" type="button" style="display:none; margin-top:8px; font-size:1rem; line-height:1.25; padding:10px 18px;">✅ Consolidar<br>Lecturas</button>
 
     <!-- Combo (solo visible cuando needDate o viewOnly) -->
     <div id="comboFechasWrap" class="right" style="display:none">
@@ -180,8 +181,6 @@
   const params = new URLSearchParams(location.search);
   const AUTH_USER = params.get('user') || sessionStorage.getItem('AUTH_USER') || '';
   const AUTH_TOKEN = sessionStorage.getItem('AUTH_TOKEN') || '';
-
-  //const toast = window.toast || window.parent?.toast;
 
   function setUserLogg(){
     const el = $('userLogg');
@@ -382,58 +381,68 @@
         if (res.ok === false)                { text(msg,'Error: ' + (res.error || 'sin detalle')); return; }
         
         if (res.listoParaConsolidar) {
-          const confirmar = confirm(
-            res.mensaje + "\n\n¿Desea Ejecutar el Consolidado de Lecturas Ahora Mismo?⤴️"
-          );
-
-          if (confirmar) {
-            text(msg, '⏳ Espere...');
-            
-            // 2. Llamada al padre para consolidar
-            p.netRun()
-              .withSuccessHandler(resConsolidado => {
-                if (resConsolidado && resConsolidado.ok) {
-                  //alert("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
-                  res.mensaje = '✅ Consolidado Completado. Cierre y Vuelva Abrir el Registro ➕';  //EN TOAST
-                  text(msg, res.mensaje);
-                  if ($('gridIds')) $('gridIds').innerHTML = '';
-                  pintar(res);
-                  text(msg, '');
-                  cerrarModal();
-                } else {
-                  alert("❌ Error al consolidar: " + (resConsolidado ? resConsolidado.error : 'Sin detalle'));
-                  pintar(res);
-                  text(msg, '');
-                }
-              })
-              .withFailureHandler(err => {
-                alert("❌ Error de comunicación: " + (err?.message || err));
-                pintar(res);
-                text(msg, '');
-              })
-              .correrContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
-            return;
-          } else {
-            pintar(res);
-            if ($('idSel')) $('idSel').textContent = '—';
-            if ($('prevVal')) $('prevVal').textContent = '—';
-            if ($('inpValor')) {
-              $('inpValor').value = '';
-              $('inpValor').placeholder = 'Lectura a Registrar...';
-              $('inpValor').disabled = true;
-            }
-            if ($('btnGuardar')) $('btnGuardar').disabled = true;
-            text(msg, '⚠️ El Periodo Actual Debe Consolidarse Antes de Realizar Nuevos Registros.');
-            return;
+          // Ya no interrumpe con un confirm() cada vez que se recarga (F5).
+          // El aviso queda visible en #estado (pintar ya lo muestra con res.mensaje)
+          // y el botón "Consolidar Lecturas" queda a la vista para que el
+          // usuario decida cuándo ejecutarlo.
+          pintar(res);
+          show($('btnConsolidarLecturas'), true, 'inline-block');
+          if ($('idSel')) $('idSel').textContent = '—';
+          if ($('prevVal')) $('prevVal').textContent = '—';
+          if ($('inpValor')) {
+            $('inpValor').value = '';
+            $('inpValor').placeholder = 'Lectura a Registrar...';
+            $('inpValor').disabled = true;
           }
+          if ($('btnGuardar')) $('btnGuardar').disabled = true;
+          text(msg, '⚠️ El Periodo Actual Debe Consolidarse Antes de Realizar Nuevos Registros.');
+          return;
         }
 
-        pintar(res); 
+        show($('btnConsolidarLecturas'), false);
+        pintar(res);
         text(msg, '');
       })
       .withFailureHandler(err => text(msg, 'Error: ' + (err?.message || err)))
       .getEstadoContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
   }
+
+  // ===== Consolidar Lecturas (botón dedicado, en vez del confirm() anterior)
+  function ejecutarConsolidacion(){
+    const msg = $('msg');
+    const p = window.parent;
+    if (!p || typeof p.netRun !== 'function') {
+      text(msg, 'Error: Sin conexión con el servidor principal.');
+      return;
+    }
+
+    text(msg, '⏳ Espere...');
+    enable($('btnConsolidarLecturas'), false);
+
+    p.netRun()
+      .withSuccessHandler(resConsolidado => {
+        if (resConsolidado && resConsolidado.ok) {
+          if (typeof p.toast === 'function') {
+            p.toast("✅ " + (resConsolidado.mensaje || "Consolidado realizado con éxito."));
+          }
+          text(msg, '');
+          show($('btnConsolidarLecturas'), false);
+          cerrarModal();
+        } else {
+          alert("❌ Error al consolidar: " + (resConsolidado ? resConsolidado.error : 'Sin detalle'));
+          text(msg, '');
+          enable($('btnConsolidarLecturas'), true);
+        }
+      })
+      .withFailureHandler(err => {
+        alert("❌ Error de comunicación: " + (err?.message || err));
+        text(msg, '');
+        enable($('btnConsolidarLecturas'), true);
+      })
+      .correrContometros(typeof AUTH_TOKEN !== 'undefined' ? AUTH_TOKEN : '');
+  }
+
+  $('btnConsolidarLecturas')?.addEventListener('click', ejecutarConsolidacion);
 
   // ===== Listeners
   $('btnVerLecturas')?.addEventListener('click', () => {
