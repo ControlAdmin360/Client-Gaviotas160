@@ -3937,7 +3937,7 @@ function renderizarTablaServicios(matrizDatos) {
   let htmlHead = "<tr>";
   cabeceras.forEach((col, indexCol) => {
     const alignClass = indexCol === 0 ? "col-periodo" : "col-monto";
-    htmlHead += `<th class="${alignClass}">${col}</th>`;
+    htmlHead += `<th class="${alignClass}">${escapeHTML(col)}</th>`;
   });
   htmlHead += "</tr>";
   thead.innerHTML = htmlHead;
@@ -3965,9 +3965,10 @@ function renderizarTablaServicios(matrizDatos) {
         }
       }
 
-      const contenidoCelda = esValorFaltante 
-        ? `<span class="badge-missing">${valorTxt}</span>` 
-        : valorTxt;
+      const valorSeguro = escapeHTML(valorTxt);
+      const contenidoCelda = esValorFaltante
+        ? `<span class="badge-missing">${valorSeguro}</span>`
+        : valorSeguro;
 
       const alignClass = indexCol === 0 ? "col-periodo" : "col-monto";
       htmlBody += `<td class="${alignClass}">${contenidoCelda}</td>`;
