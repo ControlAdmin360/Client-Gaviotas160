@@ -26,16 +26,44 @@ if (DEBUG) {
 // Único admin que puede permanecer logueado durante el mantenimiento.
 const ADMIN_MANTENIMIENTO = 'PABREU';
 
+// Los 2 mensajes que requireAuth() puede lanzar en el backend cuando la
+// sesión ya no sirve. Hay que tratarlos igual acá porque, cuando una
+// pantalla dispara varias llamadas RPC casi al mismo tiempo (p.ej.
+// Consultas: getRecibosMovimientos + api_Saldos_Para_Modal), la primera
+// que llega mata la sesión y devuelve SISTEMA_EN_MANTENIMIENTO, pero la
+// segunda ya encuentra el token borrado y recibe el mensaje genérico de
+// "sesión inválida" en su lugar — sin este manejo, esa segunda llamada
+// mostraba el error de conexión genérico en vez de la pantalla correcta.
+const MENSAJE_MANTENIMIENTO = 'SISTEMA_EN_MANTENIMIENTO';
+const MENSAJE_SESION_INVALIDA = 'Sesión inválida o expirada. Por favor, inicia sesión de nuevo.';
+
 // Muestra la tarjeta de "Sistema en Mantenimiento" y, si había una sesión
-// activa, la cierra de inmediato (se usa tanto desde el poll periódico
-// como desde el interceptor global de netRun() cuando el backend corta
-// la sesión con SISTEMA_EN_MANTENIMIENTO).
+// activa, la cierra de inmediato.
 function forzarPantallaMantenimiento() {
   if (getAuthToken()) cerrarSesion(false);
   const cardMantenimiento = document.getElementById('maintenance-card');
   const cardLogin = document.getElementById('form-login-card');
   if (cardMantenimiento) cardMantenimiento.style.display = 'block';
   if (cardLogin) cardLogin.style.display = 'none';
+}
+
+// Punto único donde netRun() evalúa cualquier error de sesión que venga
+// del backend. Devuelve true si ya lo manejó (no hay que pasarlo a
+// failureFn de la pantalla que hizo la llamada).
+function manejarErrorDeSesion(mensaje) {
+  if (mensaje === MENSAJE_MANTENIMIENTO) {
+    forzarPantallaMantenimiento();
+    return true;
+  }
+  if (mensaje === MENSAJE_SESION_INVALIDA) {
+    // Puede ser un timeout normal, o una sesión que YA fue cerrada por
+    // mantenimiento en una llamada paralela — se re-consulta el estado
+    // real antes de decidir si va a la pantalla de mantenimiento o a Login.
+    if (getAuthToken()) cerrarSesion(false);
+    verificarModoMantenimiento();
+    return true;
+  }
+  return false;
 }
 
 function verificarModoMantenimiento() {
@@ -307,7 +335,7 @@ window.netRun = function () {
             })
             .withFailureHandler(err => {
               if (typeof window.__NetState === 'object') window.__NetState.idle();
-              if (err && err.message === 'SISTEMA_EN_MANTENIMIENTO') { forzarPantallaMantenimiento(); return; }
+              if (err && manejarErrorDeSesion(err.message)) return;
               failureFn(err);
             })[prop](...args);
         } else {
@@ -332,7 +360,7 @@ window.netRun = function () {
             // status HTTP, porque de lo contrario !res.ok corta el flujo antes
             // de leer el mensaje real y todo cae como "error de conexión" genérico.
             if (data && data.status === 'error') {
-              if (data.message === 'SISTEMA_EN_MANTENIMIENTO') { forzarPantallaMantenimiento(); return; }
+              if (manejarErrorDeSesion(data.message)) return;
               failureFn(new Error(data.message || 'Error en servidor'));
               return;
             }
