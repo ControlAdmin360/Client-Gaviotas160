@@ -323,18 +323,21 @@ window.netRun = function () {
               parameters: args
             })
           })
-          .then(res => {
-            if (!res.ok) throw new Error("HTTP error " + res.status);
-            return res.json();
-          })
-          .then(res => {
+          .then(res => res.json().catch(() => null).then(data => ({ httpOk: res.ok, httpStatus: res.status, data })))
+          .then(({ httpOk, httpStatus, data }) => {
             if (typeof window.__NetState === 'object') window.__NetState.idle();
-            if (res && res.status === 'error') {
-              if (res.message === 'SISTEMA_EN_MANTENIMIENTO') { forzarPantallaMantenimiento(); return; }
-              failureFn(new Error(res.message || 'Error en servidor'));
-            } else {
-              successFn(res && 'result' in res ? res.result : res);
+            // Un 500 con body {status:'error', message:...} (p.ej. errores lanzados
+            // por funciones del backend, incluido SISTEMA_EN_MANTENIMIENTO) se
+            // procesa igual que un 200 — se evalúa el body ANTES de mirar el
+            // status HTTP, porque de lo contrario !res.ok corta el flujo antes
+            // de leer el mensaje real y todo cae como "error de conexión" genérico.
+            if (data && data.status === 'error') {
+              if (data.message === 'SISTEMA_EN_MANTENIMIENTO') { forzarPantallaMantenimiento(); return; }
+              failureFn(new Error(data.message || 'Error en servidor'));
+              return;
             }
+            if (!httpOk) { failureFn(new Error("HTTP error " + httpStatus)); return; }
+            successFn(data && 'result' in data ? data.result : data);
           })
           .catch(err => {
             if (typeof window.__NetState === 'object') window.__NetState.idle();
