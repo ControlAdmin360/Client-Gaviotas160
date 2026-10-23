@@ -23,6 +23,21 @@ if (DEBUG) {
   });
 }
 
+// Único admin que puede permanecer logueado durante el mantenimiento.
+const ADMIN_MANTENIMIENTO = 'PABREU';
+
+// Muestra la tarjeta de "Sistema en Mantenimiento" y, si había una sesión
+// activa, la cierra de inmediato (se usa tanto desde el poll periódico
+// como desde el interceptor global de netRun() cuando el backend corta
+// la sesión con SISTEMA_EN_MANTENIMIENTO).
+function forzarPantallaMantenimiento() {
+  if (getAuthToken()) cerrarSesion(false);
+  const cardMantenimiento = document.getElementById('maintenance-card');
+  const cardLogin = document.getElementById('form-login-card');
+  if (cardMantenimiento) cardMantenimiento.style.display = 'block';
+  if (cardLogin) cardLogin.style.display = 'none';
+}
+
 function verificarModoMantenimiento() {
   const params = new URLSearchParams(window.location.search);
   const esBypassAdmin = params.get('admin') === '1' || params.get('mode') === 'admin';
@@ -41,13 +56,27 @@ function verificarModoMantenimiento() {
   netRun()
     .withSuccessHandler(res => {
       const enMantenimiento = res && res.mantenimiento === true;
+      const sesionActiva = !!getAuthToken();
+      const usuarioActual = (sessionStorage.getItem('AUTH_USER') || '').trim().toUpperCase();
 
       if (enMantenimiento) {
-        if (cardMantenimiento) cardMantenimiento.style.display = 'block';
-        if (cardLogin) cardLogin.style.display = 'none';
+        // Sesión activa que no es la del admin -> se cierra de inmediato,
+        // sin esperar a que el usuario haga alguna acción que dispare un RPC.
+        if (sesionActiva && usuarioActual !== ADMIN_MANTENIMIENTO) {
+          forzarPantallaMantenimiento();
+          return;
+        }
+        if (!sesionActiva) {
+          if (cardMantenimiento) cardMantenimiento.style.display = 'block';
+          if (cardLogin) cardLogin.style.display = 'none';
+        }
       } else {
-        if (cardMantenimiento) cardMantenimiento.style.display = 'none';
-        if (cardLogin) cardLogin.style.display = 'block';
+        // Mantenimiento recién desactivado: si estaba viendo la tarjeta de
+        // mantenimiento (no logueado), pasa sola a la ventana de Login.
+        if (!sesionActiva) {
+          if (cardMantenimiento) cardMantenimiento.style.display = 'none';
+          if (cardLogin) cardLogin.style.display = 'block';
+        }
       }
     })
     .withFailureHandler(err => {
@@ -57,6 +86,11 @@ function verificarModoMantenimiento() {
     })
     .api_obtenerModoMantenimiento();
 }
+
+// Poll periódico: cubre el caso de una sesión inactiva (sin hacer ningún
+// RPC) o la pantalla de mantenimiento quedando abierta sin recargar.
+if (window.__maintenancePollInterval) clearInterval(window.__maintenancePollInterval);
+window.__maintenancePollInterval = setInterval(verificarModoMantenimiento, 20000);
 
 // --- Gestión de Sesión y Token (sessionStorage) ---
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
@@ -265,6 +299,7 @@ window.netRun = function () {
             })
             .withFailureHandler(err => {
               if (typeof window.__NetState === 'object') window.__NetState.idle();
+              if (err && err.message === 'SISTEMA_EN_MANTENIMIENTO') { forzarPantallaMantenimiento(); return; }
               failureFn(err);
             })[prop](...args);
         } else {
@@ -287,6 +322,7 @@ window.netRun = function () {
           .then(res => {
             if (typeof window.__NetState === 'object') window.__NetState.idle();
             if (res && res.status === 'error') {
+              if (res.message === 'SISTEMA_EN_MANTENIMIENTO') { forzarPantallaMantenimiento(); return; }
               failureFn(new Error(res.message || 'Error en servidor'));
             } else {
               successFn(res && 'result' in res ? res.result : res);
