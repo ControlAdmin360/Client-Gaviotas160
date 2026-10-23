@@ -89,8 +89,16 @@ function verificarModoMantenimiento() {
 
 // Poll periódico: cubre el caso de una sesión inactiva (sin hacer ningún
 // RPC) o la pantalla de mantenimiento quedando abierta sin recargar.
+// Se salta la consulta (sin pegarle a Firebase/Vercel) cuando no hace
+// falta: logueado como el admin exento, o pestaña en segundo plano.
+function pollModoMantenimiento() {
+  const usuarioActual = (sessionStorage.getItem('AUTH_USER') || '').trim().toUpperCase();
+  if (getAuthToken() && usuarioActual === ADMIN_MANTENIMIENTO) return;
+  if (document.hidden) return;
+  verificarModoMantenimiento();
+}
 if (window.__maintenancePollInterval) clearInterval(window.__maintenancePollInterval);
-window.__maintenancePollInterval = setInterval(verificarModoMantenimiento, 20000);
+window.__maintenancePollInterval = setInterval(pollModoMantenimiento, 60000);
 
 // --- Gestión de Sesión y Token (sessionStorage) ---
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
