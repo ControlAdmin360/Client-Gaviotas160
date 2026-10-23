@@ -23,49 +23,6 @@ if (DEBUG) {
   });
 }
 
-// Único admin que puede permanecer logueado durante el mantenimiento.
-const ADMIN_MANTENIMIENTO = 'PABREU';
-
-// Los 2 mensajes que requireAuth() puede lanzar en el backend cuando la
-// sesión ya no sirve. Hay que tratarlos igual acá porque, cuando una
-// pantalla dispara varias llamadas RPC casi al mismo tiempo (p.ej.
-// Consultas: getRecibosMovimientos + api_Saldos_Para_Modal), la primera
-// que llega mata la sesión y devuelve SISTEMA_EN_MANTENIMIENTO, pero la
-// segunda ya encuentra el token borrado y recibe el mensaje genérico de
-// "sesión inválida" en su lugar — sin este manejo, esa segunda llamada
-// mostraba el error de conexión genérico en vez de la pantalla correcta.
-const MENSAJE_MANTENIMIENTO = 'SISTEMA_EN_MANTENIMIENTO';
-const MENSAJE_SESION_INVALIDA = 'Sesión inválida o expirada. Por favor, inicia sesión de nuevo.';
-
-// Muestra la tarjeta de "Sistema en Mantenimiento" y, si había una sesión
-// activa, la cierra de inmediato.
-function forzarPantallaMantenimiento() {
-  if (getAuthToken()) cerrarSesion(false);
-  const cardMantenimiento = document.getElementById('maintenance-card');
-  const cardLogin = document.getElementById('form-login-card');
-  if (cardMantenimiento) cardMantenimiento.style.display = 'block';
-  if (cardLogin) cardLogin.style.display = 'none';
-}
-
-// Punto único donde netRun() evalúa cualquier error de sesión que venga
-// del backend. Devuelve true si ya lo manejó (no hay que pasarlo a
-// failureFn de la pantalla que hizo la llamada).
-function manejarErrorDeSesion(mensaje) {
-  if (mensaje === MENSAJE_MANTENIMIENTO) {
-    forzarPantallaMantenimiento();
-    return true;
-  }
-  if (mensaje === MENSAJE_SESION_INVALIDA) {
-    // Puede ser un timeout normal, o una sesión que YA fue cerrada por
-    // mantenimiento en una llamada paralela — se re-consulta el estado
-    // real antes de decidir si va a la pantalla de mantenimiento o a Login.
-    if (getAuthToken()) cerrarSesion(false);
-    verificarModoMantenimiento();
-    return true;
-  }
-  return false;
-}
-
 function verificarModoMantenimiento() {
   const params = new URLSearchParams(window.location.search);
   const esBypassAdmin = params.get('admin') === '1' || params.get('mode') === 'admin';
@@ -84,27 +41,13 @@ function verificarModoMantenimiento() {
   netRun()
     .withSuccessHandler(res => {
       const enMantenimiento = res && res.mantenimiento === true;
-      const sesionActiva = !!getAuthToken();
-      const usuarioActual = (sessionStorage.getItem('AUTH_USER') || '').trim().toUpperCase();
 
       if (enMantenimiento) {
-        // Sesión activa que no es la del admin -> se cierra de inmediato,
-        // sin esperar a que el usuario haga alguna acción que dispare un RPC.
-        if (sesionActiva && usuarioActual !== ADMIN_MANTENIMIENTO) {
-          forzarPantallaMantenimiento();
-          return;
-        }
-        if (!sesionActiva) {
-          if (cardMantenimiento) cardMantenimiento.style.display = 'block';
-          if (cardLogin) cardLogin.style.display = 'none';
-        }
+        if (cardMantenimiento) cardMantenimiento.style.display = 'block';
+        if (cardLogin) cardLogin.style.display = 'none';
       } else {
-        // Mantenimiento recién desactivado: si estaba viendo la tarjeta de
-        // mantenimiento (no logueado), pasa sola a la ventana de Login.
-        if (!sesionActiva) {
-          if (cardMantenimiento) cardMantenimiento.style.display = 'none';
-          if (cardLogin) cardLogin.style.display = 'block';
-        }
+        if (cardMantenimiento) cardMantenimiento.style.display = 'none';
+        if (cardLogin) cardLogin.style.display = 'block';
       }
     })
     .withFailureHandler(err => {
@@ -114,19 +57,6 @@ function verificarModoMantenimiento() {
     })
     .api_obtenerModoMantenimiento();
 }
-
-// Poll periódico: cubre el caso de una sesión inactiva (sin hacer ningún
-// RPC) o la pantalla de mantenimiento quedando abierta sin recargar.
-// Se salta la consulta (sin pegarle a Firebase/Vercel) cuando no hace
-// falta: logueado como el admin exento, o pestaña en segundo plano.
-function pollModoMantenimiento() {
-  const usuarioActual = (sessionStorage.getItem('AUTH_USER') || '').trim().toUpperCase();
-  if (getAuthToken() && usuarioActual === ADMIN_MANTENIMIENTO) return;
-  if (document.hidden) return;
-  verificarModoMantenimiento();
-}
-if (window.__maintenancePollInterval) clearInterval(window.__maintenancePollInterval);
-window.__maintenancePollInterval = setInterval(pollModoMantenimiento, 60000);
 
 // --- Gestión de Sesión y Token (sessionStorage) ---
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
@@ -335,7 +265,6 @@ window.netRun = function () {
             })
             .withFailureHandler(err => {
               if (typeof window.__NetState === 'object') window.__NetState.idle();
-              if (err && manejarErrorDeSesion(err.message)) return;
               failureFn(err);
             })[prop](...args);
         } else {
@@ -351,21 +280,17 @@ window.netRun = function () {
               parameters: args
             })
           })
-          .then(res => res.json().catch(() => null).then(data => ({ httpOk: res.ok, httpStatus: res.status, data })))
-          .then(({ httpOk, httpStatus, data }) => {
+          .then(res => {
+            if (!res.ok) throw new Error("HTTP error " + res.status);
+            return res.json();
+          })
+          .then(res => {
             if (typeof window.__NetState === 'object') window.__NetState.idle();
-            // Un 500 con body {status:'error', message:...} (p.ej. errores lanzados
-            // por funciones del backend, incluido SISTEMA_EN_MANTENIMIENTO) se
-            // procesa igual que un 200 — se evalúa el body ANTES de mirar el
-            // status HTTP, porque de lo contrario !res.ok corta el flujo antes
-            // de leer el mensaje real y todo cae como "error de conexión" genérico.
-            if (data && data.status === 'error') {
-              if (manejarErrorDeSesion(data.message)) return;
-              failureFn(new Error(data.message || 'Error en servidor'));
-              return;
+            if (res && res.status === 'error') {
+              failureFn(new Error(res.message || 'Error en servidor'));
+            } else {
+              successFn(res && 'result' in res ? res.result : res);
             }
-            if (!httpOk) { failureFn(new Error("HTTP error " + httpStatus)); return; }
-            successFn(data && 'result' in data ? data.result : data);
           })
           .catch(err => {
             if (typeof window.__NetState === 'object') window.__NetState.idle();
