@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gaviotas 160 (-)</title>
+  <title>ControlAdmin360 (-)</title>
+  <style>[data-company]{visibility:hidden}.company-listo [data-company]{visibility:visible}</style>
 
   <!-- Instalable como app (PWA) -->
   <link rel="manifest" href="manifest.json">
@@ -11,7 +12,7 @@
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Gaviotas 160">
+  <meta name="apple-mobile-web-app-title" id="meta-apple-title" content="ControlAdmin360">
 
   <!-- Favicon emoji unificado -->
   <link id="favicon-main" rel="icon" type="image/svg+xml" href="">
@@ -27,7 +28,9 @@
         link.rel = 'icon';
         document.head.appendChild(link);
       }
-      var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>🕊️</text></svg>";
+      var icono = '🏢';
+      try { var c = JSON.parse(localStorage.getItem('COMPANY_INFO') || 'null'); if (c && c.ICONO) icono = c.ICONO; } catch (e) {}
+      var svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>" + icono + "</text></svg>";
       link.type = 'image/svg+xml';
       link.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
     })();
@@ -44,8 +47,8 @@
         <i class="fa-solid fa-gear gear-small"></i>
       </div>
       <div class="login-header">
-        <span class="logo-icon">🕊️</span>
-        <h2>Gaviotas 160</h2>
+        <span class="logo-icon" data-company="icono"></span>
+        <h2 data-company="corto">UNKNOWN</h2>
         <p>ControlAdmin360 Gestión & Administración</p>
       </div>
       <div class="maintenance-body">
@@ -63,8 +66,8 @@
     <!-- 2. FORMULARIO DE LOGIN (Tu caja de Login original) -->
     <div id="form-login-card" class="login-card">
       <div class="login-header">
-        <span class="logo-icon">🕊️</span>
-        <h2>Gaviotas 160</h2>
+        <span class="logo-icon" data-company="icono"></span>
+        <h2 data-company="corto">UNKNOWN</h2>
         <p>ControlAdmin360 Gestión & Administración</p>
       </div>
       <form id="form-login" onsubmit="validarIngreso(event)">
@@ -99,7 +102,7 @@
     <!-- Topbar -->
     <header class="topbar" role="banner">
       <button id="btnMenu" class="btn btn-menu" type="button" aria-controls="sidebar" aria-expanded="false" title="Menú">☰</button>
-      <div class="brand" aria-label="Nombre de la aplicación">🕊️ Gaviotas 160</div>
+      <div class="brand" data-company="marca" aria-label="Nombre de la aplicación">UNKNOWN</div>
 
       <div id="srvStatus" class="srv-badge srv-idle" title="Disponible" style="margin:6px 0 10px 0;">
         <span class="dot"></span>
@@ -478,7 +481,7 @@
             </div>
             <div id="exportLinks" style="display:flex; gap:8px; padding:10px 14px; flex:0 0 auto;"></div>
             <div style="display:flex; gap:8px; justify-content: flex-end; align-items: center; flex:0 0 auto;">
-              <button id="recibos-consolidados" class="btn-blue" onclick="window.open('https://drive.google.com/drive/folders/1a2-ApIJ63jFeyRZR2OyDw5bXm6AcgEVA', '_blank')">🗂️ Recibos Consolidados</button> 
+              <button id="recibos-consolidados" class="btn-blue" onclick="abrirCarpetaRecibos()">🗂️ Recibos Consolidados</button> 
               <button id="exon-desc" class="btn-orange" style="padding: 5px 14px;" onclick="abrirModalExon()">💸 Exoneraciones <br> Reintegros</button> 
               <button id="multas-btn" class="btn-redd" style="padding: 5px 14px;" onclick="abrirModalMultas()">🚨 Multas <br> Sanciones</button>
               <button id="config-btn" class="btn-blue" style="padding: 5px 14px;" onclick="abrirModalConfig()">⚙️ Config.</button>
@@ -858,7 +861,7 @@
       <!-- CONFIG -->
       <section id="view-config" class="view" aria-labelledby="h-config">
         <h1 id="h-config">Configuración</h1>
-         <p>Módulo de Sistema Activo: <code>Contometros / Gaviotas 160</code></p>
+         <p>Módulo de Sistema Activo: <code data-company="modulo">Contometros / UNKNOWN</code></p>
       </section>
 
 
@@ -1005,7 +1008,7 @@
   <dialog id="dlgBancoForm" class="modal" aria-labelledby="dlgBancoFormTitle">
     <div class="modal-box">
       <div class="modal-titlebar">
-        <h3 id="dlgBancoFormTitle" class="modal-title" style="font-size: 1.4rem;">🌐 AppWeb! Gaviotas 160</h3>
+        <h3 id="dlgBancoFormTitle" class="modal-title" data-company="titulo-banco" style="font-size: 1.4rem;">🌐 AppWeb! UNKNOWN</h3>
         <button id="btnBancoFormClose" class="modal-close with-label" type="button" title="Cerrar" onclick="closeForm('banco')">
           <span class="icon" aria-hidden="true">✖️ </span><span class="label">Close</span>
         </button>

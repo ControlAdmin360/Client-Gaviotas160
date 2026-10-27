@@ -607,7 +607,7 @@
     // 🎯 Validación de Consumo Elevado (Usando ALERTAS_LEC unificado con el Login)
     if (prevDeSeleccionado !== '' && prevDeSeleccionado != null && !isNaN(prevDeSeleccionado)) {
       const consumoLts = valNum - parseInt(prevDeSeleccionado, 10);
-      if (consumoLts > rango) {
+      if (consumoLts > rango && !EST?.allowNewUnits) {
         const confirma = confirm(`⚠️ ALERTA DE CONSUMO ELEVADO:\n\nEl consumo calculado es de (${(consumoLts / 1000).toFixed(2)} m³).\n\nℹ️→ Si la lectura es correcta, proceda con el registro.`);
         if (!confirma) return;
       }
@@ -743,7 +743,7 @@
     // 2. Advertencia si supera rango Lts (alerta ámbar, pero permite guardar)
     const consumoLts = n - prevNum;
     const rango = getRangoAlerta();
-    if (consumoLts > rango) {
+    if (consumoLts > rango && !EST?.allowNewUnits) {
       this.style.borderColor = '#f59e0b';
       this.classList.remove('input-error');
       msg.classList.remove('flat');

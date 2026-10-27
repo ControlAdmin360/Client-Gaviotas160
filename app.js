@@ -58,6 +58,24 @@ function verificarModoMantenimiento() {
     .api_obtenerModoMantenimiento();
 }
 
+// Cada 60 s: si hay sesión iniciada y el modo mantenimiento está activo, cierra la sesión.
+// La entrada de administración (?admin=1) no se vigila, porque es la que se usa durante el mantenimiento.
+function vigilarMantenimiento() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('admin') === '1' || params.get('mode') === 'admin') return;
+  setInterval(() => {
+    if (!getAuthToken()) return;
+    fetch(GAS_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ functionName: 'api_obtenerModoMantenimiento', parameters: [] })
+    })
+      .then(r => r.json())
+      .then(r => { if (r?.result?.mantenimiento === true && getAuthToken()) cerrarSesion(true); })
+      .catch(() => {});
+  }, 60000);
+}
+
 // --- Gestión de Sesión y Token (sessionStorage) ---
 function getAuthToken(){ return sessionStorage.getItem('AUTH_TOKEN') || ''; }
 function setAuthToken(t){ if (t) sessionStorage.setItem('AUTH_TOKEN', t); }
@@ -220,7 +238,7 @@ function iniServicesDepas() {
 
       // 2. Actualiza el título de la pestaña del navegador inmediatamente
       if (depas.length > 0) {
-        document.title = `Gaviotas 160 (${depas.length})`;
+        document.title = tituloApp(depas.length);
       }
 
       // 3. Hidrata los Sets para que DataBank pinte colores al instante
@@ -280,8 +298,14 @@ window.netRun = function () {
               parameters: args
             })
           })
-          .then(res => {
-            if (!res.ok) throw new Error("HTTP error " + res.status);
+          .then(async res => {
+            if (!res.ok) {
+              // Si el servidor dice que la sesión ya no vale (ej. tras restaurar la base), se cierra la sesión.
+              const cuerpo = await res.json().catch(() => null);
+              const msg = (cuerpo && cuerpo.message) || '';
+              if (/Sesión inválida o expirada/.test(msg)) cerrarSesion(true);
+              throw new Error(msg || "HTTP error " + res.status);
+            }
             return res.json();
           })
           .then(res => {
@@ -303,6 +327,70 @@ window.netRun = function () {
   });
   return proxy;
 };
+
+// ===== Datos del condominio (CONFIG/COMPANY) =====
+// El frontend no guarda datos de ningún condominio: si no se pueden leer de
+// Firebase se muestra UNKNOWN. Los textos quedan ocultos hasta saber cuáles son.
+window.COMPANY = { NOMBRE: 'UNKNOWN', NOMBRE_CORTO: 'UNKNOWN', ICONO: '' };
+
+function tituloApp(n) { return `${window.COMPANY.NOMBRE_CORTO} (${n})`; }
+
+// Botón "Recibos Consolidados": abre la carpeta de Drive configurada en CONFIG/COMPANY/CARPETA_RECIBOS_URL.
+function abrirCarpetaRecibos() {
+  const url = String(window.COMPANY.CARPETA_RECIBOS_URL || '').trim();
+  if (/^https:\/\//i.test(url)) {
+    window.open(url, '_blank', 'noopener');
+  } else {
+    const aviso = '⚠️ Falta configurar la carpeta de recibos (CONFIG/COMPANY/CARPETA_RECIBOS_URL en Firebase).';
+    if (window.toast) toast(aviso); else alert(aviso);
+  }
+}
+
+function aplicarCompany(info) {
+  if (!info || !info.NOMBRE_CORTO) return;
+  window.COMPANY = { NOMBRE: info.NOMBRE || info.NOMBRE_CORTO, NOMBRE_CORTO: info.NOMBRE_CORTO, ICONO: info.ICONO || '', CARPETA_RECIBOS_URL: info.CARPETA_RECIBOS_URL || '' };
+  const corto = window.COMPANY.NOMBRE_CORTO, icono = window.COMPANY.ICONO;
+  const poner = (sel, txt) => document.querySelectorAll(sel).forEach(el => { el.textContent = txt; });
+  poner('[data-company="icono"]', icono);
+  poner('[data-company="corto"]', corto);
+  poner('[data-company="marca"]', `${icono} ${corto}`.trim());
+  poner('[data-company="modulo"]', `Contometros / ${corto}`);
+  poner('[data-company="titulo-banco"]', `\u{1F310} AppWeb! ${corto}`);
+  const m = document.title.match(/\(([^)]*)\)\s*$/);
+  document.title = tituloApp(m ? m[1] : '-');
+  const meta = document.getElementById('meta-apple-title');
+  if (meta) meta.setAttribute('content', corto);
+  const fav = document.getElementById('favicon-main');
+  if (fav && icono) {
+    const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>" + icono + "</text></svg>";
+    fav.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+}
+
+function iniCompany() {
+  const revelar = () => document.documentElement.classList.add('company-listo');
+  const desconocido = () => { if (window.COMPANY.NOMBRE_CORTO === 'UNKNOWN') aplicarCompany({ NOMBRE: 'UNKNOWN', NOMBRE_CORTO: 'UNKNOWN', ICONO: '' }); };
+  let conCache = false;
+  try {
+    const c = JSON.parse(localStorage.getItem('COMPANY_INFO') || 'null');
+    if (c && c.NOMBRE_CORTO) { aplicarCompany(c); conCache = true; }
+  } catch (e) {}
+  if (conCache) revelar();
+  setTimeout(() => { desconocido(); revelar(); }, 5000);
+  netRun()
+    .withSuccessHandler(res => {
+      if (res && res.ok) {
+        aplicarCompany(res);
+        try { localStorage.setItem('COMPANY_INFO', JSON.stringify({ NOMBRE: res.NOMBRE, NOMBRE_CORTO: res.NOMBRE_CORTO, ICONO: res.ICONO, CARPETA_RECIBOS_URL: res.CARPETA_RECIBOS_URL })); } catch (e) {}
+      } else {
+        desconocido();
+      }
+      revelar();
+    })
+    .withFailureHandler(() => { desconocido(); revelar(); })
+    .getCompanyInfo();
+}
+iniCompany();
 
 window.eventosCache = [];
 window.norm = window.norm || (s => String(s ?? '').trim().toUpperCase());
@@ -526,7 +614,7 @@ document.getElementById('btn-m3')?.addEventListener('click', async () => {
 
     if (typeof uiPaintCell === 'function') {
       uiPaintCell({
-        row: 9 - 3, col: 16, text: formatted,
+        row: bancoFilaM3() || 6, col: 16, text: formatted,
         color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8
       });
     }
@@ -1222,15 +1310,7 @@ function banco_renderStyled(payload) {
     tbl.innerHTML = (typeof buildColGroup === 'function' ? buildColGroup(generatedWidths) : '') + headHtml + bodyHtml;
 
     // ===== 5. INTERACTIVIDAD Y KPIS =====
-    if (typeof uiPaintCell === 'function') {
-      uiPaintCell({ row: 1, col: 15, color: '#995924', align: 'center' });
-      uiPaintCell({ row: 2, col: 15, color: '#D36FC1', align: 'center' });
-      uiPaintCell({ row: 3, col: 15, color: '#688E87', align: 'center' });
-      uiPaintCell({ row: 4, col: 15, color: '#F4BE3F', align: 'center' });
-      uiPaintCell({ row: 5, col: 15, color: '#4258FF', align: 'center' });
-      uiPaintCell({ row: 6, col: 16, color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8 });
-      uiPaintCell({ row: 8, col: 15, color: '#989D9C', bg: '#970C1D', align: 'center', radius: 8 });
-    }
+    pintarPanelServiciosBanco();
 
     const kMov = document.getElementById('banco-kpi-mov');
     const kMon = document.getElementById('banco-kpi-monto');
@@ -1278,6 +1358,47 @@ function setupBanco(){
 }
 
 // --- Helpers de columnas visibles (respetan colSpan) ---
+const BANCO_COLOR_SERVICIO = {
+  'ADMIN': '#995924', 'ANDINOS': '#D36FC1', 'LUZ-BCI': '#688E87', 'LUZ-SG': '#F4BE3F',
+  'LUZ1': '#688E87', 'LUZ2': '#F4BE3F', 'SEDAPAL': '#4258FF',
+  'PISCINAS': '#2EC4D6', 'JARDINES': '#5FAF4A'
+};
+
+function bancoNombreServicioFila(tr) {
+  const td = tr ? _getCellByVisIndex(tr, 15) : null;
+  return String(td?.textContent || '').trim().toUpperCase();
+}
+
+function bancoFilaM3() {
+  const body = document.getElementById('tabla-banco')?.tBodies?.[0];
+  if (!body) return 0;
+  for (let r = 1; r <= body.rows.length; r++) {
+    const nombre = bancoNombreServicioFila(body.rows[r - 1]);
+    if (nombre === 'FALTA:') return 0;
+    if (nombre.startsWith('M3')) return r;
+  }
+  return 0;
+}
+
+function pintarPanelServiciosBanco() {
+  if (typeof uiPaintCell !== 'function') return;
+  const body = document.getElementById('tabla-banco')?.tBodies?.[0];
+  if (!body) return;
+  for (let r = 1; r <= body.rows.length; r++) {
+    const nombre = bancoNombreServicioFila(body.rows[r - 1]);
+    if (!nombre) continue;
+    if (nombre === 'FALTA:') {
+      uiPaintCell({ row: r, col: 15, color: '#989D9C', bg: '#970C1D', align: 'center', radius: 8 });
+      break;
+    }
+    if (nombre.startsWith('M3')) {
+      uiPaintCell({ row: r, col: 16, color: '#333333', bg: '#AAAAAA', align: 'center', radius: 8 });
+    } else {
+      uiPaintCell({ row: r, col: 15, color: BANCO_COLOR_SERVICIO[nombre] || '#CBD5E1', align: 'center' });
+    }
+  }
+}
+
 function _getCellByVisIndex(tr, visCol1){
   let acc = 0;
   for (const td of tr.cells){
@@ -1842,7 +1963,7 @@ function setupConsultasSelect() {
       const servs = res?.servIds || [];
 
       if (depas.length > 0) {
-        document.title = `Gaviotas 160 (${depas.length})`;
+        document.title = tituloApp(depas.length);
       }
 
       window.LISTAS = window.LISTAS || {};
@@ -4558,6 +4679,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. Modales y Vistas Iniciales
   verificarModoMantenimiento(); // Pública: no requiere sesión, se puede mostrar siempre
+  vigilarMantenimiento();
   setupFullscreen();
   setupMobileSidebar();
   setupSearch();
